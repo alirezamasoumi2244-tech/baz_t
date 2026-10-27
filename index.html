@@ -361,7 +361,6 @@ function waitPeerOpen(peer, timeout=8000) {
     peer.on('error', onErr);
   });
 }
-
 function waitConnOpen(conn, timeout=6000) {
   return new Promise((res, rej) => {
     if (conn.open) return res();
@@ -369,8 +368,7 @@ function waitConnOpen(conn, timeout=6000) {
     const finish = (err) => {
       if (done) return;
       done = true;
-      clearInterval(poll);
-      clearTimeout(t);
+      clearInterval(poll); clearTimeout(t);
       try { conn.off('open', onOpen); conn.off('error', onErr); } catch(_){}
       if (err) rej(err); else res();
     };
@@ -383,9 +381,7 @@ function waitConnOpen(conn, timeout=6000) {
   });
 }
 
-/* ==============================================================
-   VOICE CHAT (مستقل) — با کیفیت بالا و دیلی پایین
-   ============================================================== */
+/* ============ VOICE CHAT ============ */
 const VoiceChat = {
   peer: null, code: null, isHost: false, active: false,
   connections: new Map(), calls: new Map(), audioElements: new Map(),
@@ -412,23 +408,17 @@ async function voiceEnsureStream() {
       t.enabled = VoiceChat.micOn;
       try { t.contentHint = 'speech'; } catch(_){}
     });
-  } catch(e) {
-    showToast('دسترسی به میکروفون رد شد', 'warn');
-    throw new Error('mic-denied');
-  }
+  } catch(e) { showToast('دسترسی به میکروفون رد شد', 'warn'); throw new Error('mic-denied'); }
 }
 
-// SDP transform برای بالا بردن بیت‌ریت opus و کاهش دیلی
 function voiceCallOptions() {
   return {
     sdpTransform: (sdp) => {
       let out = sdp;
-      // افزایش بیت‌ریت opus به 96kbps + فعال کردن FEC برای مقاومت در برابر packet loss
       out = out.replace(/(a=fmtp:\d+ minptime=\d+[^\r\n]*)/g, (m) => {
         if (m.includes('maxaveragebitrate')) return m;
         return m + ';maxaveragebitrate=96000;useinbandfec=1;usedtx=0;stereo=0;sprop-stereo=0';
       });
-      // تنظیم ptime به 10ms برای کاهش دیلی
       out = out.replace(/(a=ptime:\d+)/g, 'a=ptime:10');
       return out;
     }
@@ -443,10 +433,7 @@ async function voiceCreate(onStatus = () => {}) {
     const peer = new Peer('bv' + code, peerCfg);
     try {
       await waitPeerOpen(peer, 8000);
-      VoiceChat.peer = peer;
-      VoiceChat.code = code;
-      VoiceChat.isHost = true;
-      VoiceChat.active = true;
+      VoiceChat.peer = peer; VoiceChat.code = code; VoiceChat.isHost = true; VoiceChat.active = true;
       voiceSetup();
       onStatus('آماده');
       await new Promise(r => setTimeout(r, 1500));
@@ -460,15 +447,12 @@ async function voiceJoin(code, onStatus = () => {}) {
   await voiceEnsureStream();
   const hostId = 'bv' + code;
   let lastErr = null;
-
   for (let attempt = 1; attempt <= 5; attempt++) {
     onStatus(`تلاش ${attempt} از 5...`);
     const peer = new Peer(undefined, peerCfg);
     try {
       await waitPeerOpen(peer, 8000);
-      VoiceChat.peer = peer;
-      VoiceChat.code = code;
-      VoiceChat.isHost = false;
+      VoiceChat.peer = peer; VoiceChat.code = code; VoiceChat.isHost = false;
       const conn = peer.connect(hostId, { reliable: true });
       voiceWireConn(conn, true);
       await waitConnOpen(conn, 6000);
@@ -476,10 +460,7 @@ async function voiceJoin(code, onStatus = () => {}) {
       voiceSetup();
       try { conn.send({ type:'hello', name: voiceGetName() }); } catch(_){}
       if (VoiceChat.localStream && !VoiceChat.calls.has(hostId)) {
-        try {
-          const call = peer.call(hostId, VoiceChat.localStream, voiceCallOptions());
-          voiceWireCall(call);
-        } catch(_){}
+        try { const call = peer.call(hostId, VoiceChat.localStream, voiceCallOptions()); voiceWireCall(call); } catch(_){}
       }
       onStatus('متصل شد');
       return;
@@ -509,28 +490,17 @@ function voiceSetup() {
 
 function voiceWireConn(conn, isJoiner) {
   const peerId = conn.peer;
-  if (!VoiceChat.connections.has(peerId)) {
-    VoiceChat.connections.set(peerId, { conn, name: 'Player' + peerId.slice(-4) });
-  } else {
-    VoiceChat.connections.get(peerId).conn = conn;
-  }
+  if (!VoiceChat.connections.has(peerId)) VoiceChat.connections.set(peerId, { conn, name: 'Player' + peerId.slice(-4) });
+  else VoiceChat.connections.get(peerId).conn = conn;
 
   conn.on('open', () => {
     if (!VoiceChat.peer || VoiceChat.peer.destroyed) return;
     if (VoiceChat.isHost) {
       const list = [];
-      for (const [id, c] of VoiceChat.connections) {
-        if (id !== peerId && c.conn.open) list.push({ id, name: c.name });
-      }
+      for (const [id, c] of VoiceChat.connections) if (id !== peerId && c.conn.open) list.push({ id, name: c.name });
       try { conn.send({ type:'peer-list', peers:list }); } catch(_){}
-      for (const [id, c] of VoiceChat.connections) {
-        if (id !== peerId && c.conn.open) {
-          try { c.conn.send({ type:'peer-joined', peerId }); } catch(_){}
-        }
-      }
-    } else if (!isJoiner) {
-      try { conn.send({ type:'hello', name: voiceGetName() }); } catch(_){}
-    }
+      for (const [id, c] of VoiceChat.connections) if (id !== peerId && c.conn.open) try { c.conn.send({ type:'peer-joined', peerId }); } catch(_){}
+    } else if (!isJoiner) try { conn.send({ type:'hello', name: voiceGetName() }); } catch(_){}
     updateVoiceUI();
   });
 
@@ -539,13 +509,7 @@ function voiceWireConn(conn, isJoiner) {
     if (data.type === 'hello') {
       const c = VoiceChat.connections.get(peerId);
       if (c) c.name = (data.name || c.name).slice(0,16);
-      if (VoiceChat.isHost) {
-        for (const [id, cc] of VoiceChat.connections) {
-          if (id !== peerId && cc.conn.open) {
-            try { cc.conn.send({ type:'peer-renamed', peerId, name: c.name }); } catch(_){}
-          }
-        }
-      }
+      if (VoiceChat.isHost) for (const [id, cc] of VoiceChat.connections) if (id !== peerId && cc.conn.open) try { cc.conn.send({ type:'peer-renamed', peerId, name: c.name }); } catch(_){}
       updateVoiceUI();
     }
     else if (data.type === 'peer-list') {
@@ -556,21 +520,14 @@ function voiceWireConn(conn, isJoiner) {
           const pc = VoiceChat.peer.connect(p.id, { reliable:true });
           VoiceChat.connections.set(p.id, { conn:pc, name:p.name || 'Player' });
           voiceWireConn(pc, false);
-          if (VoiceChat.localStream && !VoiceChat.calls.has(p.id)) {
-            try { voiceWireCall(VoiceChat.peer.call(p.id, VoiceChat.localStream, voiceCallOptions())); } catch(_){}
-          }
+          if (VoiceChat.localStream && !VoiceChat.calls.has(p.id)) try { voiceWireCall(VoiceChat.peer.call(p.id, VoiceChat.localStream, voiceCallOptions())); } catch(_){}
         } catch(err) { console.warn('voice peer-list connect failed', err); }
       }
       updateVoiceUI();
     }
     else if (data.type === 'peer-joined') { updateVoiceUI(); }
-    else if (data.type === 'peer-renamed') {
-      const c = VoiceChat.connections.get(data.peerId);
-      if (c) { c.name = data.name; updateVoiceUI(); }
-    }
-    else if (data.type === 'chat') {
-      voiceAddChatMsg(data.name || 'Player', data.text || '', false);
-    }
+    else if (data.type === 'peer-renamed') { const c = VoiceChat.connections.get(data.peerId); if (c) { c.name = data.name; updateVoiceUI(); } }
+    else if (data.type === 'chat') voiceAddChatMsg(data.name || 'Player', data.text || '', false);
   });
 
   conn.on('close', () => {
@@ -592,15 +549,11 @@ function voiceWireCall(call) {
     let el = VoiceChat.audioElements.get(peerId);
     if (!el) {
       el = document.createElement('audio');
-      el.autoplay = true;
-      el.playsInline = true;
-      el.style.display = 'none';
-      document.body.appendChild(el);
-      VoiceChat.audioElements.set(peerId, el);
+      el.autoplay = true; el.playsInline = true; el.style.display = 'none';
+      document.body.appendChild(el); VoiceChat.audioElements.set(peerId, el);
     }
     el.srcObject = stream;
     el.volume = VoiceChat.outputVolume;
-    // کاهش دیلی با play فوری
     el.play().catch(()=>{});
   });
   call.on('close', () => {
@@ -625,36 +578,25 @@ function voiceLeave() {
   for (const el of VoiceChat.audioElements.values()) el.remove();
   VoiceChat.audioElements.clear();
   for (const call of VoiceChat.calls.values()) { try { call.close(); } catch(_){} }
-  VoiceChat.calls.clear();
-  VoiceChat.connections.clear();
-  VoiceChat.active = false;
-  VoiceChat.panelOpen = false;
-  VoiceChat.code = null;
+  VoiceChat.calls.clear(); VoiceChat.connections.clear();
+  VoiceChat.active = false; VoiceChat.panelOpen = false; VoiceChat.code = null;
   updateVoiceUI();
   showToast('از ویس چت خارج شدید');
 }
 
 function voiceSendChat(text) {
-  text = String(text || '').trim();
-  if (!text) return;
+  text = String(text || '').trim(); if (!text) return;
   for (const c of VoiceChat.connections.values()) if (c.conn.open) try { c.conn.send({ type:'chat', name: voiceGetName(), text }); } catch(_){}
   voiceAddChatMsg(voiceGetName(), text, true);
 }
-
 function voiceSendChatUI() {
-  const input = $('vchat-input');
-  if (!input) return;
-  const text = input.value.trim();
-  if (!text) return;
-  voiceSendChat(text);
-  input.value = '';
+  const input = $('vchat-input'); if (!input) return;
+  const text = input.value.trim(); if (!text) return;
+  voiceSendChat(text); input.value = '';
 }
-
 function voiceAddChatMsg(name, text, isMe) {
-  const chatEl = $('vchat');
-  if (!chatEl) return;
-  const empty = chatEl.querySelector('.vempty');
-  if (empty) empty.remove();
+  const chatEl = $('vchat'); if (!chatEl) return;
+  const empty = chatEl.querySelector('.vempty'); if (empty) empty.remove();
   const div = document.createElement('div');
   div.className = 'vmsg' + (isMe ? ' me' : '');
   div.innerHTML = `<span class="vname">${escHtml(name)}:</span> ${escHtml(text)}`;
@@ -685,7 +627,6 @@ function updateVoiceUI() {
 function openVoicePanel() { VoiceChat.panelOpen = true; updateVoiceUI(); }
 function closeVoicePanel() { VoiceChat.panelOpen = false; updateVoiceUI(); }
 function toggleVoicePanel() { VoiceChat.panelOpen = !VoiceChat.panelOpen; updateVoiceUI(); }
-
 function openVoiceModal() { $('voice-modal').classList.add('on'); voiceModalMain(); }
 function closeVoiceModal() { $('voice-modal').classList.remove('on'); }
 
@@ -732,8 +673,7 @@ async function voiceModalDoJoin() {
   try {
     await voiceJoin(code, (status) => { body.innerHTML = `<div style="padding:20px;color:#79d3ff;">${status}</div>`; });
     await new Promise(r => setTimeout(r, 800));
-    closeVoiceModal();
-    openVoicePanel();
+    closeVoiceModal(); openVoicePanel();
     showToast('به ویس چت متصل شدید', 'voice');
   } catch(e) {
     body.innerHTML = `<div style="color:#ff7a6b;margin-bottom:12px;">خطا: ${e.message === 'mic-denied' ? 'دسترسی به میکروفون رد شد' : 'کد اشتباه است یا میزبان ویس آفلاین است.'}</div>
@@ -819,10 +759,26 @@ function addRoom(cx,cz,w,d,h,mat,door){ const t=0.8,dw=4.5,hw=w/2,hd=d/2,segX=(w
 function buildMap(){ addBox(0,0,-A,A*2,20,5,matWall); addBox(0,0,A,A*2,20,5,matWall); addBox(-A,0,0,5,20,A*2,matWall); addBox(A,0,0,5,20,A*2,matWall); addBox(0,0,0,40,2,40,matConcrete); addBox(0,2,0,30,12,30,matDark); addBox(0,14,0,34,2,34,matConcrete); addBox(-15,2,-15,8,16,8,matRed); addBox(15,2,-15,8,16,8,matRed); addBox(-15,2,15,8,16,8,matRed); addBox(15,2,15,8,16,8,matRed); addBox(0,0,25,10,1,10,matConcrete); addBox(0,1,20,10,1,10,matConcrete); addBox(0,2,15,10,1,10,matConcrete); addRoom(-80,-80,40,30,6,matConcrete,'s'); addRoom(80,-80,35,40,6,matMetal,'w'); addRoom(-80,80,30,30,5,matBlue,'e'); addRoom(80,80,45,35,7,matConcrete,'n'); addRoom(0,-140,60,20,5,matRed,'s'); addRoom(0,140,60,20,5,matRed,'n'); addRoom(-140,0,20,60,5,matMetal,'e'); addRoom(140,0,20,60,5,matMetal,'w'); addBox(-160,0,-160,10,25,10,matDark); addBox(-160,25,-160,12,2,12,matConcrete); addBox(160,0,160,10,25,10,matDark); addBox(160,25,160,12,2,12,matConcrete); for(let i=0;i<30;i++){ const x=rand(-200,200),z=rand(-200,200); if(Math.abs(x)<30&&Math.abs(z)<30) continue; addBox(x,0,z,6.5,2.7,2.6,i%2===0?matMetal:matRed); } for(let i=0;i<80;i++){ const x=rand(-200,200),z=rand(-200,200); if(Math.abs(x)<30&&Math.abs(z)<30) continue; addBox(x,0,z,1.5,1.5,1.5,matCrate); if(Math.random()>0.5) addBox(x,1.5,z,1.5,1.5,1.5,matCrate); } for(let i=0;i<20;i++){ const x=rand(-200,200),z=rand(-200,200); if(Math.abs(x)<30&&Math.abs(z)<30) continue; if(i%2===0) addBox(x,0,z,8,1.2,1.0,matConcrete); else addBox(x,0,z,1.0,1.2,8,matConcrete); } }
 buildMap();
 
-const SPAWN_POINTS=[];
-for(let i=0;i<40;i++){ const a=(i/40)*Math.PI*2; const r=150+rand(-20,20); SPAWN_POINTS.push(new THREE.Vector3(Math.cos(a)*r,20,Math.sin(a)*r)); }
-for(let i=0;i<20;i++){ SPAWN_POINTS.push(new THREE.Vector3(rand(-100,100),20,rand(-100,100))); }
-function pickRandomSpawn(){ const sp = SPAWN_POINTS[(Math.random()*SPAWN_POINTS.length)|0]; return new THREE.Vector3(sp.x, sp.y||20, sp.z); }
+/* ==============================================================
+   SPAWN — کاملاً رندوم داخل نقشه، دور از دیوارها
+   ============================================================== */
+function pickRandomSpawn(){
+  for (let i = 0; i < 80; i++){
+    const angle = Math.random() * Math.PI * 2;
+    const radius = Math.sqrt(Math.random()) * (A - 30);
+    const x = Math.cos(angle) * radius;
+    const z = Math.sin(angle) * radius;
+    let blocked = false;
+    for (let j = 0; j < colliders.length; j++){
+      const b = colliders[j];
+      if (b.max.x - b.min.x > 100 || b.max.z - b.min.z > 100) continue;
+      if (x > b.min.x - 3 && x < b.max.x + 3 &&
+          z > b.min.z - 3 && z < b.max.z + 3){ blocked = true; break; }
+    }
+    if (!blocked) return new THREE.Vector3(x, 20, z);
+  }
+  return new THREE.Vector3(rand(-100, 100), 20, rand(-100, 100));
+}
 
 const PLAYER={ pos:new THREE.Vector3(0,20,0), vel:new THREE.Vector3(), yaw:Math.PI, pitch:0, radius:0.42, height:1.75, eyeStand:1.62, eyeCrouch:1.05, eye:1.62, onGround:false, crouching:false, sprinting:false, health:100, maxHealth:100, alive:true };
 const GRAVITY=22.0, JUMP_SPEED=7.3, SPEED_WALK=5.4, SPEED_RUN=8.1, SPEED_CROUCH=2.6;
@@ -891,7 +847,6 @@ function handleNewClient(conn){
   conn.on('data', data => handleFromClient(id, data));
   conn.on('open', () => {
     try { conn.send({ type:'welcome', yourId:id, hostId:Net.peer.id, players:getAllStates(), started:Net.started }); } catch(_){}
-    // مدل بازیکن جدید رو فوری روی هاست بساز
     const st = Net.clientConns.get(id);
     if (st) updateRemoteState(st.state);
     broadcastAll({type:'playerJoined', player: Net.clientConns.get(id).state}, id);
@@ -912,9 +867,6 @@ function getAllStates(){
 }
 function broadcastAll(msg, exceptId){ if (!Net.isHost) return; for (const [id,c] of Net.clientConns){ if (id===exceptId) continue; if (c.conn.open){ try { c.conn.send(msg); } catch(_){} } } }
 
-/* ==============================================================
-   سرور-محور: هاست تصمیم نهایی دمیج و مرگ رو می‌گیره
-   ============================================================== */
 function handleFromClient(fromId, data){
   if (!data || !data.type) return;
   const isFromHost = fromId === Net.myId;
@@ -940,7 +892,6 @@ function handleFromClient(fromId, data){
     if (!dmg || !targetId) return;
 
     if (targetId === Net.myId){
-      // هاست هدف قرار گرفته
       if (!PLAYER.alive) return;
       damagePlayer(dmg, fromId);
       if (PLAYER.health <= 0 && PLAYER.alive){
@@ -948,50 +899,35 @@ function handleFromClient(fromId, data){
         if (c){ c.state.score++; c.state.kills++; }
         broadcastAll({type:'killEvent', killer:fromId, killerName:fromName, victim:Net.myId, victimName:Net.myName});
         broadcastAll({type:'scoreUpdate', players:getAllStates()});
-        // ری‌اسپاون سریع‌تر (1.5 ثانیه)
         setTimeout(() => {
           if (!PLAYER.alive){
             const sp = pickRandomSpawn();
-            PLAYER.alive = true;
-            PLAYER.health = 100;
-            PLAYER.vel.set(0,0,0);
-            PLAYER.pos.set(sp.x, sp.y, sp.z);
-            PLAYER.pitch = 0;
-            updateHealthHud();
-            $('vignette').style.opacity = '0';
+            respawnPlayer(sp.x, sp.y, sp.z);
           }
         }, 1500);
       }
     } else {
-      // کلاینت هدف قرار گرفته
       const target = Net.clientConns.get(targetId);
       if (!target) return;
-      // حتی اگه target.state.alive = false باشه، اجازه بده که دمیج بشه (برای همگام‌سازی)
       target.state.health = Math.max(0, target.state.health - dmg);
       const fatal = target.state.health <= 0 && target.state.alive;
-
       if (target.conn.open){
         try { target.conn.send({type:'damaged', amount:dmg, from:fromId, fromName, fatal}); } catch(_){}
       }
-
       if (fatal){
         target.state.alive = false;
         target.state.deaths++;
-        // فوری مدل رو در حالت مرده بذار
+        // فوری پنهان
         const rp = remotePlayers.get(targetId);
-        if (rp) rp.dead = true;
-
+        if (rp){ rp.dead = true; rp.group.visible = false; }
         if (isFromHost){
           G.playerScore++; G.kills++;
           Sfx.kill(); hitmarkerKill(); updateScoreHud();
         } else if (c){
           c.state.score++; c.state.kills++;
         }
-
         broadcastAll({type:'killEvent', killer:fromId, killerName:fromName, victim:targetId, victimName:target.state.name});
         broadcastAll({type:'scoreUpdate', players:getAllStates()});
-
-        // ری‌اسپاون سریع‌تر (1.5 ثانیه)
         setTimeout(() => {
           const vv = Net.clientConns.get(targetId);
           if (!vv) return;
@@ -1010,9 +946,7 @@ function handleFromClient(fromId, data){
 
 function startHostTick(){ if (Net.tickTimer) clearInterval(Net.tickTimer); Net.tickTimer = setInterval(()=>{ if (!Net.isHost) return; broadcastAll({type:'states', players:getAllStates()}); }, 100); }
 
-/* ==============================================================
-   PUBLIC ROOMS
-   ============================================================== */
+/* PUBLIC ROOMS */
 const PUBLIC_PREFIX = 'baz-pub-';
 const PUBLIC_MAX = 20;
 
@@ -1023,12 +957,8 @@ async function createPublicRoom(onStatus = () => {}) {
     const peer = new Peer(targetId, peerCfg);
     try {
       await waitPeerOpen(peer, 6000);
-      Net.peer = peer;
-      Net.roomCode = 'PUBLIC #' + index;
-      Net.isHost = true;
-      Net.myId = peer.id;
-      setupHost(peer);
-      onStatus('روم عمومی ساخته شد');
+      Net.peer = peer; Net.roomCode = 'PUBLIC #' + index; Net.isHost = true; Net.myId = peer.id;
+      setupHost(peer); onStatus('روم عمومی ساخته شد');
       await new Promise(r => setTimeout(r, 1500));
       return;
     } catch(e) { try { peer.destroy(); } catch(_){} }
@@ -1039,10 +969,8 @@ async function createPublicRoom(onStatus = () => {}) {
 async function joinPublicRoom(onStatus = () => {}) {
   const myPeer = new Peer(undefined, peerCfg);
   await waitPeerOpen(myPeer, 8000);
-  Net.peer = myPeer;
-  Net.myId = myPeer.id;
+  Net.peer = myPeer; Net.myId = myPeer.id;
   Net.myName = ($('setName').value || 'Player').trim().slice(0,16) || 'Player';
-
   const unavailableIds = new Set();
   myPeer.on('error', (e) => {
     if (e && e.type === 'peer-unavailable' && e.message) {
@@ -1050,15 +978,13 @@ async function joinPublicRoom(onStatus = () => {}) {
       if (m) unavailableIds.add(m[0]);
     }
   });
-
   for (let index = 1; index <= PUBLIC_MAX; index++) {
     const targetId = PUBLIC_PREFIX + index;
     if (unavailableIds.has(targetId)) continue;
     onStatus(`جستجوی سرور #${index}...`);
     try {
       const conn = myPeer.connect(targetId, { reliable: true });
-      conn.on('data', handleFromHost);
-      conn.on('error', () => {});
+      conn.on('data', handleFromHost); conn.on('error', () => {});
       await Promise.race([
         new Promise((res, rej) => {
           if (conn.open) return res();
@@ -1067,15 +993,10 @@ async function joinPublicRoom(onStatus = () => {}) {
         }),
         new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 1800))
       ]);
-      Net.hostConn = conn;
-      Net.isHost = false;
-      Net.roomCode = 'PUBLIC #' + index;
-      conn.on('close', () => {
-        if (!Net.isHost) { showToast('اتصال قطع شد', 'warn'); leaveRoom(); }
-      });
+      Net.hostConn = conn; Net.isHost = false; Net.roomCode = 'PUBLIC #' + index;
+      conn.on('close', () => { if (!Net.isHost) { showToast('اتصال قطع شد', 'warn'); leaveRoom(); } });
       try { conn.send({ type: 'name', name: Net.myName }); } catch(_){}
-      onStatus('متصل شد');
-      return;
+      onStatus('متصل شد'); return;
     } catch(e) { try { conn.close(); } catch(_){} }
   }
   try { myPeer.destroy(); } catch(_){}
@@ -1083,7 +1004,6 @@ async function joinPublicRoom(onStatus = () => {}) {
   throw new Error('no-public-rooms');
 }
 
-/* ============ PRIVATE ROOMS ============ */
 async function hostPrivateRoom(onStatus = () => {}) {
   for (let attempt = 1; attempt <= 5; attempt++) {
     onStatus(`تلاش ${attempt} برای ساخت روم خصوصی...`);
@@ -1092,8 +1012,7 @@ async function hostPrivateRoom(onStatus = () => {}) {
     try {
       await waitPeerOpen(peer, 8000);
       Net.peer = peer; Net.roomCode = code; Net.isHost = true; Net.myId = peer.id;
-      setupHost(peer);
-      onStatus('روم ساخته شد');
+      setupHost(peer); onStatus('روم ساخته شد');
       await new Promise(r => setTimeout(r, 2000));
       return code;
     } catch(e) { try { peer.destroy(); } catch(_){} }
@@ -1138,7 +1057,7 @@ function handleFromHost(data){
   else if (data.type==='damaged'){
     damagePlayer(data.amount, data.from);
     addKillFeed(data.fromName||'حریف', 'شما', true);
-    if (data.fatal){ playerDie(data.from, data.fromName); }
+    if (data.fatal && PLAYER.alive){ playerDie(data.from, data.fromName); }
   }
   else if (data.type==='killEvent'){
     if (data.killer===Net.myId){ G.playerScore++; G.kills++; Sfx.kill(); hitmarkerKill(); }
@@ -1148,23 +1067,14 @@ function handleFromHost(data){
   }
   else if (data.type==='scoreUpdate'){
     for (const p of data.players){ if (p.id===Net.myId){ G.kills=p.kills; G.deaths=p.deaths; } }
-    updateScoreHud();
-    updateScoreboard(data.players);
+    updateScoreHud(); updateScoreboard(data.players);
   }
   else if (data.type==='remoteShoot'){
     spawnTracer(new THREE.Vector3(data.from.x,data.from.y,data.from.z), new THREE.Vector3(data.to.x,data.to.y,data.to.z), 0xff9a5a);
     Sfx.shot('smg');
   }
   else if (data.type==='respawn'){
-    PLAYER.alive=true; PLAYER.health=100;
-    PLAYER.pos.set(data.x,data.y||20,data.z);
-    PLAYER.vel.set(0,0,0);
-    updateHealthHud();
-    $('vignette').style.opacity='0';
-  }
-  else if (data.type==='respawnPlayer'){
-    const rp=remotePlayers.get(data.id);
-    if (rp){ rp.target.health=100; rp.group.visible=true; rp.dead=false; }
+    respawnPlayer(data.x, data.y||20, data.z);
   }
 }
 
@@ -1200,9 +1110,10 @@ function addRemote(state){
   const group=buildRemoteModel();
   group.position.set(state.x, state.y||20, state.z);
   group.rotation.y=state.yaw||0;
+  group.visible = state.health > 0;
   scene.add(group);
   for (const p of group.userData.parts) p.userData.playerId=state.id;
-  remotePlayers.set(state.id, { group, name:state.name, target:{ x:state.x, y:state.y||20, z:state.z, yaw:state.yaw||0, health:state.health }, dead:false });
+  remotePlayers.set(state.id, { group, name:state.name, target:{ x:state.x, y:state.y||20, z:state.z, yaw:state.yaw||0, health:state.health }, dead: state.health <= 0 });
 }
 function updateRemoteState(state){
   if (!state || !state.id) return;
@@ -1211,24 +1122,29 @@ function updateRemoteState(state){
   rp.target.x=state.x; rp.target.y=state.y||20; rp.target.z=state.z;
   rp.target.yaw=state.yaw||0; rp.target.health=state.health;
   if (state.name) rp.name=state.name;
-  if (state.health<=0 && !rp.dead) rp.dead=true;
-  else if (state.health>0 && rp.dead){ rp.dead=false; rp.group.visible=true; rp.group.rotation.z=0; }
+  if (state.health<=0 && !rp.dead){
+    rp.dead = true;
+    rp.group.visible = false;   // فوری غیب بشه
+  } else if (state.health>0 && rp.dead){
+    rp.dead = false;
+    rp.group.visible = true;
+    rp.group.rotation.z = 0;
+    // snap به موقعیت جدید ری‌اسپاون
+    rp.group.position.set(state.x, state.y||20, state.z);
+    rp.target.x = state.x; rp.target.y = state.y||20; rp.target.z = state.z;
+  }
 }
 function removeRemote(id){
   const rp=remotePlayers.get(id); if (!rp) return;
   scene.remove(rp.group);
-  for (const p of rp.group.userData.parts){
-    const i=remoteHittables.indexOf(p);
-    if (i>=0) remoteHittables.splice(i,1);
-    if (p.geometry) p.geometry.dispose();
-  }
+  for (const p of rp.group.userData.parts){ const i=remoteHittables.indexOf(p); if (i>=0) remoteHittables.splice(i,1); if (p.geometry) p.geometry.dispose(); }
   for (const m of rp.group.userData.mats) m.dispose();
   remotePlayers.delete(id);
 }
 function clearAllRemotes(){ for (const id of Array.from(remotePlayers.keys())) removeRemote(id); }
 function updateRemotes(dt){
   for (const rp of remotePlayers.values()){
-    if (rp.dead){ rp.group.rotation.z=Math.min(rp.group.rotation.z+dt*4,Math.PI*0.5); rp.group.position.y=Math.max(rp.group.position.y-dt*2,-0.3); continue; }
+    if (rp.dead) continue;  // پنهانه، انیمیشن نداریم
     rp.group.rotation.z=0;
     const pX=rp.group.position.x, pZ=rp.group.position.z;
     rp.group.position.x=damp(rp.group.position.x,rp.target.x,14,dt);
@@ -1260,14 +1176,10 @@ function tryShoot(){
   ws.mag--; fireCooldown=60/w.rpm; Sfx.shot(w.sound);
   muzzleTimer=0.05; muzzleFlash.visible=true;
   const kick=w.recoil;
-  recoilKick.z=Math.min(recoilKick.z+0.045*kick,0.10);
-  recoilKick.rotX+=0.020*kick;
-  recoilKick.rotZ+=(Math.random()-0.5)*0.014*kick;
+  recoilKick.z=Math.min(recoilKick.z+0.045*kick,0.10); recoilKick.rotX+=0.020*kick; recoilKick.rotZ+=(Math.random()-0.5)*0.014*kick;
   const vK=0.0125*kick*rand(0.75,1.25);
-  PLAYER.pitch=clamp(PLAYER.pitch+vK,-1.45,1.45);
-  pendingRecovery+=vK*0.72;
-  const origin=muzzleWorldPosition();
-  const rays=w.pellets||1;
+  PLAYER.pitch=clamp(PLAYER.pitch+vK,-1.45,1.45); pendingRecovery+=vK*0.72;
+  const origin=muzzleWorldPosition(); const rays=w.pellets||1;
   for (let r=0;r<rays;r++){
     const dir=new THREE.Vector3(); camera.getWorldDirection(dir);
     const sp=currentSpread();
@@ -1288,12 +1200,8 @@ function tryShoot(){
       onHitMarker(false);
       spawnImpact(hit.point, part==='head'?0xffdd44:0xff6644);
       Sfx.hit();
-      // ارسال به سرور (هاست)
-      if (pid){
-        sendToHost({type:'hit', target:pid, damage:dmg});
-      } else {
-        console.warn('Hit registered but no playerId', hit.object);
-      }
+      if (pid) sendToHost({type:'hit', target:pid, damage:dmg});
+      else console.warn('Hit registered but no playerId', hit.object);
     }
     else if (wd<Infinity){ end=wh[0].point; spawnImpact(end, 0xd8c9a0); }
     else end=origin.clone().addScaledVector(dir, w.range);
@@ -1311,8 +1219,10 @@ function startReload(){ const w=WEAPONS[curWeapon], ws=weaponState[curWeapon]; i
 function finishReload(){ const w=WEAPONS[curWeapon], ws=weaponState[curWeapon]; const n=w.magSize-ws.mag, g=Math.min(n, ws.reserve); ws.mag+=g; ws.reserve-=g; reloading=false; Sfx.reloadEnd(); updateAmmoHud(); }
 function switchWeapon(idx){ if (idx===curWeapon||idx<0||idx>=WEAPONS.length||reloading) return; curWeapon=idx; buildGunModel(idx); fireCooldown=0.28; updateAmmoHud(); $('wname').textContent=WEAPONS[curWeapon].name; Sfx.empty(); }
 
-/* ============ DAMAGE ============ */
+/* ============ DAMAGE / DEATH ============ */
 let vignetteTimer=0;
+let deathAnim = { active: false, startTime: 0, duration: 1100 };
+
 function damagePlayer(amount, fromId){
   if (!PLAYER.alive || !G.running) return;
   PLAYER.health -= amount;
@@ -1321,15 +1231,57 @@ function damagePlayer(amount, fromId){
   updateHealthHud();
   if (PLAYER.health <= 0){ PLAYER.health = 0; }
 }
+
 function playerDie(kId, kName){
   if (!PLAYER.alive) return;
   PLAYER.alive = false;
   PLAYER.health = 0;
   PLAYER.vel.set(0,0,0);
+  reloading = false;
+  reloadTimer = 0;
+  triggerHeld = false;
+  adsHeld = false;
+  adsAmount = 0;
   updateHealthHud();
   addKillFeed(kName||'حریف', 'شما', true);
   Sfx.kill();
-  $('vignette').style.opacity = '1';
+  $('vignette').style.opacity = '0.65';
+  if (gunGroup) gunGroup.visible = false;
+  const sc = $('scope-overlay'); if (sc) sc.classList.remove('active');
+  const ch = $('crosshair'); if (ch) ch.style.opacity = '0';
+  deathAnim.active = true;
+  deathAnim.startTime = performance.now();
+}
+
+function updateDeathAnimation(){
+  if (!deathAnim.active) return;
+  const t = clamp((performance.now() - deathAnim.startTime) / deathAnim.duration, 0, 1);
+  const ease = 1 - Math.pow(1 - t, 3);
+  const eyeY = lerp(PLAYER.eyeStand, 0.4, ease);
+  const roll = ease * 1.05;
+  const pitchTarget = -0.45;
+  camera.position.set(PLAYER.pos.x, PLAYER.pos.y + eyeY, PLAYER.pos.z);
+  camera.rotation.y = PLAYER.yaw;
+  camera.rotation.x = pitchTarget * ease;
+  camera.rotation.z = roll;
+}
+
+function respawnPlayer(x, y, z){
+  PLAYER.pos.set(x, y || 20, z);
+  PLAYER.vel.set(0,0,0);
+  PLAYER.yaw = Math.random() * Math.PI * 2;
+  PLAYER.pitch = 0;
+  PLAYER.eye = PLAYER.eyeStand;
+  PLAYER.alive = true;
+  PLAYER.health = 100;
+  camera.rotation.z = 0;
+  camera.rotation.x = PLAYER.pitch;
+  deathAnim.active = false;
+  if (gunGroup) gunGroup.visible = true;
+  const ch = $('crosshair'); if (ch) ch.style.opacity = '1';
+  updateHealthHud();
+  $('vignette').style.opacity = '0';
+  vignetteTimer = 0;
 }
 
 const G={ running:false, paused:false, over:false, playerScore:0, enemyScore:0, scoreTarget:25, timeLeft:600, kills:0, deaths:0, sensitivity:1.0 };
@@ -1357,7 +1309,7 @@ window.addEventListener('keyup', e => { keys[e.code]=false; });
 let pointerLocked=false;
 canvas.addEventListener('click', () => { if (!G.running||G.paused) return; if (!pointerLocked) canvas.requestPointerLock(); });
 document.addEventListener('pointerlockchange', () => { pointerLocked=(document.pointerLockElement===canvas); });
-document.addEventListener('mousemove', e => { if (!G.running||G.paused||!pointerLocked) return; const s=0.0022*G.sensitivity; PLAYER.yaw-=e.movementX*s; PLAYER.pitch-=e.movementY*s; PLAYER.pitch=clamp(PLAYER.pitch,-1.45,1.45); });
+document.addEventListener('mousemove', e => { if (!G.running||G.paused||!pointerLocked||!PLAYER.alive) return; const s=0.0022*G.sensitivity; PLAYER.yaw-=e.movementX*s; PLAYER.pitch-=e.movementY*s; PLAYER.pitch=clamp(PLAYER.pitch,-1.45,1.45); });
 document.addEventListener('mousedown', e => { if (!G.running||G.paused) return; if (!pointerLocked){ canvas.requestPointerLock(); return; } if (e.button===0) triggerHeld=true; if (e.button===2) adsHeld=true; });
 document.addEventListener('mouseup', e => { if (e.button===0) triggerHeld=false; if (e.button===2) adsHeld=false; });
 document.addEventListener('contextmenu', e => { if (G.running) e.preventDefault(); });
@@ -1391,9 +1343,9 @@ stickZone.addEventListener('touchmove', e=>{
 }, {passive:false});
 function endMove(e){ for (const t of e.changedTouches){ if (t.identifier!==moveTouchId) continue; moveTouchId=null; moveVec.x=0; moveVec.y=0; stickKnob.style.transform='translate(0px,0px)'; } }
 stickZone.addEventListener('touchend', endMove, {passive:false}); stickZone.addEventListener('touchcancel', endMove, {passive:false});
-canvas.addEventListener('touchstart', e=>{ if (!G.running||G.paused) return; for (const t of e.changedTouches){ if (lookTouchId===null){ lookTouchId=t.identifier; lookLast.x=t.clientX; lookLast.y=t.clientY; } } }, {passive:true});
+canvas.addEventListener('touchstart', e=>{ if (!G.running||G.paused||!PLAYER.alive) return; for (const t of e.changedTouches){ if (lookTouchId===null){ lookTouchId=t.identifier; lookLast.x=t.clientX; lookLast.y=t.clientY; } } }, {passive:true});
 canvas.addEventListener('touchmove', e=>{
-  if (!G.running||G.paused) return;
+  if (!G.running||G.paused||!PLAYER.alive) return;
   for (const t of e.changedTouches){
     if (t.identifier!==lookTouchId) continue;
     const dx=t.clientX-lookLast.x, dy=t.clientY-lookLast.y;
@@ -1422,7 +1374,6 @@ function hitmarkerHit(){ hitmarkerEl.classList.add('show'); setTimeout(()=>hitma
 function hitmarkerKill(){ hitmarkerEl.classList.add('show'); hitmarkerEl.style.filter='brightness(1.8) hue-rotate(-25deg)'; setTimeout(()=>{hitmarkerEl.classList.remove('show'); hitmarkerEl.style.filter='';},160); }
 function onHitMarker(k){ k?hitmarkerKill():hitmarkerHit(); }
 
-/* ============ LOBBY UI ============ */
 function updateLobbyUI(){ const t=(Net.isHost?1:0)+Net.clientConns.size+(Net.isHost?0:1); $('playerCount').textContent=t+' / 50'; const list=[]; if (Net.isHost){ list.push({name:Net.myName, isHost:true, isMe:true}); for (const c of Net.clientConns.values()) list.push({name:c.state.name, isHost:false, isMe:false}); } else list.push({name:Net.myName, isHost:false, isMe:true}); $('playerListBody').innerHTML=list.map(p=>`<div class="pl${p.isHost?' host':''}"><div class="dot"></div><div class="nm">${escHtml(p.name)}${p.isMe?' (شما)':''}</div>${p.isHost?'<div class="role">میزبان</div>':''}</div>`).join(''); }
 function showLobby(isHost){ $('menu').classList.remove('on'); $('joinScreen').classList.remove('on'); $('lobby').classList.add('on'); $('roomCode').textContent=Net.roomCode; $('btnStartGame').style.display=isHost?'inline-block':'none'; $('lobbyTitle').textContent=isHost?(String(Net.roomCode).includes('PUBLIC')?'روم عمومی شما':'روم شما'):'اتاق انتظار'; $('lobbyStatus').textContent=isHost?'دکمه شروع را بزن یا منتظر بازیکنان بمان.':'منتظر شروع بازی توسط میزبان...'; updateLobbyUI(); }
 
@@ -1431,19 +1382,21 @@ function startMatch(){
   if (G.running) return;
   G.running=true; G.paused=false; G.over=false;
   G.playerScore=0; G.enemyScore=0; G.timeLeft=600; G.kills=0; G.deaths=0;
-  // spawn رندوم
   const spawn = pickRandomSpawn();
   PLAYER.pos.copy(spawn); PLAYER.vel.set(0,0,0);
   PLAYER.yaw=Math.random()*Math.PI*2; PLAYER.pitch=0;
   PLAYER.health=100; PLAYER.alive=true; PLAYER.crouching=false; PLAYER.onGround=false; PLAYER.eye=PLAYER.eyeStand;
+  camera.rotation.z = 0;
+  deathAnim.active = false;
   for (let i=0;i<WEAPONS.length;i++){ weaponState[i].mag=WEAPONS[i].magSize; weaponState[i].reserve=WEAPONS[i].reserveMax; }
   curWeapon=0; buildGunModel(0); reloading=false; reloadTimer=0; fireCooldown=0;
   adsHeld=false; adsAmount=0; triggerHeld=false; recoilKick={z:0,rotX:0,rotZ:0}; pendingRecovery=0;
+  if (gunGroup) gunGroup.visible = true;
+  if (crosshairEl) crosshairEl.style.opacity = '1';
   killfeedEl.innerHTML=''; sbBodyEl.innerHTML='';
   rebuildShootMeshes();
   if (Net.isHost){
     Net.started=true;
-    // مدل همه کلاینت‌ها رو فوری روی هاست بساز
     for (const c of Net.clientConns.values()){
       if (!remotePlayers.has(c.state.id)) addRemote(c.state);
     }
@@ -1476,7 +1429,7 @@ function leaveRoom(){
 /* ============ PLAYER UPDATE ============ */
 function doJump(){ if (!PLAYER.alive) return; if (PLAYER.onGround){ PLAYER.vel.y=JUMP_SPEED; PLAYER.onGround=false; Sfx.empty(); } }
 function updatePlayer(dt){
-  if (!PLAYER.alive){ return; }
+  if (!PLAYER.alive){ updateDeathAnimation(); return; }
   let ix=0, iz=0;
   if (keys['KeyW']||keys['ArrowUp']) iz+=1;
   if (keys['KeyS']||keys['ArrowDown']) iz-=1;
@@ -1508,7 +1461,7 @@ function updatePlayer(dt){
   if (PLAYER.vel.y<=0&&PLAYER.pos.y<=gh+0.1){ PLAYER.pos.y=gh; PLAYER.vel.y=0; PLAYER.onGround=true; } else PLAYER.onGround=false;
   if (PLAYER.pos.y<-20){ PLAYER.pos.y=-20; PLAYER.vel.y=0; PLAYER.onGround=true; }
   camera.position.set(PLAYER.pos.x, PLAYER.pos.y+PLAYER.eye, PLAYER.pos.z);
-  camera.rotation.y=PLAYER.yaw; camera.rotation.x=PLAYER.pitch;
+  camera.rotation.y=PLAYER.yaw; camera.rotation.x=PLAYER.pitch; camera.rotation.z=0;
   if (pendingRecovery>0){ const r=Math.min(pendingRecovery,5.5*dt); PLAYER.pitch-=r; pendingRecovery-=r; }
   PLAYER.pitch=clamp(PLAYER.pitch,-1.45,1.45);
   const isScoped=(curWeapon===2||curWeapon===4)&&adsAmount>0.8;
@@ -1526,7 +1479,6 @@ function updatePlayer(dt){
   else { scopeEl.classList.remove('active'); crosshairEl.style.opacity=adsAmount>0.75?'0.15':'1'; gunGroup.visible=true; }
   const spread=currentSpread(); const gapPx=clamp(6+spread*900,4,52);
   crosshairEl.style.setProperty('--gap',gapPx.toFixed(1)+'px');
-  // ارسال state هر 66ms (15Hz) برای همگام‌سازی سریع‌تر
   if (!Net.isHost && Net.hostConn && Net.hostConn.open){
     const t=performance.now();
     if (t-Net.lastStateSend>66){
@@ -1550,7 +1502,7 @@ function update(dt){
   G.timeLeft-=dt;
   if (G.timeLeft<=0){ G.timeLeft=0; endMatch(G.kills>=G.enemyScore); return; }
   updateTimerHud(); updatePlayer(dt); updateViewmodel(dt); updateRemotes(dt); updateEffects(dt);
-  if (vignetteTimer>0){ vignetteTimer-=dt; vignetteEl.style.opacity=String(clamp(vignetteTimer/0.45,0,1)*0.9); if (vignetteTimer<=0) vignetteEl.style.opacity='0'; }
+  if (vignetteTimer>0){ vignetteTimer-=dt; vignetteEl.style.opacity=String(clamp(vignetteTimer/0.45,0,1)*0.9); if (vignetteTimer<=0 && PLAYER.alive) vignetteEl.style.opacity='0'; }
   updateAmmoHud(); updateHealthHud();
 }
 let lastTime=performance.now();
@@ -1568,75 +1520,43 @@ setInterval(() => {
 $('btnCreatePublic').addEventListener('click', async () => {
   Sfx.init(); Sfx.resume();
   Net.myName = ($('setName').value || 'Player').trim().slice(0,16) || 'Player';
-  $('btnCreatePublic').disabled = true;
-  $('btnCreatePublic').textContent = 'در حال ساخت...';
+  $('btnCreatePublic').disabled = true; $('btnCreatePublic').textContent = 'در حال ساخت...';
   showConnStatus('در حال ساخت روم عمومی...');
-  try {
-    await createPublicRoom((s) => showConnStatus(s));
-    hideConnStatus(); showLobby(true);
-  } catch (e) {
-    hideConnStatus();
-    alert('همه ۲۰ سرور عمومی پر است! بعداً دوباره تلاش کن.');
-  } finally {
-    $('btnCreatePublic').disabled = false;
-    $('btnCreatePublic').textContent = 'ساخت روم عمومی';
-  }
+  try { await createPublicRoom((s) => showConnStatus(s)); hideConnStatus(); showLobby(true); }
+  catch (e) { hideConnStatus(); alert('همه ۲۰ سرور عمومی پر است! بعداً دوباره تلاش کن.'); }
+  finally { $('btnCreatePublic').disabled = false; $('btnCreatePublic').textContent = 'ساخت روم عمومی'; }
 });
-
 $('btnJoinPublic').addEventListener('click', async () => {
   Sfx.init(); Sfx.resume();
   Net.myName = ($('setName').value || 'Player').trim().slice(0,16) || 'Player';
-  $('btnJoinPublic').disabled = true;
-  $('btnJoinPublic').textContent = 'در حال جستجو...';
+  $('btnJoinPublic').disabled = true; $('btnJoinPublic').textContent = 'در حال جستجو...';
   showConnStatus('در حال جستجوی روم‌های عمومی...');
-  try {
-    await joinPublicRoom((s) => showConnStatus(s));
-    hideConnStatus(); showLobby(false);
-  } catch (e) {
-    hideConnStatus();
-    alert('هیچ روم عمومی پیدا نشد. می‌تونی خودت یکی بسازی!');
-  } finally {
-    $('btnJoinPublic').disabled = false;
-    $('btnJoinPublic').textContent = 'پیوستن به روم عمومی (خودکار)';
-  }
+  try { await joinPublicRoom((s) => showConnStatus(s)); hideConnStatus(); showLobby(false); }
+  catch (e) { hideConnStatus(); alert('هیچ روم عمومی پیدا نشد. می‌تونی خودت یکی بسازی!'); }
+  finally { $('btnJoinPublic').disabled = false; $('btnJoinPublic').textContent = 'پیوستن به روم عمومی (خودکار)'; }
 });
-
 $('btnCreate').addEventListener('click', async () => {
   Sfx.init(); Sfx.resume();
   Net.myName = ($('setName').value || 'Player').trim().slice(0,16) || 'Player';
   $('btnCreate').disabled = true; $('btnCreate').textContent = 'در حال ساخت...';
   showConnStatus('در حال ساخت روم خصوصی...');
-  try {
-    await hostPrivateRoom((s) => showConnStatus(s));
-    hideConnStatus(); showLobby(true);
-  } catch (e) {
-    hideConnStatus();
-    alert('خطا در ساخت روم: ' + e.message);
-  } finally {
-    $('btnCreate').disabled = false; $('btnCreate').textContent = 'ساخت روم خصوصی';
-  }
+  try { await hostPrivateRoom((s) => showConnStatus(s)); hideConnStatus(); showLobby(true); }
+  catch (e) { hideConnStatus(); alert('خطا در ساخت روم: ' + e.message); }
+  finally { $('btnCreate').disabled = false; $('btnCreate').textContent = 'ساخت روم خصوصی'; }
 });
-
 $('btnJoin').addEventListener('click', () => { $('menu').classList.remove('on'); $('joinScreen').classList.add('on'); $('joinCode').value=''; $('joinError').textContent=''; setTimeout(()=>$('joinCode').focus(), 100); });
 $('joinCode').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g,'').slice(0,4); });
 $('btnBackMenu').addEventListener('click', () => { $('joinScreen').classList.remove('on'); $('menu').classList.add('on'); });
-
 $('btnDoJoin').addEventListener('click', async () => {
   const code = $('joinCode').value.trim();
   if (!/^\d{4}$/.test(code)){ $('joinError').textContent = 'کد باید ۴ رقم باشد'; return; }
   Net.myName = ($('setName').value || 'Player').trim().slice(0,16) || 'Player';
   $('btnDoJoin').disabled = true; $('btnDoJoin').textContent = 'در حال اتصال...';
   $('joinError').textContent = '';
-  try {
-    await joinPrivateRoom(code, Net.myName, (status) => { $('joinError').textContent = status; });
-    showLobby(false);
-  } catch (e) {
-    $('joinError').textContent = 'روم پیدا نشد. مطمئن شو کد درست است و میزبان هنوز متصل است.';
-  } finally {
-    $('btnDoJoin').disabled = false; $('btnDoJoin').textContent = 'اتصال';
-  }
+  try { await joinPrivateRoom(code, Net.myName, (status) => { $('joinError').textContent = status; }); showLobby(false); }
+  catch (e) { $('joinError').textContent = 'روم پیدا نشد. مطمئن شو کد درست است و میزبان هنوز متصل است.'; }
+  finally { $('btnDoJoin').disabled = false; $('btnDoJoin').textContent = 'اتصال'; }
 });
-
 $('btnCopyCode').addEventListener('click', () => {
   const code = $('roomCode').textContent;
   if (navigator.clipboard){ navigator.clipboard.writeText(code).then(()=>{ $('btnCopyCode').textContent='کپی شد'; setTimeout(()=>$('btnCopyCode').textContent='کپی کد', 1500); }); }
