@@ -11,7 +11,6 @@ html,body{height:100%;overflow:hidden;background:#07090c;color:#e8eef6;
   font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;
   user-select:none;-webkit-user-select:none;}
 #game{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;}
-
 #hud{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .35s;}
 #hud.on{opacity:1;}
 #crosshair{position:absolute;left:50%;top:50%;width:0;height:0;--gap:9px;}
@@ -86,6 +85,7 @@ html,body{height:100%;overflow:hidden;background:#07090c;color:#e8eef6;
 .settings label{opacity:.78;text-align:right;}
 .settings input[type=range]{width:100%;accent-color:#2e9fe0;}
 .settings select{background:#111a24;color:#dce8f5;border:1px solid rgba(255,255,255,.16);border-radius:6px;padding:5px 8px;font-family:inherit;font-size:13px;width:100%;}
+.settings input[type=text]{background:#111a24;color:#dce8f5;border:1px solid rgba(255,255,255,.16);border-radius:6px;padding:5px 8px;font-family:inherit;font-size:13px;width:100%;direction:ltr;text-align:center;}
 #lobby{display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;text-align:center;z-index:40;position:fixed;inset:0;background:radial-gradient(circle at 50% 35%,#12202e 0%,#070a0e 70%);overflow-y:auto;}
 #lobby.on{display:flex;}
 .code-box{background:rgba(46,159,224,.12);border:2px dashed rgba(121,211,255,.5);border-radius:12px;padding:16px 28px;margin:8px 0;}
@@ -122,7 +122,6 @@ html,body{height:100%;overflow:hidden;background:#07090c;color:#e8eef6;
 #pauseBtn{position:absolute;top:10px;left:10px;width:38px;height:38px;border-radius:9px;background:rgba(8,12,18,.6);border:1px solid rgba(255,255,255,.18);color:#dce8f5;font-size:14px;font-weight:800;pointer-events:auto;cursor:pointer;z-index:22;display:none;font-family:inherit;}
 #pauseBtn.on{display:block;}
 
-/* ==================== VOICE CHAT UI ==================== */
 #voice-pill{position:fixed;top:10px;left:54px;z-index:9000;display:flex;align-items:center;gap:6px;padding:0 12px;height:38px;background:rgba(8,12,18,.85);border:1px solid rgba(34,197,94,.5);border-radius:9px;backdrop-filter:blur(8px);cursor:pointer;pointer-events:auto;color:#e8eef6;font-family:inherit;font-size:12px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.5);transition:transform .12s,border-color .12s;user-select:none;}
 #voice-pill.hidden{display:none;}
 #voice-pill:active{transform:scale(.96);}
@@ -132,7 +131,6 @@ html,body{height:100%;overflow:hidden;background:#07090c;color:#e8eef6;
 @keyframes vPulse{50%{opacity:.5;}}
 #voice-pill .vcount{color:#79d3ff;font-size:13px;font-weight:800;}
 #voice-pill .vlabel{opacity:.7;font-weight:400;font-size:11px;}
-
 #voice-panel{position:fixed;top:54px;left:10px;z-index:9001;width:290px;max-width:calc(100vw - 20px);background:rgba(8,12,18,.97);border:1px solid rgba(34,197,94,.4);border-radius:12px;backdrop-filter:blur(12px);padding:12px;color:#e8eef6;font-family:inherit;pointer-events:auto;box-shadow:0 10px 30px rgba(0,0,0,.7);}
 #voice-panel.hidden{display:none;}
 #voice-panel .vhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
@@ -184,6 +182,10 @@ html,body{height:100%;overflow:hidden;background:#07090c;color:#e8eef6;
 .toast.warn{background:linear-gradient(135deg,#dc2626,#991b1b);}
 .toast.voice{background:linear-gradient(135deg,#16a34a,#15803d);box-shadow:0 8px 24px rgba(34,197,94,.5);}
 @keyframes tIn{from{opacity:0;transform:translateX(-50%) translateY(10px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+#conn-status{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:200;background:rgba(8,12,18,.95);border:1px solid rgba(56,189,248,.5);border-radius:12px;padding:20px 30px;color:#79d3ff;font-weight:700;font-size:14px;text-align:center;display:none;backdrop-filter:blur(10px);box-shadow:0 10px 40px rgba(0,0,0,.8);}
+#conn-status.on{display:block;}
+#conn-status .spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(121,211,255,.3);border-top-color:#79d3ff;border-radius:50%;animation:spin 1s linear infinite;margin-left:8px;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg);}}
 @media (max-width:520px){
   #hpwrap{width:130px;}
   #ammo b{font-size:26px;}
@@ -252,10 +254,13 @@ html,body{height:100%;overflow:hidden;background:#07090c;color:#e8eef6;
     <label>کیفیت</label>
     <select id="setQuality"><option value="high">بالا</option><option value="med" selected>متوسط</option><option value="low">پایین</option></select>
     <label>صدا</label><input type="range" id="setVol" min="0" max="100" value="60">
+    <label>سرور PeerJS</label>
+    <input type="text" id="setPeerServer" placeholder="0.peerjs.com" value="0.peerjs.com">
   </div>
   <button class="btn voice" id="btnVoice" onclick="openVoiceModal()">🎙 ویس چت</button>
   <button class="btn" id="btnCreate">ساخت روم بازی</button>
   <button class="btn ghost" id="btnJoin">پیوستن به روم بازی</button>
+  <p style="font-size:11px;opacity:.5;margin-top:6px;">اگر اتصال برقرار نشد، چند ثانیه صبر کنید و دوباره تلاش کنید.</p>
 </div>
 
 <div id="lobby">
@@ -277,7 +282,7 @@ html,body{height:100%;overflow:hidden;background:#07090c;color:#e8eef6;
   <input type="text" class="input code" id="joinCode" maxlength="4" placeholder="0000" inputmode="numeric">
   <button class="btn" id="btnDoJoin">اتصال</button>
   <button class="btn ghost" id="btnBackMenu">بازگشت</button>
-  <div id="joinError" style="color:#ff6b5e;font-size:12px;min-height:20px;"></div>
+  <div id="joinError" style="color:#ff6b5e;font-size:12px;min-height:20px;line-height:1.7;"></div>
 </div>
 
 <div class="screen" id="pause">
@@ -292,7 +297,6 @@ html,body{height:100%;overflow:hidden;background:#07090c;color:#e8eef6;
   <button class="btn" id="btnBackLobby">بازگشت به اتاق انتظار</button>
 </div>
 
-<!-- ==================== VOICE CHAT UI ==================== -->
 <div id="voice-pill" class="hidden" onclick="toggleVoicePanel()">
   <span class="vdot"></span>
   <span class="vcount" id="vpill-count">1</span>
@@ -327,6 +331,8 @@ html,body{height:100%;overflow:hidden;background:#07090c;color:#e8eef6;
   </div>
 </div>
 
+<div id="conn-status"><span id="conn-status-text">در حال اتصال...</span></div>
+
 <script type="importmap">
 { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
 </script>
@@ -334,7 +340,6 @@ html,body{height:100%;overflow:hidden;background:#07090c;color:#e8eef6;
 <script type="module">
 import * as THREE from 'three';
 
-/* ============ HELPERS ============ */
 const $ = id => document.getElementById(id);
 const clamp = (v,a,b) => v<a?a:(v>b?b:v);
 const damp = (a,b,l,dt) => b + (a-b)*Math.exp(-l*dt);
@@ -342,7 +347,26 @@ const lerp = (a,b,t) => a + (b-a)*t;
 const rand = (a,b) => a + Math.random()*(b-a);
 const escHtml = (s) => String(s).replace(/[<>&"']/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]));
 
-const peerCfg = { config:{ iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},{urls:'stun:stun.cloudflare.com:3478'}] } };
+// ============ PeerJS config (custom server support) ============
+function getPeerServerHost() {
+  try { return localStorage.getItem('baz-peer-host') || '0.peerjs.com'; }
+  catch(e) { return '0.peerjs.com'; }
+}
+function getPeerConfig() {
+  return {
+    host: getPeerServerHost(),
+    port: 443,
+    secure: true,
+    config: {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun.cloudflare.com:3478' }
+      ]
+    }
+  };
+}
+const peerCfg = getPeerConfig();
 
 function showToast(text, type='') {
   const el = document.createElement('div');
@@ -354,24 +378,112 @@ function showToast(text, type='') {
     el.style.opacity = '0';
     el.style.transform = 'translateX(-50%) translateY(8px)';
     setTimeout(() => el.remove(), 350);
-  }, 2200);
+  }, 2400);
+}
+
+function showConnStatus(text) {
+  const el = $('conn-status');
+  $('conn-status-text').textContent = text;
+  el.classList.add('on');
+}
+function hideConnStatus() {
+  $('conn-status').classList.remove('on');
+}
+
+// ============ Robust peer helpers ============
+function waitPeerOpen(peer, timeout=8000) {
+  return new Promise((res, rej) => {
+    if (peer.open) return res();
+    if (peer.destroyed) return rej(new Error('destroyed'));
+    const t = setTimeout(() => rej(new Error('open-timeout')), timeout);
+    const onOpen = () => { clearTimeout(t); cleanup(); res(); };
+    const onErr = (e) => { clearTimeout(t); cleanup(); rej(e); };
+    function cleanup() {
+      try { peer.off('open', onOpen); peer.off('error', onErr); } catch(_){}
+    }
+    peer.on('open', onOpen);
+    peer.on('error', onErr);
+  });
+}
+
+/**
+ * Try to connect to a peer ID with aggressive retries.
+ * @param {string} hostId - Target peer ID
+ * @param {object} opts - { maxAttempts, perAttemptTimeout, retryDelay, onStatus }
+ * @returns {Promise<{peer, conn}>}
+ */
+async function connectWithRetry(hostId, opts = {}) {
+  const maxAttempts = opts.maxAttempts || 5;
+  const perAttemptTimeout = opts.perAttemptTimeout || 5000;
+  const retryDelay = opts.retryDelay || 1500;
+  const onStatus = opts.onStatus || (() => {});
+  let lastErr = null;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    onStatus(`تلاش ${attempt} از ${maxAttempts}...`);
+    const peer = new Peer(undefined, peerCfg);
+
+    try {
+      // Wait for peer to open on signaling
+      await waitPeerOpen(peer, 8000);
+
+      // Create a promise that rejects if peer-unavailable happens
+      const unavailable = new Promise((_, rej) => {
+        const handler = (err) => {
+          if (err && err.type === 'peer-unavailable') {
+            rej(new Error('peer-unavailable'));
+          }
+        };
+        peer.on('error', handler);
+      });
+
+      // Attempt connect
+      const conn = peer.connect(hostId, { reliable: true });
+
+      // Set up data/close handlers early (before open)
+      conn.on('data', handleFromHost);
+      conn.on('close', () => {
+        if (!Net.isHost) {
+          $('joinError').textContent = 'اتصال به میزبان قطع شد';
+          leaveRoom();
+        }
+      });
+      conn.on('error', () => {});
+
+      // Race: open vs unavailable vs timeout
+      await Promise.race([
+        new Promise((res, rej) => {
+          if (conn.open) return res();
+          const t = setTimeout(() => rej(new Error('conn-timeout')), perAttemptTimeout);
+          conn.on('open', () => { clearTimeout(t); res(); });
+        }),
+        unavailable,
+        new Promise((_, rej) => setTimeout(() => rej(new Error('conn-timeout')), perAttemptTimeout + 500))
+      ]);
+
+      // Success!
+      return { peer, conn };
+
+    } catch (e) {
+      lastErr = e;
+      try { peer.destroy(); } catch(_){}
+      if (attempt < maxAttempts) {
+        onStatus(`تلاش ${attempt} ناموفق (${e.message}) - تلاش مجدد...`);
+        await new Promise(r => setTimeout(r, retryDelay));
+      }
+    }
+  }
+
+  throw new Error(lastErr ? lastErr.message : 'connection-failed');
 }
 
 /* ==============================================================
-   ====  VOICE CHAT SYSTEM (کاملاً مستقل از روم بازی)  =====
+   ====  VOICE CHAT SYSTEM (مستقل از روم بازی)  =====
    ============================================================== */
 const VoiceChat = {
-  peer: null,
-  code: null,
-  isHost: false,
-  active: false,
-  connections: new Map(),   // peerId -> {conn, name}
-  calls: new Map(),         // peerId -> call
-  audioElements: new Map(), // peerId -> <audio>
-  localStream: null,
-  micOn: true,
-  outputVolume: 0.9,
-  panelOpen: false
+  peer: null, code: null, isHost: false, active: false,
+  connections: new Map(), calls: new Map(), audioElements: new Map(),
+  localStream: null, micOn: true, outputVolume: 0.9, panelOpen: false
 };
 
 async function voiceEnsureStream() {
@@ -385,59 +497,84 @@ async function voiceEnsureStream() {
   }
 }
 
-async function voiceCreate() {
+async function voiceCreate(onStatus = () => {}) {
   await voiceEnsureStream();
-  for (let attempt = 0; attempt < 5; attempt++) {
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    onStatus(`تلاش ${attempt} برای ساخت...`);
     const code = String(1000 + Math.floor(Math.random()*9000));
-    const peer = new Peer('vbaz-' + code, peerCfg);
+    const peer = new Peer('bv' + code, peerCfg);
     try {
-      await new Promise((res, rej) => {
-        const t = setTimeout(() => rej(new Error('timeout')), 8000);
-        peer.on('open', () => { clearTimeout(t); res(); });
-        peer.on('error', e => { clearTimeout(t); rej(e); });
-      });
+      await waitPeerOpen(peer, 8000);
       VoiceChat.peer = peer;
       VoiceChat.code = code;
       VoiceChat.isHost = true;
       VoiceChat.active = true;
       voiceSetup();
+      onStatus('آماده');
+      // Wait a moment for server propagation
+      await new Promise(r => setTimeout(r, 1500));
       return code;
     } catch(e) {
       try { peer.destroy(); } catch(_){}
     }
   }
-  throw new Error('cannot create voice room');
+  throw new Error('cannot-create');
 }
 
-async function voiceJoin(code) {
+async function voiceJoin(code, onStatus = () => {}) {
   await voiceEnsureStream();
-  const peer = new Peer(undefined, peerCfg);
-  await new Promise((res, rej) => {
-    const t = setTimeout(() => rej(new Error('timeout')), 8000);
-    peer.on('open', () => { clearTimeout(t); res(); });
-    peer.on('error', e => { clearTimeout(t); rej(e); });
-  });
-  VoiceChat.peer = peer;
-  VoiceChat.code = code;
-  VoiceChat.isHost = false;
-  VoiceChat.active = true;
-  voiceSetup();
+  const hostId = 'bv' + code;
+  let lastErr = null;
 
-  const hostId = 'vbaz-' + code;
-  const conn = peer.connect(hostId, { reliable:true });
-  voiceWireConn(conn);
-  await new Promise((res, rej) => {
-    const t = setTimeout(() => rej(new Error('timeout')), 10000);
-    conn.on('open', () => { clearTimeout(t); res(); });
-    conn.on('error', e => { clearTimeout(t); rej(e); });
-  });
-  // Send hello
-  conn.send({ type:'hello', name: voiceGetName() });
-  // Call host with voice
-  if (VoiceChat.localStream && !VoiceChat.calls.has(hostId)) {
-    const call = peer.call(hostId, VoiceChat.localStream);
-    voiceWireCall(call);
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    onStatus(`تلاش ${attempt} از 5...`);
+    const peer = new Peer(undefined, peerCfg);
+    try {
+      await waitPeerOpen(peer, 8000);
+
+      const unavailable = new Promise((_, rej) => {
+        const handler = (err) => {
+          if (err && err.type === 'peer-unavailable') rej(new Error('peer-unavailable'));
+        };
+        peer.on('error', handler);
+      });
+
+      const conn = peer.connect(hostId, { reliable: true });
+      voiceWireConn(conn, true);
+
+      await Promise.race([
+        new Promise((res, rej) => {
+          if (conn.open) return res();
+          const t = setTimeout(() => rej(new Error('conn-timeout')), 5000);
+          conn.on('open', () => { clearTimeout(t); res(); });
+        }),
+        unavailable,
+        new Promise((_, rej) => setTimeout(() => rej(new Error('conn-timeout')), 5500))
+      ]);
+
+      VoiceChat.peer = peer;
+      VoiceChat.code = code;
+      VoiceChat.isHost = false;
+      VoiceChat.active = true;
+      voiceSetup();
+
+      conn.send({ type:'hello', name: voiceGetName() });
+
+      // Call host for voice
+      if (VoiceChat.localStream && !VoiceChat.calls.has(hostId)) {
+        const call = peer.call(hostId, VoiceChat.localStream);
+        voiceWireCall(call);
+      }
+
+      onStatus('متصل شد');
+      return;
+    } catch(e) {
+      lastErr = e;
+      try { peer.destroy(); } catch(_){}
+      if (attempt < 5) await new Promise(r => setTimeout(r, 1500));
+    }
   }
+  throw new Error(lastErr ? lastErr.message : 'cannot-join');
 }
 
 function voiceGetName() {
@@ -447,43 +584,41 @@ function voiceGetName() {
 
 function voiceSetup() {
   const peer = VoiceChat.peer;
-
   peer.on('call', call => {
     call.answer(VoiceChat.localStream || undefined);
     voiceWireCall(call);
   });
-
-  peer.on('connection', conn => {
-    voiceWireConn(conn);
+  peer.on('connection', conn => voiceWireConn(conn, false));
+  peer.on('error', e => {
+    if (e.type !== 'peer-unavailable') console.warn('voice peer error', e);
   });
-
-  peer.on('error', e => console.warn('voice peer error', e));
-  peer.on('disconnected', () => { try { peer.reconnect(); } catch(_){} });
+  peer.on('disconnected', () => {
+    try { if (!peer.destroyed) peer.reconnect(); } catch(_){}
+  });
 }
 
-function voiceWireConn(conn) {
+function voiceWireConn(conn, isJoiner) {
   const peerId = conn.peer;
   if (!VoiceChat.connections.has(peerId)) {
     VoiceChat.connections.set(peerId, { conn, name: 'Player' + peerId.slice(-4) });
+  } else {
+    VoiceChat.connections.get(peerId).conn = conn;
   }
 
   conn.on('open', () => {
     if (VoiceChat.isHost) {
-      // Send peer list (excluding this peer; host id is implied)
       const list = [];
       for (const [id, c] of VoiceChat.connections) {
-        if (id !== peerId) list.push({ id, name: c.name });
+        if (id !== peerId && c.conn.open) list.push({ id, name: c.name });
       }
-      conn.send({ type:'peer-list', peers:list });
-
-      // Notify existing peers
+      try { conn.send({ type:'peer-list', peers:list }); } catch(_){}
       for (const [id, c] of VoiceChat.connections) {
         if (id !== peerId && c.conn.open) {
-          c.conn.send({ type:'peer-joined', peerId });
+          try { c.conn.send({ type:'peer-joined', peerId }); } catch(_){}
         }
       }
-    } else {
-      conn.send({ type:'hello', name: voiceGetName() });
+    } else if (!isJoiner) {
+      try { conn.send({ type:'hello', name: voiceGetName() }); } catch(_){}
     }
     updateVoiceUI();
   });
@@ -492,23 +627,35 @@ function voiceWireConn(conn) {
     if (data.type === 'hello') {
       const c = VoiceChat.connections.get(peerId);
       if (c) c.name = (data.name || c.name).slice(0,16);
+      // If we're the host, tell all others
+      if (VoiceChat.isHost) {
+        for (const [id, c] of VoiceChat.connections) {
+          if (id !== peerId && c.conn.open) {
+            try { c.conn.send({ type:'peer-renamed', peerId, name: c.name }); } catch(_){}
+          }
+        }
+      }
       updateVoiceUI();
-    } else if (data.type === 'peer-list') {
+    }
+    else if (data.type === 'peer-list') {
       for (const p of (data.peers || [])) {
         if (!VoiceChat.connections.has(p.id)) {
           const pc = VoiceChat.peer.connect(p.id, { reliable:true });
           VoiceChat.connections.set(p.id, { conn:pc, name:p.name || 'Player' });
-          voiceWireConn(pc);
+          voiceWireConn(pc, false);
         }
-        // Call peer
         if (VoiceChat.localStream && !VoiceChat.calls.has(p.id)) {
           const call = VoiceChat.peer.call(p.id, VoiceChat.localStream);
           voiceWireCall(call);
         }
       }
-    } else if (data.type === 'peer-joined') {
-      // Do nothing on the receiving side - the joiner will call us
-    } else if (data.type === 'chat') {
+      updateVoiceUI();
+    }
+    else if (data.type === 'peer-renamed') {
+      const c = VoiceChat.connections.get(data.peerId);
+      if (c) { c.name = data.name; updateVoiceUI(); }
+    }
+    else if (data.type === 'chat') {
       voiceAddChatMsg(data.name || 'Player', data.text || '', false);
     }
   });
@@ -521,18 +668,13 @@ function voiceWireConn(conn) {
     if (el) { el.remove(); VoiceChat.audioElements.delete(peerId); }
     updateVoiceUI();
   });
-
   conn.on('error', () => {});
 }
 
 function voiceWireCall(call) {
   const peerId = call.peer;
-  if (VoiceChat.calls.has(peerId)) {
-    try { call.close(); } catch(_){}
-    return;
-  }
+  if (VoiceChat.calls.has(peerId)) return;
   VoiceChat.calls.set(peerId, call);
-
   call.on('stream', stream => {
     let el = VoiceChat.audioElements.get(peerId);
     if (!el) {
@@ -545,14 +687,12 @@ function voiceWireCall(call) {
     el.srcObject = stream;
     el.volume = VoiceChat.outputVolume;
   });
-
   call.on('close', () => {
     VoiceChat.calls.delete(peerId);
     const el = VoiceChat.audioElements.get(peerId);
     if (el) { el.remove(); VoiceChat.audioElements.delete(peerId); }
   });
-
-  call.on('error', e => { console.warn('voice call error', e); });
+  call.on('error', () => {});
 }
 
 function voiceToggleMic() {
@@ -566,10 +706,7 @@ function voiceToggleMic() {
 }
 
 function voiceLeave() {
-  if (VoiceChat.peer) {
-    try { VoiceChat.peer.destroy(); } catch(_){}
-    VoiceChat.peer = null;
-  }
+  if (VoiceChat.peer) { try { VoiceChat.peer.destroy(); } catch(_){} VoiceChat.peer = null; }
   if (VoiceChat.localStream) {
     VoiceChat.localStream.getTracks().forEach(t => t.stop());
     VoiceChat.localStream = null;
@@ -622,67 +759,40 @@ function voiceAddChatMsg(name, text, isMe) {
 function updateVoiceUI() {
   const pill = $('voice-pill');
   const panel = $('voice-panel');
-
   if (!VoiceChat.active) {
     pill.classList.add('hidden');
     panel.classList.add('hidden');
     return;
   }
-
   pill.classList.remove('hidden');
   pill.classList.toggle('muted', !VoiceChat.micOn);
   $('vpill-count').textContent = (VoiceChat.connections.size + 1);
 
   if (VoiceChat.panelOpen) {
     panel.classList.remove('hidden');
-
     $('vp-code').textContent = VoiceChat.code || '----';
     $('vp-count').textContent = (VoiceChat.connections.size + 1);
-
-    // Peer list
     const listEl = $('vp-peers');
-    let html = '';
-    html += `<div class="vpeer me"><span class="vp-dot"></span><span class="vp-name">${escHtml(voiceGetName())}</span><span class="vp-tag">شما</span></div>`;
+    let html = `<div class="vpeer me"><span class="vp-dot"></span><span class="vp-name">${escHtml(voiceGetName())}</span><span class="vp-tag">شما</span></div>`;
     for (const [id, c] of VoiceChat.connections) {
       html += `<div class="vpeer"><span class="vp-dot"></span><span class="vp-name">${escHtml(c.name || 'Player')}</span></div>`;
     }
     listEl.innerHTML = html;
-
-    // Mic button
     const micBtn = $('vp-mic');
-    if (VoiceChat.micOn) {
-      micBtn.textContent = '🎙 میکروفون روشن';
-      micBtn.className = 'vbtn mic-on';
-    } else {
-      micBtn.textContent = '🔇 میکروفون خاموش';
-      micBtn.className = 'vbtn mic-off';
-    }
+    if (VoiceChat.micOn) { micBtn.textContent = '🎙 میکروفون روشن'; micBtn.className = 'vbtn mic-on'; }
+    else { micBtn.textContent = '🔇 میکروفون خاموش'; micBtn.className = 'vbtn mic-off'; }
   } else {
     panel.classList.add('hidden');
   }
 }
 
-function openVoicePanel() {
-  VoiceChat.panelOpen = true;
-  updateVoiceUI();
-}
-function closeVoicePanel() {
-  VoiceChat.panelOpen = false;
-  updateVoiceUI();
-}
-function toggleVoicePanel() {
-  VoiceChat.panelOpen = !VoiceChat.panelOpen;
-  updateVoiceUI();
-}
+function openVoicePanel() { VoiceChat.panelOpen = true; updateVoiceUI(); }
+function closeVoicePanel() { VoiceChat.panelOpen = false; updateVoiceUI(); }
+function toggleVoicePanel() { VoiceChat.panelOpen = !VoiceChat.panelOpen; updateVoiceUI(); }
 
-/* ============ VOICE MODAL (from menu) ============ */
-function openVoiceModal() {
-  $('voice-modal').classList.add('on');
-  voiceModalMain();
-}
-function closeVoiceModal() {
-  $('voice-modal').classList.remove('on');
-}
+/* ============ VOICE MODAL ============ */
+function openVoiceModal() { $('voice-modal').classList.add('on'); voiceModalMain(); }
+function closeVoiceModal() { $('voice-modal').classList.remove('on'); }
 function voiceModalMain() {
   const body = $('voice-modal-body');
   if (VoiceChat.active) {
@@ -706,7 +816,9 @@ async function voiceModalCreate() {
   const body = $('voice-modal-body');
   body.innerHTML = `<div style="padding:20px;color:#79d3ff;">در حال ساخت...</div>`;
   try {
-    const code = await voiceCreate();
+    const code = await voiceCreate((status) => {
+      body.innerHTML = `<div style="padding:20px;color:#79d3ff;">${status}</div>`;
+    });
     body.innerHTML = `
       <div style="font-size:13px;margin-bottom:8px;">ویس چت ساخته شد! این کد را برای دوستانت بفرست:</div>
       <div style="font-family:monospace;font-size:40px;letter-spacing:10px;color:#79d3ff;font-weight:800;padding:14px;background:rgba(46,159,224,.15);border:2px dashed rgba(121,211,255,.5);border-radius:10px;margin-bottom:16px;direction:ltr;">${code}</div>
@@ -715,7 +827,7 @@ async function voiceModalCreate() {
       </div>`;
     showToast('ویس چت ساخته شد ✓', 'voice');
   } catch(e) {
-    body.innerHTML = `<div style="color:#ff7a6b;margin-bottom:12px;">خطا: ${e.message === 'mic-denied' ? 'دسترسی به میکروفون رد شد' : 'اتصال برقرار نشد'}</div>
+    body.innerHTML = `<div style="color:#ff7a6b;margin-bottom:12px;">خطا: ${e.message === 'mic-denied' ? 'دسترسی به میکروفون رد شد' : 'اتصال برقرار نشد. دوباره تلاش کن.'}</div>
       <div class="vmodal-actions"><button class="vmodal-btn" onclick="voiceModalMain()">تلاش مجدد</button></div>`;
   }
 }
@@ -736,20 +848,21 @@ async function voiceModalDoJoin() {
   const code = $('vjoin-input').value.trim();
   if (!/^\d{4}$/.test(code)) { $('vjoin-err').textContent = 'کد باید ۴ رقم باشد'; return; }
   const body = $('voice-modal-body');
-  body.innerHTML = `<div style="padding:20px;color:#79d3ff;">در حال اتصال...</div>`;
   try {
-    await voiceJoin(code);
-    await new Promise(r => setTimeout(r, 1500));
+    await voiceJoin(code, (status) => {
+      body.innerHTML = `<div style="padding:20px;color:#79d3ff;">${status}</div>`;
+    });
+    await new Promise(r => setTimeout(r, 1200));
     closeVoiceModal();
     openVoicePanel();
     showToast('به ویس چت متصل شدید ✓', 'voice');
   } catch(e) {
-    body.innerHTML = `<div style="color:#ff7a6b;margin-bottom:12px;">خطا: ${e.message === 'mic-denied' ? 'دسترسی به میکروفون رد شد' : 'کد اشتباه است یا ویس چت وجود ندارد'}</div>
+    body.innerHTML = `<div style="color:#ff7a6b;margin-bottom:12px;">خطا: ${e.message === 'mic-denied' ? 'دسترسی به میکروفون رد شد' : 'کد اشتباه است یا ویس چت وجود ندارد.'}</div>
       <div class="vmodal-actions"><button class="vmodal-btn" onclick="voiceModalShowJoin()">تلاش مجدد</button></div>`;
   }
 }
 
-// expose to global scope for onclick handlers
+// expose to global scope
 window.openVoiceModal = openVoiceModal;
 window.closeVoiceModal = closeVoiceModal;
 window.voiceModalMain = voiceModalMain;
@@ -770,35 +883,9 @@ const Sfx = (() => {
   function resume(){ if(ctx&&ctx.state==='suspended') ctx.resume(); }
   function setVolume(v){ vol=v; if(master) master.gain.value=v; }
   function noise(dur){ const n=Math.max(1,Math.floor(ctx.sampleRate*dur)); const buf=ctx.createBuffer(1,n,ctx.sampleRate); const d=buf.getChannelData(0); for(let i=0;i<n;i++) d[i]=Math.random()*2-1; return buf; }
-  function shot(kind){
-    if(!enabled)return; init(); resume();
-    const t=ctx.currentTime;
-    const src=ctx.createBufferSource(); src.buffer=noise(0.3);
-    const lp=ctx.createBiquadFilter(); lp.type='lowpass';
-    const f0=kind==='dmr'?7000:kind==='smg'?5200:6200;
-    lp.frequency.setValueAtTime(f0,t); lp.frequency.exponentialRampToValueAtTime(500,t+0.16);
-    const g=ctx.createGain(); const peak=kind==='dmr'?1.0:kind==='smg'?0.62:0.8;
-    g.gain.setValueAtTime(peak,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.2);
-    src.connect(lp); lp.connect(g); g.connect(master); src.start(t); src.stop(t+0.3);
-    const o=ctx.createOscillator(); o.type='sine';
-    o.frequency.setValueAtTime(kind==='dmr'?130:175,t);
-    o.frequency.exponentialRampToValueAtTime(42,t+0.12);
-    const og=ctx.createGain(); og.gain.setValueAtTime(peak*0.85,t);
-    og.gain.exponentialRampToValueAtTime(0.001,t+0.15);
-    o.connect(og); og.connect(master); o.start(t); o.stop(t+0.16);
-  }
-  function click(freq,dur,gain,type){
-    if(!enabled)return; init(); resume();
-    const t=ctx.currentTime;
-    const o=ctx.createOscillator(); o.type=type||'square';
-    o.frequency.setValueAtTime(freq,t);
-    o.frequency.exponentialRampToValueAtTime(freq*0.6,t+dur);
-    const g=ctx.createGain(); g.gain.setValueAtTime(gain,t);
-    g.gain.exponentialRampToValueAtTime(0.001,t+dur);
-    o.connect(g); g.connect(master); o.start(t); o.stop(t+dur+0.02);
-  }
-  return { init, resume, setVolume,
-    shot,
+  function shot(kind){ if(!enabled)return; init(); resume(); const t=ctx.currentTime; const src=ctx.createBufferSource(); src.buffer=noise(0.3); const lp=ctx.createBiquadFilter(); lp.type='lowpass'; const f0=kind==='dmr'?7000:kind==='smg'?5200:6200; lp.frequency.setValueAtTime(f0,t); lp.frequency.exponentialRampToValueAtTime(500,t+0.16); const g=ctx.createGain(); const peak=kind==='dmr'?1.0:kind==='smg'?0.62:0.8; g.gain.setValueAtTime(peak,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.2); src.connect(lp); lp.connect(g); g.connect(master); src.start(t); src.stop(t+0.3); const o=ctx.createOscillator(); o.type='sine'; o.frequency.setValueAtTime(kind==='dmr'?130:175,t); o.frequency.exponentialRampToValueAtTime(42,t+0.12); const og=ctx.createGain(); og.gain.setValueAtTime(peak*0.85,t); og.gain.exponentialRampToValueAtTime(0.001,t+0.15); o.connect(og); og.connect(master); o.start(t); o.stop(t+0.16); }
+  function click(freq,dur,gain,type){ if(!enabled)return; init(); resume(); const t=ctx.currentTime; const o=ctx.createOscillator(); o.type=type||'square'; o.frequency.setValueAtTime(freq,t); o.frequency.exponentialRampToValueAtTime(freq*0.6,t+dur); const g=ctx.createGain(); g.gain.setValueAtTime(gain,t); g.gain.exponentialRampToValueAtTime(0.001,t+dur); o.connect(g); g.connect(master); o.start(t); o.stop(t+dur+0.02); }
+  return { init, resume, setVolume, shot,
     hit: () => click(1400,0.05,0.22,'square'),
     kill: () => { click(880,0.08,0.28,'sawtooth'); setTimeout(()=>click(1320,0.1,0.24,'sawtooth'),70); },
     hurt: () => { if(!enabled)return; init(); resume(); const t=ctx.currentTime; const src=ctx.createBufferSource(); src.buffer=noise(0.2); const bp=ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=400; const g=ctx.createGain(); g.gain.setValueAtTime(0.4,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.18); src.connect(bp); bp.connect(g); g.connect(master); src.start(t); src.stop(t+0.22); },
@@ -818,7 +905,6 @@ renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.05;
 renderer.outputColorSpace=THREE.SRGBColorSpace;
-
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x9dbfe0);
 scene.fog=new THREE.Fog(0x9dbfe0,150,400);
@@ -836,22 +922,8 @@ sun.shadow.bias=-0.0008; sun.shadow.normalBias=0.02;
 scene.add(sun); scene.add(sun.target);
 
 /* ============ TEXTURES ============ */
-function makeGroundTexture(){
-  const c=document.createElement('canvas'); c.width=c.height=512;
-  const g=c.getContext('2d');
-  g.fillStyle='#6e6b5e'; g.fillRect(0,0,512,512);
-  for(let i=0;i<9000;i++){ const v=60+Math.random()*70; g.fillStyle=`rgba(${v|0},${(v*0.97)|0},${(v*0.86)|0},${Math.random()*0.55})`; const s=Math.random()*3.2+0.6; g.fillRect(Math.random()*512,Math.random()*512,s,s); }
-  const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(100,100); t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy()); t.colorSpace=THREE.SRGBColorSpace;
-  return t;
-}
-function makeCrateTexture(){
-  const c=document.createElement('canvas'); c.width=c.height=256; const g=c.getContext('2d');
-  g.fillStyle='#9a7248'; g.fillRect(0,0,256,256);
-  g.strokeStyle='rgba(60,40,20,.55)'; g.lineWidth=8; g.strokeRect(6,6,244,244);
-  g.beginPath(); g.moveTo(10,10); g.lineTo(246,246); g.stroke();
-  g.beginPath(); g.moveTo(246,10); g.lineTo(10,246); g.stroke();
-  const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; return t;
-}
+function makeGroundTexture(){ const c=document.createElement('canvas'); c.width=c.height=512; const g=c.getContext('2d'); g.fillStyle='#6e6b5e'; g.fillRect(0,0,512,512); for(let i=0;i<9000;i++){ const v=60+Math.random()*70; g.fillStyle=`rgba(${v|0},${(v*0.97)|0},${(v*0.86)|0},${Math.random()*0.55})`; const s=Math.random()*3.2+0.6; g.fillRect(Math.random()*512,Math.random()*512,s,s); } const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(100,100); t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy()); t.colorSpace=THREE.SRGBColorSpace; return t; }
+function makeCrateTexture(){ const c=document.createElement('canvas'); c.width=c.height=256; const g=c.getContext('2d'); g.fillStyle='#9a7248'; g.fillRect(0,0,256,256); g.strokeStyle='rgba(60,40,20,.55)'; g.lineWidth=8; g.strokeRect(6,6,244,244); g.beginPath(); g.moveTo(10,10); g.lineTo(246,246); g.stroke(); g.beginPath(); g.moveTo(246,10); g.lineTo(10,246); g.stroke(); const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; return t; }
 
 /* ============ WORLD ============ */
 let A=230;
@@ -864,38 +936,11 @@ const matMetal=new THREE.MeshStandardMaterial({color:0x4f6b7a,roughness:0.55,met
 const matRed=new THREE.MeshStandardMaterial({color:0xa8442f,roughness:0.7});
 const matDark=new THREE.MeshStandardMaterial({color:0x3a3f44,roughness:0.82});
 const matBlue=new THREE.MeshStandardMaterial({color:0x2f5d80,roughness:0.7});
-
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(4000,4000), new THREE.MeshStandardMaterial({map:makeGroundTexture(),roughness:1.0}));
 ground.rotation.x=-Math.PI/2; ground.receiveShadow=true; scene.add(ground);
-
-function addBox(x,yB,z,w,h,d,mat,opts={}){
-  const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);
-  mesh.position.set(x,yB+h/2,z); mesh.castShadow=opts.cast!==false; mesh.receiveShadow=true;
-  worldGroup.add(mesh);
-  if(opts.collide!==false){ colliders.push({min:new THREE.Vector3(x-w/2,yB,z-d/2),max:new THREE.Vector3(x+w/2,yB+h,z+d/2)}); worldMeshes.push(mesh); }
-  return mesh;
-}
-function addRoom(cx,cz,w,d,h,mat,door){
-  const t=0.8,dw=4.5,hw=w/2,hd=d/2,segX=(w-dw)/2,segZ=(d-dw)/2;
-  const lx=cx-(w+dw)/4,rx=cx+(w+dw)/4,lz=cz-(d+dw)/4,rz=cz+(d+dw)/4;
-  if(door==='n'){addBox(lx,0,cz-hd,segX,h,t,mat);addBox(rx,0,cz-hd,segX,h,t,mat);} else addBox(cx,0,cz-hd,w,h,t,mat);
-  if(door==='s'){addBox(lx,0,cz+hd,segX,h,t,mat);addBox(rx,0,cz+hd,segX,h,t,mat);} else addBox(cx,0,cz+hd,w,h,t,mat);
-  if(door==='w'){addBox(cx-hw,0,lz,t,h,segZ,mat);addBox(cx-hw,0,rz,t,h,segZ,mat);} else addBox(cx-hw,0,cz,t,h,d,mat);
-  if(door==='e'){addBox(cx+hw,0,lz,t,h,segZ,mat);addBox(cx+hw,0,rz,t,h,segZ,mat);} else addBox(cx+hw,0,cz,t,h,d,mat);
-}
-function buildMap(){
-  addBox(0,0,-A,A*2,20,5,matWall); addBox(0,0,A,A*2,20,5,matWall); addBox(-A,0,0,5,20,A*2,matWall); addBox(A,0,0,5,20,A*2,matWall);
-  addBox(0,0,0,40,2,40,matConcrete); addBox(0,2,0,30,12,30,matDark); addBox(0,14,0,34,2,34,matConcrete);
-  addBox(-15,2,-15,8,16,8,matRed); addBox(15,2,-15,8,16,8,matRed); addBox(-15,2,15,8,16,8,matRed); addBox(15,2,15,8,16,8,matRed);
-  addBox(0,0,25,10,1,10,matConcrete); addBox(0,1,20,10,1,10,matConcrete); addBox(0,2,15,10,1,10,matConcrete);
-  addRoom(-80,-80,40,30,6,matConcrete,'s'); addRoom(80,-80,35,40,6,matMetal,'w'); addRoom(-80,80,30,30,5,matBlue,'e'); addRoom(80,80,45,35,7,matConcrete,'n');
-  addRoom(0,-140,60,20,5,matRed,'s'); addRoom(0,140,60,20,5,matRed,'n'); addRoom(-140,0,20,60,5,matMetal,'e'); addRoom(140,0,20,60,5,matMetal,'w');
-  addBox(-160,0,-160,10,25,10,matDark); addBox(-160,25,-160,12,2,12,matConcrete);
-  addBox(160,0,160,10,25,10,matDark); addBox(160,25,160,12,2,12,matConcrete);
-  for(let i=0;i<30;i++){ const x=rand(-200,200),z=rand(-200,200); if(Math.abs(x)<30&&Math.abs(z)<30) continue; addBox(x,0,z,6.5,2.7,2.6,i%2===0?matMetal:matRed); }
-  for(let i=0;i<80;i++){ const x=rand(-200,200),z=rand(-200,200); if(Math.abs(x)<30&&Math.abs(z)<30) continue; addBox(x,0,z,1.5,1.5,1.5,matCrate); if(Math.random()>0.5) addBox(x,1.5,z,1.5,1.5,1.5,matCrate); }
-  for(let i=0;i<20;i++){ const x=rand(-200,200),z=rand(-200,200); if(Math.abs(x)<30&&Math.abs(z)<30) continue; if(i%2===0) addBox(x,0,z,8,1.2,1.0,matConcrete); else addBox(x,0,z,1.0,1.2,8,matConcrete); }
-}
+function addBox(x,yB,z,w,h,d,mat,opts={}){ const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat); mesh.position.set(x,yB+h/2,z); mesh.castShadow=opts.cast!==false; mesh.receiveShadow=true; worldGroup.add(mesh); if(opts.collide!==false){ colliders.push({min:new THREE.Vector3(x-w/2,yB,z-d/2),max:new THREE.Vector3(x+w/2,yB+h,z+d/2)}); worldMeshes.push(mesh); } return mesh; }
+function addRoom(cx,cz,w,d,h,mat,door){ const t=0.8,dw=4.5,hw=w/2,hd=d/2,segX=(w-dw)/2,segZ=(d-dw)/2; const lx=cx-(w+dw)/4,rx=cx+(w+dw)/4,lz=cz-(d+dw)/4,rz=cz+(d+dw)/4; if(door==='n'){addBox(lx,0,cz-hd,segX,h,t,mat);addBox(rx,0,cz-hd,segX,h,t,mat);} else addBox(cx,0,cz-hd,w,h,t,mat); if(door==='s'){addBox(lx,0,cz+hd,segX,h,t,mat);addBox(rx,0,cz+hd,segX,h,t,mat);} else addBox(cx,0,cz+hd,w,h,t,mat); if(door==='w'){addBox(cx-hw,0,lz,t,h,segZ,mat);addBox(cx-hw,0,rz,t,h,segZ,mat);} else addBox(cx-hw,0,cz,t,h,d,mat); if(door==='e'){addBox(cx+hw,0,lz,t,h,segZ,mat);addBox(cx+hw,0,rz,t,h,segZ,mat);} else addBox(cx+hw,0,cz,t,h,d,mat); }
+function buildMap(){ addBox(0,0,-A,A*2,20,5,matWall); addBox(0,0,A,A*2,20,5,matWall); addBox(-A,0,0,5,20,A*2,matWall); addBox(A,0,0,5,20,A*2,matWall); addBox(0,0,0,40,2,40,matConcrete); addBox(0,2,0,30,12,30,matDark); addBox(0,14,0,34,2,34,matConcrete); addBox(-15,2,-15,8,16,8,matRed); addBox(15,2,-15,8,16,8,matRed); addBox(-15,2,15,8,16,8,matRed); addBox(15,2,15,8,16,8,matRed); addBox(0,0,25,10,1,10,matConcrete); addBox(0,1,20,10,1,10,matConcrete); addBox(0,2,15,10,1,10,matConcrete); addRoom(-80,-80,40,30,6,matConcrete,'s'); addRoom(80,-80,35,40,6,matMetal,'w'); addRoom(-80,80,30,30,5,matBlue,'e'); addRoom(80,80,45,35,7,matConcrete,'n'); addRoom(0,-140,60,20,5,matRed,'s'); addRoom(0,140,60,20,5,matRed,'n'); addRoom(-140,0,20,60,5,matMetal,'e'); addRoom(140,0,20,60,5,matMetal,'w'); addBox(-160,0,-160,10,25,10,matDark); addBox(-160,25,-160,12,2,12,matConcrete); addBox(160,0,160,10,25,10,matDark); addBox(160,25,160,12,2,12,matConcrete); for(let i=0;i<30;i++){ const x=rand(-200,200),z=rand(-200,200); if(Math.abs(x)<30&&Math.abs(z)<30) continue; addBox(x,0,z,6.5,2.7,2.6,i%2===0?matMetal:matRed); } for(let i=0;i<80;i++){ const x=rand(-200,200),z=rand(-200,200); if(Math.abs(x)<30&&Math.abs(z)<30) continue; addBox(x,0,z,1.5,1.5,1.5,matCrate); if(Math.random()>0.5) addBox(x,1.5,z,1.5,1.5,1.5,matCrate); } for(let i=0;i<20;i++){ const x=rand(-200,200),z=rand(-200,200); if(Math.abs(x)<30&&Math.abs(z)<30) continue; if(i%2===0) addBox(x,0,z,8,1.2,1.0,matConcrete); else addBox(x,0,z,1.0,1.2,8,matConcrete); } }
 buildMap();
 
 /* ============ SPAWN ============ */
@@ -909,27 +954,8 @@ const GRAVITY=22.0, JUMP_SPEED=7.3, SPEED_WALK=5.4, SPEED_RUN=8.1, SPEED_CROUCH=
 let START_POS=new THREE.Vector3(0,20,0);
 function playerForward(){ return new THREE.Vector3(-Math.sin(PLAYER.yaw),0,-Math.cos(PLAYER.yaw)); }
 function playerRight(){ return new THREE.Vector3(Math.cos(PLAYER.yaw),0,-Math.sin(PLAYER.yaw)); }
-function resolveHorizontal(pos,radius){
-  for(let i=0;i<colliders.length;i++){ const b=colliders[i];
-    if(b.max.x-b.min.x>100||b.max.z-b.min.z>100) continue;
-    const minX=b.min.x-radius,maxX=b.max.x+radius,minZ=b.min.z-radius,maxZ=b.max.z+radius;
-    if(pos.x<=minX||pos.x>=maxX||pos.z<=minZ||pos.z>=maxZ) continue;
-    if(pos.y>=b.max.y-0.06) continue;
-    if(pos.y+PLAYER.height<=b.min.y) continue;
-    const dxL=pos.x-minX,dxR=maxX-pos.x,dzL=pos.z-minZ,dzR=maxZ-pos.z;
-    const m=Math.min(dxL,dxR,dzL,dzR);
-    if(m===dxL) pos.x=minX; else if(m===dxR) pos.x=maxX; else if(m===dzL) pos.z=minZ; else pos.z=maxZ;
-  }
-}
-function groundHeightAt(x,z,y){
-  let h=0; const pad=PLAYER.radius*0.55;
-  for(let i=0;i<colliders.length;i++){ const b=colliders[i];
-    if(x<b.min.x-pad||x>b.max.x+pad) continue;
-    if(z<b.min.z-pad||z>b.max.z+pad) continue;
-    if(b.max.y<=y+0.5&&b.max.y>h) h=b.max.y;
-  }
-  return h;
-}
+function resolveHorizontal(pos,radius){ for(let i=0;i<colliders.length;i++){ const b=colliders[i]; if(b.max.x-b.min.x>100||b.max.z-b.min.z>100) continue; const minX=b.min.x-radius,maxX=b.max.x+radius,minZ=b.min.z-radius,maxZ=b.max.z+radius; if(pos.x<=minX||pos.x>=maxX||pos.z<=minZ||pos.z>=maxZ) continue; if(pos.y>=b.max.y-0.06) continue; if(pos.y+PLAYER.height<=b.min.y) continue; const dxL=pos.x-minX,dxR=maxX-pos.x,dzL=pos.z-minZ,dzR=maxZ-pos.z; const m=Math.min(dxL,dxR,dzL,dzR); if(m===dxL) pos.x=minX; else if(m===dxR) pos.x=maxX; else if(m===dzL) pos.z=minZ; else pos.z=maxZ; } }
+function groundHeightAt(x,z,y){ let h=0; const pad=PLAYER.radius*0.55; for(let i=0;i<colliders.length;i++){ const b=colliders[i]; if(x<b.min.x-pad||x>b.max.x+pad) continue; if(z<b.min.z-pad||z>b.max.z+pad) continue; if(b.max.y<=y+0.5&&b.max.y>h) h=b.max.y; } return h; }
 
 /* ============ WEAPONS ============ */
 const WEAPONS=[
@@ -945,7 +971,6 @@ const weaponState=WEAPONS.map(w=>({mag:w.magSize,reserve:w.reserveMax}));
 let curWeapon=0,fireCooldown=0,reloading=false,reloadTimer=0;
 let adsAmount=0,adsHeld=false,triggerHeld=false,semiLatch=false;
 let recoilKick={z:0,rotX:0,rotZ:0}, pendingRecovery=0;
-
 const gunGroup=new THREE.Group(); camera.add(gunGroup);
 function buildGunModel(idx){
   while(gunGroup.children.length){ const c=gunGroup.children.pop(); c.traverse(o=>{if(o.geometry)o.geometry.dispose();}); }
@@ -966,109 +991,138 @@ function buildGunModel(idx){
 }
 const muzzleFlashMat=new THREE.MeshBasicMaterial({color:0xffe9a8,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false});
 const muzzleFlash=new THREE.Mesh(new THREE.SphereGeometry(0.09,8,8),muzzleFlashMat);
-muzzleFlash.position.set(0.24,-0.20,-0.95);
-muzzleFlash.visible=false; camera.add(muzzleFlash);
+muzzleFlash.position.set(0.24,-0.20,-0.95); muzzleFlash.visible=false; camera.add(muzzleFlash);
 let muzzleTimer=0;
 
 /* ============ EFFECTS ============ */
 const effects=[];
-function spawnTracer(from,to,color){
-  const geo=new THREE.BufferGeometry().setFromPoints([from.clone(),to.clone()]);
-  const mat=new THREE.LineBasicMaterial({color:color||0xffe08a,transparent:true,opacity:0.95,depthWrite:false});
-  const line=new THREE.Line(geo,mat); line.frustumCulled=false;
-  scene.add(line);
-  effects.push({type:'tracer',obj:line,life:0.06,max:0.06});
-}
-function spawnImpact(point,color){
-  const geo=new THREE.SphereGeometry(0.09,6,6);
-  const mat=new THREE.MeshBasicMaterial({color:color||0xffcc66,transparent:true,opacity:0.95,blending:THREE.AdditiveBlending,depthWrite:false});
-  const m=new THREE.Mesh(geo,mat); m.position.copy(point);
-  scene.add(m);
-  effects.push({type:'impact',obj:m,life:0.18,max:0.18});
-}
-function updateEffects(dt){
-  for(let i=effects.length-1;i>=0;i--){
-    const e=effects[i]; e.life-=dt;
-    if(e.life<=0){scene.remove(e.obj); if(e.obj.geometry)e.obj.geometry.dispose(); if(e.obj.material)e.obj.material.dispose(); effects.splice(i,1); continue;}
-    const t=e.life/e.max;
-    if(e.type==='tracer') e.obj.material.opacity=0.95*t;
-    else { e.obj.material.opacity=0.95*t; e.obj.scale.setScalar(1+(1-t)*2.4); }
-  }
-}
+function spawnTracer(from,to,color){ const geo=new THREE.BufferGeometry().setFromPoints([from.clone(),to.clone()]); const mat=new THREE.LineBasicMaterial({color:color||0xffe08a,transparent:true,opacity:0.95,depthWrite:false}); const line=new THREE.Line(geo,mat); line.frustumCulled=false; scene.add(line); effects.push({type:'tracer',obj:line,life:0.06,max:0.06}); }
+function spawnImpact(point,color){ const geo=new THREE.SphereGeometry(0.09,6,6); const mat=new THREE.MeshBasicMaterial({color:color||0xffcc66,transparent:true,opacity:0.95,blending:THREE.AdditiveBlending,depthWrite:false}); const m=new THREE.Mesh(geo,mat); m.position.copy(point); scene.add(m); effects.push({type:'impact',obj:m,life:0.18,max:0.18}); }
+function updateEffects(dt){ for(let i=effects.length-1;i>=0;i--){ const e=effects[i]; e.life-=dt; if(e.life<=0){scene.remove(e.obj); if(e.obj.geometry)e.obj.geometry.dispose(); if(e.obj.material)e.obj.material.dispose(); effects.splice(i,1); continue;} const t=e.life/e.max; if(e.type==='tracer') e.obj.material.opacity=0.95*t; else { e.obj.material.opacity=0.95*t; e.obj.scale.setScalar(1+(1-t)*2.4); } } }
 
 /* ============ GAME NETWORK ============ */
 const Net={ peer:null, roomCode:null, isHost:false, hostConn:null, clientConns:new Map(), myId:null, myName:'Player', started:false, tickTimer:null, lastStateSend:0 };
-function randomCode(){ return String(1000+Math.floor(Math.random()*9000)); }
-function waitOpen(obj,timeout=8000){ return new Promise((res,rej)=>{ if(obj.open) return res(); const t=setTimeout(()=>rej(new Error('timeout')),timeout); obj.on('open',()=>{clearTimeout(t);res();}); obj.on('error',e=>{clearTimeout(t);rej(e);}); }); }
-async function hostRoom(){
-  for(let attempt=0;attempt<3;attempt++){
-    const code=randomCode(); const peer=new Peer('baz-'+code,peerCfg);
-    try { await waitOpen(peer); Net.peer=peer; Net.roomCode=code; Net.isHost=true; Net.myId=peer.id; setupHost(peer); return code; }
-    catch(e){ try{peer.destroy();}catch(_){} if(attempt===2) throw new Error('اتصال ممکن نشد'); }
+
+async function hostRoom(onStatus = () => {}) {
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    onStatus(`تلاش ${attempt} برای ساخت روم...`);
+    const code = String(1000 + Math.floor(Math.random()*9000));
+    const peer = new Peer('br' + code, peerCfg);
+    try {
+      await waitPeerOpen(peer, 8000);
+      Net.peer = peer;
+      Net.roomCode = code;
+      Net.isHost = true;
+      Net.myId = peer.id;
+      setupHost(peer);
+      onStatus('روم ساخته شد');
+      // Wait for server propagation
+      await new Promise(r => setTimeout(r, 2000));
+      return code;
+    } catch(e) {
+      try { peer.destroy(); } catch(_){}
+    }
   }
+  throw new Error('cannot-create');
 }
-function setupHost(peer){ peer.on('connection',conn=>{ if(Net.clientConns.size>=49){ try{conn.send({type:'error',msg:'full'});}catch(_){} try{conn.close();}catch(_){} return;} handleNewClient(conn); }); }
+
+function setupHost(peer){
+  peer.on('connection', conn => {
+    if (Net.clientConns.size >= 49) { try { conn.send({type:'error',msg:'full'}); } catch(_){} try { conn.close(); } catch(_){} return; }
+    handleNewClient(conn);
+  });
+  peer.on('error', e => { if (e.type !== 'peer-unavailable') console.warn('[host] peer error', e); });
+  peer.on('disconnected', () => {
+    try { if (!peer.destroyed) peer.reconnect(); } catch(_){}
+  });
+}
+
 function handleNewClient(conn){
-  const id=conn.peer;
-  Net.clientConns.set(id,{conn,state:defaultState(id)});
-  conn.on('data',data=>handleFromClient(id,data));
-  conn.on('open',()=>{ try{conn.send({type:'welcome',yourId:id,hostId:Net.peer.id,players:getAllStates(),started:Net.started});}catch(_){} if(Net.started){const st=Net.clientConns.get(id);if(st)updateRemoteState(st.state);} broadcastAll({type:'playerJoined',player:Net.clientConns.get(id).state},id); updateLobbyUI(); });
-  conn.on('close',()=>{ Net.clientConns.delete(id); removeRemote(id); broadcastAll({type:'playerLeft',id}); updateLobbyUI(); });
-  conn.on('error',()=>{});
+  const id = conn.peer;
+  Net.clientConns.set(id, { conn, state: defaultState(id) });
+  conn.on('data', data => handleFromClient(id, data));
+  conn.on('open', () => {
+    try { conn.send({ type:'welcome', yourId:id, hostId:Net.peer.id, players:getAllStates(), started:Net.started }); } catch(_){}
+    if (Net.started) { const st = Net.clientConns.get(id); if (st) updateRemoteState(st.state); }
+    broadcastAll({type:'playerJoined', player: Net.clientConns.get(id).state}, id);
+    updateLobbyUI();
+  });
+  conn.on('close', () => { Net.clientConns.delete(id); removeRemote(id); broadcastAll({type:'playerLeft', id}); updateLobbyUI(); });
+  conn.on('error', () => {});
 }
+
 function defaultState(id){
-  const sp=SPAWN_POINTS[(Math.random()*SPAWN_POINTS.length)|0];
-  return {id,name:'Player'+id.slice(-4),x:sp.x,y:sp.y||20,z:sp.z,yaw:0,pitch:0,health:100,alive:true,score:0,kills:0,deaths:0,weapon:0};
+  const sp = SPAWN_POINTS[(Math.random()*SPAWN_POINTS.length)|0];
+  return { id, name:'Player'+id.slice(-4), x:sp.x, y:sp.y||20, z:sp.z, yaw:0, pitch:0, health:100, alive:true, score:0, kills:0, deaths:0, weapon:0 };
 }
 function getAllStates(){
-  const list=[{id:Net.myId,name:Net.myName,x:PLAYER.pos.x,y:PLAYER.pos.y,z:PLAYER.pos.z,yaw:PLAYER.yaw,pitch:PLAYER.pitch,health:PLAYER.health,alive:PLAYER.alive,score:G.playerScore,kills:G.kills,deaths:G.deaths,weapon:curWeapon}];
-  for(const c of Net.clientConns.values()) list.push(c.state);
+  const list = [{ id:Net.myId, name:Net.myName, x:PLAYER.pos.x, y:PLAYER.pos.y, z:PLAYER.pos.z, yaw:PLAYER.yaw, pitch:PLAYER.pitch, health:PLAYER.health, alive:PLAYER.alive, score:G.playerScore, kills:G.kills, deaths:G.deaths, weapon:curWeapon }];
+  for (const c of Net.clientConns.values()) list.push(c.state);
   return list;
 }
-function broadcastAll(msg,exceptId){ if(!Net.isHost) return; for(const [id,c] of Net.clientConns){ if(id===exceptId) continue; if(c.conn.open){ try{c.conn.send(msg);}catch(_){} } } }
-function handleFromClient(fromId,data){
-  const c=Net.clientConns.get(fromId); if(!c) return;
-  if(data.type==='state'){ c.state.x=data.x; c.state.y=data.y; c.state.z=data.z; c.state.yaw=data.yaw; c.state.pitch=data.pitch; c.state.health=data.health; c.state.alive=data.alive; c.state.weapon=data.weapon||0; updateRemoteState(c.state); }
-  else if(data.type==='name'){ c.state.name=String(data.name).slice(0,16).replace(/[^\w\u0600-\u06FF ._-]/g,'')||('Player'+fromId.slice(-4)); broadcastAll({type:'playerRenamed',id:fromId,name:c.state.name}); updateLobbyUI(); }
-  else if(data.type==='hit'){ const target=data.target===Net.myId?null:Net.clientConns.get(data.target); if(data.target===Net.myId){ damagePlayer(data.damage,fromId); broadcastAll({type:'hitTaken',from:Net.myId,damage:data.damage,shooter:fromId},fromId);} else if(target&&target.conn.open){ target.conn.send({type:'damaged',amount:data.damage,from:fromId,fromName:c.state.name}); } }
-  else if(data.type==='killed'){ const victim=data.victim;
-    if(victim===Net.myId){ playerDie(fromId,c.state.name); broadcastAll({type:'killEvent',killer:fromId,killerName:c.state.name,victim:Net.myId,victimName:Net.myName}); }
-    else { const v=Net.clientConns.get(victim); if(v){ v.state.health=0; v.state.alive=false; v.state.deaths++; c.state.score++; c.state.kills++; broadcastAll({type:'killEvent',killer:fromId,killerName:c.state.name,victim,victimName:v.state.name}); broadcastAll({type:'respawnPlayer',id:victim}); setTimeout(()=>{ const vv=Net.clientConns.get(victim); if(!vv)return; const sp=SPAWN_POINTS[(Math.random()*SPAWN_POINTS.length)|0]; vv.state.x=sp.x; vv.state.y=sp.y||20; vv.state.z=sp.z; vv.state.health=100; vv.state.alive=true; if(vv.conn.open) vv.conn.send({type:'respawn',x:sp.x,y:sp.y||20,z:sp.z}); },3000); } }
-    broadcastAll({type:'scoreUpdate',players:getAllStates()});
+function broadcastAll(msg, exceptId){ if (!Net.isHost) return; for (const [id,c] of Net.clientConns){ if (id===exceptId) continue; if (c.conn.open){ try { c.conn.send(msg); } catch(_){} } } }
+
+function handleFromClient(fromId, data){
+  const c = Net.clientConns.get(fromId); if (!c) return;
+  if (data.type==='state'){ c.state.x=data.x; c.state.y=data.y; c.state.z=data.z; c.state.yaw=data.yaw; c.state.pitch=data.pitch; c.state.health=data.health; c.state.alive=data.alive; c.state.weapon=data.weapon||0; updateRemoteState(c.state); }
+  else if (data.type==='name'){ c.state.name = String(data.name).slice(0,16).replace(/[^\w\u0600-\u06FF ._-]/g,'') || ('Player'+fromId.slice(-4)); broadcastAll({type:'playerRenamed', id:fromId, name:c.state.name}); updateLobbyUI(); }
+  else if (data.type==='hit'){ const target = data.target===Net.myId ? null : Net.clientConns.get(data.target); if (data.target===Net.myId){ damagePlayer(data.damage, fromId); broadcastAll({type:'hitTaken', from:Net.myId, damage:data.damage, shooter:fromId}, fromId); } else if (target && target.conn.open){ target.conn.send({type:'damaged', amount:data.damage, from:fromId, fromName:c.state.name}); } }
+  else if (data.type==='killed'){ const victim = data.victim;
+    if (victim===Net.myId){ playerDie(fromId, c.state.name); broadcastAll({type:'killEvent', killer:fromId, killerName:c.state.name, victim:Net.myId, victimName:Net.myName}); }
+    else { const v = Net.clientConns.get(victim); if (v){ v.state.health=0; v.state.alive=false; v.state.deaths++; c.state.score++; c.state.kills++; broadcastAll({type:'killEvent', killer:fromId, killerName:c.state.name, victim, victimName:v.state.name}); broadcastAll({type:'respawnPlayer', id:victim}); setTimeout(()=>{ const vv=Net.clientConns.get(victim); if(!vv) return; const sp=SPAWN_POINTS[(Math.random()*SPAWN_POINTS.length)|0]; vv.state.x=sp.x; vv.state.y=sp.y||20; vv.state.z=sp.z; vv.state.health=100; vv.state.alive=true; if (vv.conn.open) vv.conn.send({type:'respawn', x:sp.x, y:sp.y||20, z:sp.z}); }, 3000); } }
+    broadcastAll({type:'scoreUpdate', players:getAllStates()});
   }
-  else if(data.type==='shoot'){ broadcastAll({type:'remoteShoot',fromId,from:data.from,to:data.to},fromId); }
+  else if (data.type==='shoot'){ broadcastAll({type:'remoteShoot', fromId, from:data.from, to:data.to}, fromId); }
 }
-function startHostTick(){ if(Net.tickTimer) clearInterval(Net.tickTimer); Net.tickTimer=setInterval(()=>{ if(!Net.isHost) return; broadcastAll({type:'states',players:getAllStates()}); },100); }
-async function joinRoom(code,name){
-  const peer=new Peer(undefined,peerCfg); await waitOpen(peer);
-  Net.peer=peer; Net.isHost=false; Net.roomCode=code; Net.myId=peer.id; Net.myName=name;
-  const conn=peer.connect('baz-'+code,{reliable:true});
-  conn.on('data',handleFromHost);
-  conn.on('close',()=>{ $('joinError').textContent='اتصال قطع شد'; leaveRoom(); });
-  conn.on('error',()=>{});
-  await waitOpen(conn,10000);
-  Net.hostConn=conn; conn.send({type:'name',name});
+
+function startHostTick(){ if (Net.tickTimer) clearInterval(Net.tickTimer); Net.tickTimer = setInterval(()=>{ if (!Net.isHost) return; broadcastAll({type:'states', players:getAllStates()}); }, 100); }
+
+async function joinRoom(code, name, onStatus = () => {}) {
+  const hostId = 'br' + code;
+  const result = await connectWithRetry(hostId, {
+    maxAttempts: 5,
+    perAttemptTimeout: 5000,
+    retryDelay: 1500,
+    onStatus
+  });
+
+  Net.peer = result.peer;
+  Net.hostConn = result.conn;
+  Net.isHost = false;
+  Net.roomCode = code;
+  Net.myId = result.peer.id;
+  Net.myName = name;
+
+  // Send name
+  try { result.conn.send({ type:'name', name }); } catch(_){}
+
+  // Reconnect handler
+  result.peer.on('disconnected', () => {
+    try { if (!result.peer.destroyed) result.peer.reconnect(); } catch(_){}
+  });
 }
+
 function handleFromHost(data){
-  if(data.type==='welcome'){ Net.myId=data.yourId; Net.hostId=data.hostId; clearAllRemotes(); for(const p of data.players){ if(p.id!==Net.myId) addRemote(p); } if(data.started) startMatch(); else showLobby(false); return; }
-  if(data.type==='states'){ for(const p of data.players){ if(p.id===Net.myId) continue; updateRemoteState(p); } }
-  else if(data.type==='playerJoined'){ addRemote(data.player); updateLobbyUI(); }
-  else if(data.type==='playerLeft'){ removeRemote(data.id); updateLobbyUI(); }
-  else if(data.type==='playerRenamed'){ const rp=remotePlayers.get(data.id); if(rp) rp.name=data.name; updateLobbyUI(); }
-  else if(data.type==='started'){ startMatch(); }
-  else if(data.type==='damaged'){ damagePlayer(data.amount,data.from); addKillFeed(data.fromName||'حریف','شما',true); }
-  else if(data.type==='killEvent'){ if(data.killer===Net.myId){ G.playerScore++; G.kills++; Sfx.kill(); hitmarkerKill(); } addKillFeed(data.killerName||'?',data.victimName||'?',data.victim===Net.myId); updateScoreHud(); }
-  else if(data.type==='scoreUpdate'){ for(const p of data.players){ if(p.id===Net.myId){ G.kills=p.kills; G.deaths=p.deaths; } } updateScoreHud(); updateScoreboard(data.players); }
-  else if(data.type==='remoteShoot'){ spawnTracer(new THREE.Vector3(data.from.x,data.from.y,data.from.z),new THREE.Vector3(data.to.x,data.to.y,data.to.z),0xff9a5a); Sfx.shot('smg'); }
-  else if(data.type==='respawn'){ PLAYER.alive=true; PLAYER.health=100; PLAYER.pos.set(data.x,data.y||20,data.z); PLAYER.vel.set(0,0,0); updateHealthHud(); $('vignette').style.opacity='0'; }
-  else if(data.type==='respawnPlayer'){ const rp=remotePlayers.get(data.id); if(rp){ rp.target.health=100; rp.group.visible=true; rp.dead=false; } }
+  if (data.type==='welcome'){ Net.myId=data.yourId; Net.hostId=data.hostId; clearAllRemotes(); for (const p of data.players){ if (p.id!==Net.myId) addRemote(p); } if (data.started) startMatch(); else showLobby(false); return; }
+  if (data.type==='states'){ for (const p of data.players){ if (p.id===Net.myId) continue; updateRemoteState(p); } }
+  else if (data.type==='playerJoined'){ addRemote(data.player); updateLobbyUI(); }
+  else if (data.type==='playerLeft'){ removeRemote(data.id); updateLobbyUI(); }
+  else if (data.type==='playerRenamed'){ const rp=remotePlayers.get(data.id); if (rp) rp.name=data.name; updateLobbyUI(); }
+  else if (data.type==='started'){ startMatch(); }
+  else if (data.type==='damaged'){ damagePlayer(data.amount, data.from); addKillFeed(data.fromName||'حریف', 'شما', true); }
+  else if (data.type==='killEvent'){ if (data.killer===Net.myId){ G.playerScore++; G.kills++; Sfx.kill(); hitmarkerKill(); } addKillFeed(data.killerName||'?', data.victimName||'?', data.victim===Net.myId); updateScoreHud(); }
+  else if (data.type==='scoreUpdate'){ for (const p of data.players){ if (p.id===Net.myId){ G.kills=p.kills; G.deaths=p.deaths; } } updateScoreHud(); updateScoreboard(data.players); }
+  else if (data.type==='remoteShoot'){ spawnTracer(new THREE.Vector3(data.from.x,data.from.y,data.from.z), new THREE.Vector3(data.to.x,data.to.y,data.to.z), 0xff9a5a); Sfx.shot('smg'); }
+  else if (data.type==='respawn'){ PLAYER.alive=true; PLAYER.health=100; PLAYER.pos.set(data.x,data.y||20,data.z); PLAYER.vel.set(0,0,0); updateHealthHud(); $('vignette').style.opacity='0'; }
+  else if (data.type==='respawnPlayer'){ const rp=remotePlayers.get(data.id); if (rp){ rp.target.health=100; rp.group.visible=true; rp.dead=false; } }
 }
-function sendToHost(msg){ if(Net.hostConn&&Net.hostConn.open){ try{Net.hostConn.send(msg);}catch(_){} } }
+
+function sendToHost(msg){ if (Net.hostConn && Net.hostConn.open){ try { Net.hostConn.send(msg); } catch(_){} } }
 
 /* ============ REMOTE ============ */
-const remotePlayers=new Map(); const remoteHittables=[];
+const remotePlayers = new Map(); const remoteHittables = [];
 function buildRemoteModel(){
-  const g=new THREE.Group();
+  const g = new THREE.Group();
   const bodyMat=new THREE.MeshStandardMaterial({color:0x2f3a46,roughness:0.82});
   const vestMat=new THREE.MeshStandardMaterial({color:0x8b3b2c,roughness:0.72});
   const headMat=new THREE.MeshStandardMaterial({color:0xc9a183,roughness:0.78});
@@ -1087,27 +1141,26 @@ function buildRemoteModel(){
   g.userData.limbs={leftLeg:llP,rightLeg:rlP,leftArm:laP,rightArm:raP}; g.userData.animPhase=0;
   return g;
 }
-function addRemote(state){ if(state.id===Net.myId||remotePlayers.has(state.id)) return; const group=buildRemoteModel(); group.position.set(state.x,state.y||20,state.z); group.rotation.y=state.yaw||0; scene.add(group); for(const p of group.userData.parts) p.userData.playerId=state.id; remotePlayers.set(state.id,{group,name:state.name,target:{x:state.x,y:state.y||20,z:state.z,yaw:state.yaw||0,health:state.health},dead:false}); }
-function updateRemoteState(state){ let rp=remotePlayers.get(state.id); if(!rp){ addRemote(state); rp=remotePlayers.get(state.id); if(!rp)return; } rp.target.x=state.x; rp.target.y=state.y||20; rp.target.z=state.z; rp.target.yaw=state.yaw||0; rp.target.health=state.health; if(state.name) rp.name=state.name; if(state.health<=0&&!rp.dead) rp.dead=true; else if(state.health>0&&rp.dead){ rp.dead=false; rp.group.visible=true; rp.group.rotation.z=0; } }
-function removeRemote(id){ const rp=remotePlayers.get(id); if(!rp) return; scene.remove(rp.group); for(const p of rp.group.userData.parts){ const i=remoteHittables.indexOf(p); if(i>=0) remoteHittables.splice(i,1); if(p.geometry) p.geometry.dispose(); } for(const m of rp.group.userData.mats) m.dispose(); remotePlayers.delete(id); }
-function clearAllRemotes(){ for(const id of Array.from(remotePlayers.keys())) removeRemote(id); }
+function addRemote(state){ if (state.id===Net.myId || remotePlayers.has(state.id)) return; const group=buildRemoteModel(); group.position.set(state.x, state.y||20, state.z); group.rotation.y=state.yaw||0; scene.add(group); for (const p of group.userData.parts) p.userData.playerId=state.id; remotePlayers.set(state.id, { group, name:state.name, target:{ x:state.x, y:state.y||20, z:state.z, yaw:state.yaw||0, health:state.health }, dead:false }); }
+function updateRemoteState(state){ let rp=remotePlayers.get(state.id); if (!rp){ addRemote(state); rp=remotePlayers.get(state.id); if (!rp) return; } rp.target.x=state.x; rp.target.y=state.y||20; rp.target.z=state.z; rp.target.yaw=state.yaw||0; rp.target.health=state.health; if (state.name) rp.name=state.name; if (state.health<=0 && !rp.dead) rp.dead=true; else if (state.health>0 && rp.dead){ rp.dead=false; rp.group.visible=true; rp.group.rotation.z=0; } }
+function removeRemote(id){ const rp=remotePlayers.get(id); if (!rp) return; scene.remove(rp.group); for (const p of rp.group.userData.parts){ const i=remoteHittables.indexOf(p); if (i>=0) remoteHittables.splice(i,1); if (p.geometry) p.geometry.dispose(); } for (const m of rp.group.userData.mats) m.dispose(); remotePlayers.delete(id); }
+function clearAllRemotes(){ for (const id of Array.from(remotePlayers.keys())) removeRemote(id); }
 function updateRemotes(dt){
-  for(const rp of remotePlayers.values()){
-    if(rp.dead){ rp.group.rotation.z=Math.min(rp.group.rotation.z+dt*4,Math.PI*0.5); rp.group.position.y=Math.max(rp.group.position.y-dt*2,-0.3); continue; }
+  for (const rp of remotePlayers.values()){
+    if (rp.dead){ rp.group.rotation.z=Math.min(rp.group.rotation.z+dt*4,Math.PI*0.5); rp.group.position.y=Math.max(rp.group.position.y-dt*2,-0.3); continue; }
     rp.group.rotation.z=0;
-    const pX=rp.group.position.x,pZ=rp.group.position.z;
+    const pX=rp.group.position.x, pZ=rp.group.position.z;
     rp.group.position.x=damp(rp.group.position.x,rp.target.x,14,dt);
     rp.group.position.y=damp(rp.group.position.y,rp.target.y,14,dt);
     rp.group.position.z=damp(rp.group.position.z,rp.target.z,14,dt);
     let diff=rp.target.yaw-rp.group.rotation.y;
-    while(diff>Math.PI) diff-=Math.PI*2;
-    while(diff<-Math.PI) diff+=Math.PI*2;
+    while(diff>Math.PI) diff-=Math.PI*2; while(diff<-Math.PI) diff+=Math.PI*2;
     rp.group.rotation.y+=diff*Math.min(1,dt*10);
-    const dx=rp.group.position.x-pX,dz=rp.group.position.z-pZ;
+    const dx=rp.group.position.x-pX, dz=rp.group.position.z-pZ;
     const sp=Math.hypot(dx,dz)/Math.max(dt,0.001);
     const ud=rp.group.userData;
-    if(sp>0.3&&ud.limbs){ ud.animPhase+=dt*sp*1.4; const sw=Math.sin(ud.animPhase)*Math.min(sp/6,1)*0.7; ud.limbs.leftLeg.rotation.x=sw; ud.limbs.rightLeg.rotation.x=-sw; ud.limbs.leftArm.rotation.x=-sw*0.75; ud.limbs.rightArm.rotation.x=sw*0.75; }
-    else if(ud.limbs){ ud.limbs.leftLeg.rotation.x*=0.85; ud.limbs.rightLeg.rotation.x*=0.85; ud.limbs.leftArm.rotation.x*=0.85; ud.limbs.rightArm.rotation.x*=0.85; }
+    if (sp>0.3 && ud.limbs){ ud.animPhase+=dt*sp*1.4; const sw=Math.sin(ud.animPhase)*Math.min(sp/6,1)*0.7; ud.limbs.leftLeg.rotation.x=sw; ud.limbs.rightLeg.rotation.x=-sw; ud.limbs.leftArm.rotation.x=-sw*0.75; ud.limbs.rightArm.rotation.x=sw*0.75; }
+    else if (ud.limbs){ ud.limbs.leftLeg.rotation.x*=0.85; ud.limbs.rightLeg.rotation.x*=0.85; ud.limbs.leftArm.rotation.x*=0.85; ud.limbs.rightArm.rotation.x*=0.85; }
   }
 }
 
@@ -1116,304 +1169,338 @@ const raycaster=new THREE.Raycaster();
 let shootWorldMeshes=[];
 function rebuildShootMeshes(){ shootWorldMeshes=worldMeshes.slice(); shootWorldMeshes.push(ground); }
 rebuildShootMeshes();
-function currentSpread(){ const w=WEAPONS[curWeapon]; let s=w.spread; s=lerp(s,w.adsSpread,adsAmount); const sp=Math.hypot(PLAYER.vel.x,PLAYER.vel.z); s+=w.moveSpread*clamp(sp/SPEED_RUN,0,1)*(1-adsAmount*0.75); if(!PLAYER.onGround) s+=0.03; if(PLAYER.crouching) s*=0.7; return s; }
+function currentSpread(){ const w=WEAPONS[curWeapon]; let s=w.spread; s=lerp(s,w.adsSpread,adsAmount); const sp=Math.hypot(PLAYER.vel.x,PLAYER.vel.z); s+=w.moveSpread*clamp(sp/SPEED_RUN,0,1)*(1-adsAmount*0.75); if (!PLAYER.onGround) s+=0.03; if (PLAYER.crouching) s*=0.7; return s; }
 function tryShoot(){
-  if(!G.running||G.paused||!PLAYER.alive) return;
-  if(reloading||fireCooldown>0) return;
-  const ws=weaponState[curWeapon]; if(ws.mag<=0){ Sfx.empty(); fireCooldown=0.25; startReload(); return; }
+  if (!G.running||G.paused||!PLAYER.alive) return;
+  if (reloading||fireCooldown>0) return;
+  const ws=weaponState[curWeapon]; if (ws.mag<=0){ Sfx.empty(); fireCooldown=0.25; startReload(); return; }
   const w=WEAPONS[curWeapon]; ws.mag--; fireCooldown=60/w.rpm; Sfx.shot(w.sound);
   muzzleTimer=0.05; muzzleFlash.visible=true;
   const kick=w.recoil; recoilKick.z=Math.min(recoilKick.z+0.045*kick,0.10); recoilKick.rotX+=0.020*kick; recoilKick.rotZ+=(Math.random()-0.5)*0.014*kick;
   const vK=0.0125*kick*rand(0.75,1.25); PLAYER.pitch=clamp(PLAYER.pitch+vK,-1.45,1.45); pendingRecovery+=vK*0.72;
   const origin=muzzleWorldPosition(); const rays=w.pellets||1;
-  for(let r=0;r<rays;r++){
+  for (let r=0;r<rays;r++){
     const dir=new THREE.Vector3(); camera.getWorldDirection(dir);
     const sp=currentSpread(); dir.x+=rand(-sp,sp); dir.y+=rand(-sp,sp); dir.z+=rand(-sp,sp); dir.normalize();
-    raycaster.set(origin,dir); raycaster.far=w.range;
+    raycaster.set(origin, dir); raycaster.far=w.range;
     const wh=raycaster.intersectObjects(shootWorldMeshes,false); const rh=raycaster.intersectObjects(remoteHittables,false);
     const wd=wh.length?wh[0].distance:Infinity; const rd=rh.length?rh[0].distance:Infinity;
     let end;
-    if(rd<wd){ const hit=rh[0]; end=hit.point; const part=hit.object.userData.part; const pid=hit.object.userData.playerId; let dmg=w.damage; if(part==='head') dmg*=w.headMul; if(part==='limb') dmg*=0.82; onHitMarker(false); spawnImpact(hit.point,part==='head'?0xffdd44:0xff6644); Sfx.hit(); const rp=remotePlayers.get(pid); if(rp&&rp.target.health-dmg<=0){ sendToHost({type:'killed',victim:pid}); onHitMarker(true); } else sendToHost({type:'hit',target:pid,damage:dmg}); }
-    else if(wd<Infinity){ end=wh[0].point; spawnImpact(end,0xd8c9a0); }
-    else end=origin.clone().addScaledVector(dir,w.range);
-    spawnTracer(origin,end,0xffe08a);
+    if (rd<wd){ const hit=rh[0]; end=hit.point; const part=hit.object.userData.part; const pid=hit.object.userData.playerId; let dmg=w.damage; if (part==='head') dmg*=w.headMul; if (part==='limb') dmg*=0.82; onHitMarker(false); spawnImpact(hit.point, part==='head'?0xffdd44:0xff6644); Sfx.hit(); const rp=remotePlayers.get(pid); if (rp && rp.target.health-dmg<=0){ sendToHost({type:'killed', victim:pid}); onHitMarker(true); } else sendToHost({type:'hit', target:pid, damage:dmg}); }
+    else if (wd<Infinity){ end=wh[0].point; spawnImpact(end, 0xd8c9a0); }
+    else end=origin.clone().addScaledVector(dir, w.range);
+    spawnTracer(origin, end, 0xffe08a);
   }
-  if(Net.hostConn){ const dir=new THREE.Vector3(); camera.getWorldDirection(dir); const e=origin.clone().addScaledVector(dir,w.range); sendToHost({type:'shoot',from:{x:origin.x,y:origin.y,z:origin.z},to:{x:e.x,y:e.y,z:e.z}}); }
+  if (Net.hostConn){ const dir=new THREE.Vector3(); camera.getWorldDirection(dir); const e=origin.clone().addScaledVector(dir, w.range); sendToHost({type:'shoot', from:{x:origin.x,y:origin.y,z:origin.z}, to:{x:e.x,y:e.y,z:e.z}}); }
   raycaster.far=Infinity;
 }
 function muzzleWorldPosition(){ const v=new THREE.Vector3(0.24,-0.20,-0.95); gunGroup.localToWorld(v); return v; }
-function startReload(){ const w=WEAPONS[curWeapon],ws=weaponState[curWeapon]; if(reloading||ws.mag>=w.magSize||ws.reserve<=0) return; reloading=true; reloadTimer=w.reloadTime; Sfx.reloadStart(); }
-function finishReload(){ const w=WEAPONS[curWeapon],ws=weaponState[curWeapon]; const n=w.magSize-ws.mag,g=Math.min(n,ws.reserve); ws.mag+=g; ws.reserve-=g; reloading=false; Sfx.reloadEnd(); updateAmmoHud(); }
-function switchWeapon(idx){ if(idx===curWeapon||idx<0||idx>=WEAPONS.length||reloading) return; curWeapon=idx; buildGunModel(idx); fireCooldown=0.28; updateAmmoHud(); $('wname').textContent=WEAPONS[curWeapon].name; Sfx.empty(); }
+function startReload(){ const w=WEAPONS[curWeapon], ws=weaponState[curWeapon]; if (reloading||ws.mag>=w.magSize||ws.reserve<=0) return; reloading=true; reloadTimer=w.reloadTime; Sfx.reloadStart(); }
+function finishReload(){ const w=WEAPONS[curWeapon], ws=weaponState[curWeapon]; const n=w.magSize-ws.mag, g=Math.min(n, ws.reserve); ws.mag+=g; ws.reserve-=g; reloading=false; Sfx.reloadEnd(); updateAmmoHud(); }
+function switchWeapon(idx){ if (idx===curWeapon||idx<0||idx>=WEAPONS.length||reloading) return; curWeapon=idx; buildGunModel(idx); fireCooldown=0.28; updateAmmoHud(); $('wname').textContent=WEAPONS[curWeapon].name; Sfx.empty(); }
 
 /* ============ DAMAGE ============ */
 let vignetteTimer=0;
-function damagePlayer(amount,fromId){ if(!PLAYER.alive||!G.running) return; PLAYER.health-=amount; vignetteTimer=0.45; Sfx.hurt(); updateHealthHud(); if(PLAYER.health<=0){ PLAYER.health=0; if(Net.isHost){ G.deaths++; G.enemyScore++; updateScoreHud(); } } }
-function playerDie(kId,kName){ PLAYER.alive=false; PLAYER.respawnTimer=3; G.deaths++; updateScoreHud(); addKillFeed(kName||'حریف','شما',true); Sfx.kill(); $('vignette').style.opacity='1'; }
-function respawnPlayer(){ PLAYER.alive=true; PLAYER.health=100; PLAYER.vel.set(0,0,0); const sp=SPAWN_POINTS[(Math.random()*SPAWN_POINTS.length)|0]; PLAYER.pos.set(sp.x,sp.y||20,sp.z); PLAYER.pitch=0; updateHealthHud(); $('vignette').style.opacity='0'; vignetteTimer=0; if(!Net.isHost) sendToHost({type:'respawn'}); }
+function damagePlayer(amount, fromId){ if (!PLAYER.alive||!G.running) return; PLAYER.health-=amount; vignetteTimer=0.45; Sfx.hurt(); updateHealthHud(); if (PLAYER.health<=0){ PLAYER.health=0; if (Net.isHost){ G.deaths++; G.enemyScore++; updateScoreHud(); } } }
+function playerDie(kId, kName){ PLAYER.alive=false; PLAYER.respawnTimer=3; G.deaths++; updateScoreHud(); addKillFeed(kName||'حریف','شما',true); Sfx.kill(); $('vignette').style.opacity='1'; }
+function respawnPlayer(){ PLAYER.alive=true; PLAYER.health=100; PLAYER.vel.set(0,0,0); const sp=SPAWN_POINTS[(Math.random()*SPAWN_POINTS.length)|0]; PLAYER.pos.set(sp.x, sp.y||20, sp.z); PLAYER.pitch=0; updateHealthHud(); $('vignette').style.opacity='0'; vignetteTimer=0; if (!Net.isHost) sendToHost({type:'respawn'}); }
 
 /* ============ GAME STATE ============ */
-const G={running:false,paused:false,over:false,playerScore:0,enemyScore:0,scoreTarget:25,timeLeft:600,kills:0,deaths:0,sensitivity:1.0};
+const G={ running:false, paused:false, over:false, playerScore:0, enemyScore:0, scoreTarget:25, timeLeft:600, kills:0, deaths:0, sensitivity:1.0 };
 
 /* ============ INPUT ============ */
 const keys=Object.create(null);
-window.addEventListener('keydown',e=>{
-  if(e.code==='Tab') e.preventDefault();
-  if(e.code==='Space') e.preventDefault();
-  // If typing in an input field, ignore game keys
-  if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')) return;
+window.addEventListener('keydown', e => {
+  if (e.code==='Tab') e.preventDefault();
+  if (e.code==='Space') e.preventDefault();
+  if (e.target && (e.target.tagName==='INPUT' || e.target.tagName==='TEXTAREA')) return;
   keys[e.code]=true;
-  if(!G.running) return;
-  if(e.code==='KeyR') startReload();
-  if(e.code==='Digit1') switchWeapon(0);
-  if(e.code==='Digit2') switchWeapon(1);
-  if(e.code==='Digit3') switchWeapon(2);
-  if(e.code==='Digit4') switchWeapon(3);
-  if(e.code==='Digit5') switchWeapon(4);
-  if(e.code==='Digit6') switchWeapon(5);
-  if(e.code==='Digit7') switchWeapon(6);
-  if(e.code==='Escape') pauseGame();
+  if (!G.running) return;
+  if (e.code==='KeyR') startReload();
+  if (e.code==='Digit1') switchWeapon(0);
+  if (e.code==='Digit2') switchWeapon(1);
+  if (e.code==='Digit3') switchWeapon(2);
+  if (e.code==='Digit4') switchWeapon(3);
+  if (e.code==='Digit5') switchWeapon(4);
+  if (e.code==='Digit6') switchWeapon(5);
+  if (e.code==='Digit7') switchWeapon(6);
+  if (e.code==='Escape') pauseGame();
 });
-window.addEventListener('keyup',e=>{ keys[e.code]=false; });
+window.addEventListener('keyup', e => { keys[e.code]=false; });
 
 let pointerLocked=false;
-canvas.addEventListener('click',()=>{ if(!G.running||G.paused) return; if(!pointerLocked) canvas.requestPointerLock(); });
-document.addEventListener('pointerlockchange',()=>{ pointerLocked=(document.pointerLockElement===canvas); });
-document.addEventListener('mousemove',e=>{ if(!G.running||G.paused||!pointerLocked) return; const s=0.0022*G.sensitivity; PLAYER.yaw-=e.movementX*s; PLAYER.pitch-=e.movementY*s; PLAYER.pitch=clamp(PLAYER.pitch,-1.45,1.45); });
-document.addEventListener('mousedown',e=>{ if(!G.running||G.paused) return; if(!pointerLocked){ canvas.requestPointerLock(); return; } if(e.button===0) triggerHeld=true; if(e.button===2) adsHeld=true; });
-document.addEventListener('mouseup',e=>{ if(e.button===0) triggerHeld=false; if(e.button===2) adsHeld=false; });
-document.addEventListener('contextmenu',e=>{ if(G.running) e.preventDefault(); });
+canvas.addEventListener('click', () => { if (!G.running||G.paused) return; if (!pointerLocked) canvas.requestPointerLock(); });
+document.addEventListener('pointerlockchange', () => { pointerLocked=(document.pointerLockElement===canvas); });
+document.addEventListener('mousemove', e => { if (!G.running||G.paused||!pointerLocked) return; const s=0.0022*G.sensitivity; PLAYER.yaw-=e.movementX*s; PLAYER.pitch-=e.movementY*s; PLAYER.pitch=clamp(PLAYER.pitch,-1.45,1.45); });
+document.addEventListener('mousedown', e => { if (!G.running||G.paused) return; if (!pointerLocked){ canvas.requestPointerLock(); return; } if (e.button===0) triggerHeld=true; if (e.button===2) adsHeld=true; });
+document.addEventListener('mouseup', e => { if (e.button===0) triggerHeld=false; if (e.button===2) adsHeld=false; });
+document.addEventListener('contextmenu', e => { if (G.running) e.preventDefault(); });
 
 const touchUI=$('touch');
-let moveTouchId=null,moveStart={x:0,y:0},moveVec={x:0,y:0};
+let moveTouchId=null, moveStart={x:0,y:0}, moveVec={x:0,y:0};
 const stickKnob=$('stickKnob');
-let lookTouchId=null,lookLast={x:0,y:0};
-function bindButton(el,onDown,onUp){
+let lookTouchId=null, lookLast={x:0,y:0};
+function bindButton(el, onDown, onUp){
   const d=e=>{e.preventDefault();e.stopPropagation();el.classList.add('press');if(onDown)onDown();};
   const u=e=>{e.preventDefault();e.stopPropagation();el.classList.remove('press');if(onUp)onUp();};
-  el.addEventListener('touchstart',d,{passive:false}); el.addEventListener('touchend',u,{passive:false}); el.addEventListener('touchcancel',u,{passive:false});
+  el.addEventListener('touchstart', d, {passive:false}); el.addEventListener('touchend', u, {passive:false}); el.addEventListener('touchcancel', u, {passive:false});
 }
-bindButton($('btnFire'),()=>{triggerHeld=true;},()=>{triggerHeld=false;});
-bindButton($('btnJump'),()=>{doJump();},null);
-bindButton($('btnReload'),()=>{startReload();},null);
-bindButton($('btnAds'),()=>{adsHeld=!adsHeld;},null);
-bindButton($('btnSwap'),()=>{switchWeapon((curWeapon+1)%WEAPONS.length);},null);
+bindButton($('btnFire'), ()=>{triggerHeld=true;}, ()=>{triggerHeld=false;});
+bindButton($('btnJump'), ()=>{doJump();}, null);
+bindButton($('btnReload'), ()=>{startReload();}, null);
+bindButton($('btnAds'), ()=>{adsHeld=!adsHeld;}, null);
+bindButton($('btnSwap'), ()=>{switchWeapon((curWeapon+1)%WEAPONS.length);}, null);
 const stickZone=$('stickZone');
-stickZone.addEventListener('touchstart',e=>{ e.preventDefault(); const t=e.changedTouches[0]; moveTouchId=t.identifier; moveStart.x=t.clientX; moveStart.y=t.clientY; stickKnob.style.transform='translate(0px,0px)'; },{passive:false});
-stickZone.addEventListener('touchmove',e=>{
+stickZone.addEventListener('touchstart', e=>{ e.preventDefault(); const t=e.changedTouches[0]; moveTouchId=t.identifier; moveStart.x=t.clientX; moveStart.y=t.clientY; stickKnob.style.transform='translate(0px,0px)'; }, {passive:false});
+stickZone.addEventListener('touchmove', e=>{
   e.preventDefault();
-  for(const t of e.changedTouches){
-    if(t.identifier!==moveTouchId) continue;
-    let dx=t.clientX-moveStart.x,dy=t.clientY-moveStart.y;
+  for (const t of e.changedTouches){
+    if (t.identifier!==moveTouchId) continue;
+    let dx=t.clientX-moveStart.x, dy=t.clientY-moveStart.y;
     const mR=52, len=Math.hypot(dx,dy);
-    if(len>mR){dx=dx/len*mR;dy=dy/len*mR;}
+    if (len>mR){dx=dx/len*mR; dy=dy/len*mR;}
     stickKnob.style.transform=`translate(${dx}px,${dy}px)`;
     moveVec.x=clamp(dx/mR,-1,1); moveVec.y=clamp(-dy/mR,-1,1);
   }
-},{passive:false});
-function endMove(e){ for(const t of e.changedTouches){ if(t.identifier!==moveTouchId) continue; moveTouchId=null; moveVec.x=0; moveVec.y=0; stickKnob.style.transform='translate(0px,0px)'; } }
-stickZone.addEventListener('touchend',endMove,{passive:false}); stickZone.addEventListener('touchcancel',endMove,{passive:false});
-canvas.addEventListener('touchstart',e=>{ if(!G.running||G.paused) return; for(const t of e.changedTouches){ if(lookTouchId===null){ lookTouchId=t.identifier; lookLast.x=t.clientX; lookLast.y=t.clientY; } } },{passive:true});
-canvas.addEventListener('touchmove',e=>{
-  if(!G.running||G.paused) return;
-  for(const t of e.changedTouches){
-    if(t.identifier!==lookTouchId) continue;
-    const dx=t.clientX-lookLast.x,dy=t.clientY-lookLast.y;
+}, {passive:false});
+function endMove(e){ for (const t of e.changedTouches){ if (t.identifier!==moveTouchId) continue; moveTouchId=null; moveVec.x=0; moveVec.y=0; stickKnob.style.transform='translate(0px,0px)'; } }
+stickZone.addEventListener('touchend', endMove, {passive:false}); stickZone.addEventListener('touchcancel', endMove, {passive:false});
+canvas.addEventListener('touchstart', e=>{ if (!G.running||G.paused) return; for (const t of e.changedTouches){ if (lookTouchId===null){ lookTouchId=t.identifier; lookLast.x=t.clientX; lookLast.y=t.clientY; } } }, {passive:true});
+canvas.addEventListener('touchmove', e=>{
+  if (!G.running||G.paused) return;
+  for (const t of e.changedTouches){
+    if (t.identifier!==lookTouchId) continue;
+    const dx=t.clientX-lookLast.x, dy=t.clientY-lookLast.y;
     lookLast.x=t.clientX; lookLast.y=t.clientY;
     const s=0.0042*G.sensitivity;
     PLAYER.yaw-=dx*s; PLAYER.pitch-=dy*s;
     PLAYER.pitch=clamp(PLAYER.pitch,-1.45,1.45);
   }
   e.preventDefault();
-},{passive:false});
-function endLook(e){ for(const t of e.changedTouches){ if(t.identifier===lookTouchId) lookTouchId=null; } }
-canvas.addEventListener('touchend',endLook,{passive:true}); canvas.addEventListener('touchcancel',endLook,{passive:true});
+}, {passive:false});
+function endLook(e){ for (const t of e.changedTouches){ if (t.identifier===lookTouchId) lookTouchId=null; } }
+canvas.addEventListener('touchend', endLook, {passive:true}); canvas.addEventListener('touchcancel', endLook, {passive:true});
 
 /* ============ HUD ============ */
-const hudEl=$('hud'),hpBar=$('hpbar'),hpText=$('hptext'),magEl=$('mag'),resEl=$('res'),ammoEl=$('ammo');
-const scoreYouEl=$('scoreYou'),scoreFoeEl=$('scoreFoe'),timerEl=$('matchTimer');
-const crosshairEl=$('crosshair'),hitmarkerEl=$('hitmarker'),vignetteEl=$('vignette');
-const killfeedEl=$('killfeed'),sbBodyEl=$('sbBody'),pingEl=$('pingDisplay');
+const hudEl=$('hud'), hpBar=$('hpbar'), hpText=$('hptext'), magEl=$('mag'), resEl=$('res'), ammoEl=$('ammo');
+const scoreYouEl=$('scoreYou'), scoreFoeEl=$('scoreFoe'), timerEl=$('matchTimer');
+const crosshairEl=$('crosshair'), hitmarkerEl=$('hitmarker'), vignetteEl=$('vignette');
+const killfeedEl=$('killfeed'), sbBodyEl=$('sbBody'), pingEl=$('pingDisplay');
 function updateHealthHud(){ const p=clamp(PLAYER.health/PLAYER.maxHealth,0,1); hpBar.style.width=(p*100)+'%'; hpBar.classList.toggle('low',p<0.35); hpText.textContent=Math.max(0,Math.ceil(PLAYER.health)); }
-function updateAmmoHud(){ const ws=weaponState[curWeapon],w=WEAPONS[curWeapon]; magEl.textContent=ws.mag; resEl.textContent='/ '+ws.reserve; ammoEl.classList.toggle('low',ws.mag<=Math.max(1,Math.floor(w.magSize*0.25))); }
+function updateAmmoHud(){ const ws=weaponState[curWeapon], w=WEAPONS[curWeapon]; magEl.textContent=ws.mag; resEl.textContent='/ '+ws.reserve; ammoEl.classList.toggle('low',ws.mag<=Math.max(1,Math.floor(w.magSize*0.25))); }
 function updateScoreHud(){ scoreYouEl.textContent=G.playerScore; scoreFoeEl.textContent=G.enemyScore; }
 function updateTimerHud(){ const t=Math.max(0,Math.ceil(G.timeLeft)); timerEl.textContent=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0'); }
 function updateScoreboard(players){ const s=players.slice().sort((a,b)=>b.kills-a.kills); sbBodyEl.innerHTML=s.map(p=>{ const isMe=p.id===Net.myId; return `<div class="row${isMe?' me':''}"><span class="n">${escHtml(p.name||'?')}</span><span class="s">${p.kills||0}/${p.deaths||0}</span></div>`; }).join(''); }
-function addKillFeed(k,v,isE){ const d=document.createElement('div'); d.className='kf'+(isE?' foe':''); d.innerHTML=`<b>${escHtml(k)}</b> » ${escHtml(v)}`; killfeedEl.appendChild(d); setTimeout(()=>{d.style.opacity='0';},2600); setTimeout(()=>{d.remove();},3200); while(killfeedEl.children.length>6) killfeedEl.firstChild.remove(); }
+function addKillFeed(k,v,isE){ const d=document.createElement('div'); d.className='kf'+(isE?' foe':''); d.innerHTML=`<b>${escHtml(k)}</b> » ${escHtml(v)}`; killfeedEl.appendChild(d); setTimeout(()=>{d.style.opacity='0';}, 2600); setTimeout(()=>{d.remove();}, 3200); while (killfeedEl.children.length>6) killfeedEl.firstChild.remove(); }
 function hitmarkerHit(){ hitmarkerEl.classList.add('show'); setTimeout(()=>hitmarkerEl.classList.remove('show'),90); }
 function hitmarkerKill(){ hitmarkerEl.classList.add('show'); hitmarkerEl.style.filter='brightness(1.8) hue-rotate(-25deg)'; setTimeout(()=>{hitmarkerEl.classList.remove('show'); hitmarkerEl.style.filter='';},160); }
 function onHitMarker(k){ k?hitmarkerKill():hitmarkerHit(); }
 
 /* ============ LOBBY UI ============ */
-function updateLobbyUI(){ const t=(Net.isHost?1:0)+Net.clientConns.size+(Net.isHost?0:1); $('playerCount').textContent=t+' / 50'; const list=[]; if(Net.isHost){ list.push({name:Net.myName,isHost:true,isMe:true}); for(const c of Net.clientConns.values()) list.push({name:c.state.name,isHost:false,isMe:false}); } else list.push({name:Net.myName,isHost:false,isMe:true}); $('playerListBody').innerHTML=list.map(p=>`<div class="pl${p.isHost?' host':''}"><div class="dot"></div><div class="nm">${escHtml(p.name)}${p.isMe?' (شما)':''}</div>${p.isHost?'<div class="role">میزبان</div>':''}</div>`).join(''); }
+function updateLobbyUI(){ const t=(Net.isHost?1:0)+Net.clientConns.size+(Net.isHost?0:1); $('playerCount').textContent=t+' / 50'; const list=[]; if (Net.isHost){ list.push({name:Net.myName, isHost:true, isMe:true}); for (const c of Net.clientConns.values()) list.push({name:c.state.name, isHost:false, isMe:false}); } else list.push({name:Net.myName, isHost:false, isMe:true}); $('playerListBody').innerHTML=list.map(p=>`<div class="pl${p.isHost?' host':''}"><div class="dot"></div><div class="nm">${escHtml(p.name)}${p.isMe?' (شما)':''}</div>${p.isHost?'<div class="role">میزبان</div>':''}</div>`).join(''); }
 function showLobby(isHost){ $('menu').classList.remove('on'); $('joinScreen').classList.remove('on'); $('lobby').classList.add('on'); $('roomCode').textContent=Net.roomCode; $('btnStartGame').style.display=isHost?'inline-block':'none'; $('lobbyTitle').textContent=isHost?'روم شما':'اتاق انتظار'; $('lobbyStatus').textContent=isHost?'دکمه شروع را بزن یا منتظر بازیکنان بمان.':'منتظر شروع بازی توسط میزبان...'; updateLobbyUI(); }
 
 /* ============ MATCH ============ */
 function startMatch(){
-  if(G.running) return;
+  if (G.running) return;
   G.running=true; G.paused=false; G.over=false;
   G.playerScore=0; G.enemyScore=0; G.timeLeft=600; G.kills=0; G.deaths=0;
   PLAYER.pos.copy(START_POS); PLAYER.vel.set(0,0,0); PLAYER.yaw=Math.PI; PLAYER.pitch=0;
   PLAYER.health=100; PLAYER.alive=true; PLAYER.crouching=false; PLAYER.onGround=false; PLAYER.eye=PLAYER.eyeStand;
-  for(let i=0;i<WEAPONS.length;i++){ weaponState[i].mag=WEAPONS[i].magSize; weaponState[i].reserve=WEAPONS[i].reserveMax; }
+  for (let i=0;i<WEAPONS.length;i++){ weaponState[i].mag=WEAPONS[i].magSize; weaponState[i].reserve=WEAPONS[i].reserveMax; }
   curWeapon=0; buildGunModel(0); reloading=false; reloadTimer=0; fireCooldown=0;
   adsHeld=false; adsAmount=0; triggerHeld=false; recoilKick={z:0,rotX:0,rotZ:0}; pendingRecovery=0;
   killfeedEl.innerHTML=''; sbBodyEl.innerHTML='';
   rebuildShootMeshes();
-  if(Net.isHost){ Net.started=true; broadcastAll({type:'started'}); startHostTick(); }
+  if (Net.isHost){ Net.started=true; broadcastAll({type:'started'}); startHostTick(); }
   updateScoreHud(); updateHealthHud(); updateAmmoHud(); updateTimerHud(); $('wname').textContent=WEAPONS[0].name;
   $('lobby').classList.remove('on'); $('menu').classList.remove('on'); $('over').classList.remove('on'); $('pause').classList.remove('on');
   hudEl.classList.add('on'); touchUI.classList.add('on'); $('pauseBtn').classList.add('on');
   Sfx.init(); Sfx.resume(); setTimeout(()=>canvas.requestPointerLock(),120);
 }
-function pauseGame(){ if(!G.running||G.paused) return; G.paused=true; $('pause').classList.add('on'); touchUI.classList.remove('on'); triggerHeld=false; if(document.pointerLockElement) document.exitPointerLock(); }
-function resumeGame(){ if(!G.running) return; G.paused=false; $('pause').classList.remove('on'); touchUI.classList.add('on'); canvas.requestPointerLock(); }
-function endMatch(won){
-  if(G.over) return; G.over=true; G.running=false;
-  hudEl.classList.remove('on'); touchUI.classList.remove('on'); $('pauseBtn').classList.remove('on');
-  if(document.pointerLockElement) document.exitPointerLock();
-  $('overTitle').textContent=won?'بردی':'باختی'; $('overTitle').style.color=won?'#5fe08a':'#ff6b5e';
-  $('resultLine').innerHTML=`امتیاز شما: <b>${G.kills}</b> کشتار`;
-  $('over').classList.add('on');
-}
+function pauseGame(){ if (!G.running||G.paused) return; G.paused=true; $('pause').classList.add('on'); touchUI.classList.remove('on'); triggerHeld=false; if (document.pointerLockElement) document.exitPointerLock(); }
+function resumeGame(){ if (!G.running) return; G.paused=false; $('pause').classList.remove('on'); touchUI.classList.add('on'); canvas.requestPointerLock(); }
+function endMatch(won){ if (G.over) return; G.over=true; G.running=false; hudEl.classList.remove('on'); touchUI.classList.remove('on'); $('pauseBtn').classList.remove('on'); if (document.pointerLockElement) document.exitPointerLock(); $('overTitle').textContent=won?'بردی':'باختی'; $('overTitle').style.color=won?'#5fe08a':'#ff6b5e'; $('resultLine').innerHTML=`امتیاز شما: <b>${G.kills}</b> کشتار`; $('over').classList.add('on'); }
 function leaveRoom(){
   G.running=false; G.paused=false;
-  if(Net.tickTimer){ clearInterval(Net.tickTimer); Net.tickTimer=null; }
-  if(Net.hostConn){ try{Net.hostConn.close();}catch(_){} Net.hostConn=null; }
-  for(const c of Net.clientConns.values()){ try{c.conn.close();}catch(_){} }
+  if (Net.tickTimer){ clearInterval(Net.tickTimer); Net.tickTimer=null; }
+  if (Net.hostConn){ try { Net.hostConn.close(); } catch(_){} Net.hostConn=null; }
+  for (const c of Net.clientConns.values()){ try { c.conn.close(); } catch(_){} }
   Net.clientConns.clear();
-  if(Net.peer){ try{Net.peer.destroy();}catch(_){} Net.peer=null; }
+  if (Net.peer){ try { Net.peer.destroy(); } catch(_){} Net.peer=null; }
   Net.isHost=false; Net.started=false; Net.roomCode=null;
   clearAllRemotes();
   hudEl.classList.remove('on'); touchUI.classList.remove('on'); $('pauseBtn').classList.remove('on');
   $('lobby').classList.remove('on'); $('joinScreen').classList.remove('on'); $('pause').classList.remove('on'); $('over').classList.remove('on');
   $('menu').classList.add('on');
-  if(document.pointerLockElement) document.exitPointerLock();
-  // ← ویس چت همچنان متصل می‌ماند و قطع نمی‌شود
+  if (document.pointerLockElement) document.exitPointerLock();
 }
 
 /* ============ PLAYER UPDATE ============ */
-function doJump(){ if(!PLAYER.alive) return; if(PLAYER.onGround){ PLAYER.vel.y=JUMP_SPEED; PLAYER.onGround=false; Sfx.empty(); } }
+function doJump(){ if (!PLAYER.alive) return; if (PLAYER.onGround){ PLAYER.vel.y=JUMP_SPEED; PLAYER.onGround=false; Sfx.empty(); } }
 function updatePlayer(dt){
-  if(!PLAYER.alive){ PLAYER.respawnTimer-=dt; if(PLAYER.respawnTimer<=0) respawnPlayer(); return; }
-  let ix=0,iz=0;
-  if(keys['KeyW']||keys['ArrowUp']) iz+=1;
-  if(keys['KeyS']||keys['ArrowDown']) iz-=1;
-  if(keys['KeyD']||keys['ArrowRight']) ix+=1;
-  if(keys['KeyA']||keys['ArrowLeft']) ix-=1;
+  if (!PLAYER.alive){ PLAYER.respawnTimer-=dt; if (PLAYER.respawnTimer<=0) respawnPlayer(); return; }
+  let ix=0, iz=0;
+  if (keys['KeyW']||keys['ArrowUp']) iz+=1;
+  if (keys['KeyS']||keys['ArrowDown']) iz-=1;
+  if (keys['KeyD']||keys['ArrowRight']) ix+=1;
+  if (keys['KeyA']||keys['ArrowLeft']) ix-=1;
   ix+=moveVec.x; iz+=moveVec.y;
-  const il=Math.hypot(ix,iz); if(il>1){ ix/=il; iz/=il; }
+  const il=Math.hypot(ix,iz); if (il>1){ ix/=il; iz/=il; }
   PLAYER.crouching=(!!keys['ControlLeft']||!!keys['ControlRight']||!!keys['KeyC']);
   PLAYER.sprinting=(!!keys['ShiftLeft']||!!keys['ShiftRight'])&&!PLAYER.crouching&&iz>0;
-  if(keys['Space']) doJump();
+  if (keys['Space']) doJump();
   const tEye=PLAYER.crouching?PLAYER.eyeCrouch:PLAYER.eyeStand;
   PLAYER.eye=damp(PLAYER.eye,tEye,12,dt);
-  const fwd=playerForward(),rgt=playerRight();
+  const fwd=playerForward(), rgt=playerRight();
   const wish=new THREE.Vector3(); wish.addScaledVector(fwd,iz); wish.addScaledVector(rgt,ix);
-  let wl=wish.length(); if(wl>1){ wish.multiplyScalar(1/wl); wl=1; }
+  let wl=wish.length(); if (wl>1){ wish.multiplyScalar(1/wl); wl=1; }
   let spd=PLAYER.crouching?SPEED_CROUCH:(PLAYER.sprinting?SPEED_RUN:SPEED_WALK);
-  if(adsAmount>0.5) spd*=0.62;
-  const tVX=wish.x*spd*wl,tVZ=wish.z*spd*wl;
+  if (adsAmount>0.5) spd*=0.62;
+  const tVX=wish.x*spd*wl, tVZ=wish.z*spd*wl;
   const accel=PLAYER.onGround?14:3.5;
   PLAYER.vel.x=damp(PLAYER.vel.x,tVX,accel,dt); PLAYER.vel.z=damp(PLAYER.vel.z,tVZ,accel,dt);
-  PLAYER.vel.y-=GRAVITY*dt; if(PLAYER.vel.y<-55) PLAYER.vel.y=-55;
+  PLAYER.vel.y-=GRAVITY*dt; if (PLAYER.vel.y<-55) PLAYER.vel.y=-55;
   const mvD=Math.hypot(PLAYER.vel.x,PLAYER.vel.z)*dt;
-  const steps=Math.max(1,Math.ceil(mvD/0.15));
+  const steps=Math.max(1, Math.ceil(mvD/0.15));
   const sdt=dt/steps;
-  for(let i=0;i<steps;i++){ PLAYER.pos.x+=PLAYER.vel.x*sdt; PLAYER.pos.z+=PLAYER.vel.z*sdt; resolveHorizontal(PLAYER.pos,PLAYER.radius); }
+  for (let i=0;i<steps;i++){ PLAYER.pos.x+=PLAYER.vel.x*sdt; PLAYER.pos.z+=PLAYER.vel.z*sdt; resolveHorizontal(PLAYER.pos, PLAYER.radius); }
   PLAYER.pos.y+=PLAYER.vel.y*dt;
   PLAYER.pos.x=clamp(PLAYER.pos.x,-A+2.5,A-2.5); PLAYER.pos.z=clamp(PLAYER.pos.z,-A+2.5,A-2.5);
   const gh=groundHeightAt(PLAYER.pos.x,PLAYER.pos.z,PLAYER.pos.y);
-  if(PLAYER.vel.y<=0&&PLAYER.pos.y<=gh+0.1){ PLAYER.pos.y=gh; PLAYER.vel.y=0; PLAYER.onGround=true; } else PLAYER.onGround=false;
-  if(PLAYER.pos.y<-20){ PLAYER.pos.y=-20; PLAYER.vel.y=0; PLAYER.onGround=true; }
-  camera.position.set(PLAYER.pos.x,PLAYER.pos.y+PLAYER.eye,PLAYER.pos.z);
+  if (PLAYER.vel.y<=0&&PLAYER.pos.y<=gh+0.1){ PLAYER.pos.y=gh; PLAYER.vel.y=0; PLAYER.onGround=true; } else PLAYER.onGround=false;
+  if (PLAYER.pos.y<-20){ PLAYER.pos.y=-20; PLAYER.vel.y=0; PLAYER.onGround=true; }
+  camera.position.set(PLAYER.pos.x, PLAYER.pos.y+PLAYER.eye, PLAYER.pos.z);
   camera.rotation.y=PLAYER.yaw; camera.rotation.x=PLAYER.pitch;
-  if(pendingRecovery>0){ const r=Math.min(pendingRecovery,5.5*dt); PLAYER.pitch-=r; pendingRecovery-=r; }
+  if (pendingRecovery>0){ const r=Math.min(pendingRecovery,5.5*dt); PLAYER.pitch-=r; pendingRecovery-=r; }
   PLAYER.pitch=clamp(PLAYER.pitch,-1.45,1.45);
-  // Sniper sway
   const isScoped=(curWeapon===2||curWeapon===4)&&adsAmount>0.8;
-  if(isScoped){ const t=performance.now()*0.001; PLAYER.yaw+=Math.sin(t*0.8)*0.0006; PLAYER.pitch+=Math.cos(t*0.6)*0.0006; }
-  fireCooldown=Math.max(0,fireCooldown-dt);
-  if(reloading){ reloadTimer-=dt; if(reloadTimer<=0) finishReload(); }
-  if(triggerHeld&&!reloading){ const w=WEAPONS[curWeapon]; if(w.auto){ if(fireCooldown<=0) tryShoot(); } else if(!semiLatch){ semiLatch=true; tryShoot(); } }
-  if(!triggerHeld) semiLatch=false;
+  if (isScoped){ const t=performance.now()*0.001; PLAYER.yaw+=Math.sin(t*0.8)*0.0006; PLAYER.pitch+=Math.cos(t*0.6)*0.0006; }
+  fireCooldown=Math.max(0, fireCooldown-dt);
+  if (reloading){ reloadTimer-=dt; if (reloadTimer<=0) finishReload(); }
+  if (triggerHeld&&!reloading){ const w=WEAPONS[curWeapon]; if (w.auto){ if (fireCooldown<=0) tryShoot(); } else if (!semiLatch){ semiLatch=true; tryShoot(); } }
+  if (!triggerHeld) semiLatch=false;
   const wantAds=adsHeld&&!reloading&&!PLAYER.sprinting;
   adsAmount=damp(adsAmount,wantAds?1:0,12,dt);
-  const w=WEAPONS[curWeapon]; const tf=lerp(w.baseFov,w.adsFov,adsAmount);
-  if(Math.abs(camera.fov-tf)>0.05){ camera.fov=damp(camera.fov,tf,14,dt); camera.updateProjectionMatrix(); }
+  const w=WEAPONS[curWeapon]; const tf=lerp(w.baseFov, w.adsFov, adsAmount);
+  if (Math.abs(camera.fov-tf)>0.05){ camera.fov=damp(camera.fov, tf, 14, dt); camera.updateProjectionMatrix(); }
   const scopeEl=$('scope-overlay');
-  if(isScoped){ scopeEl.classList.add('active'); crosshairEl.style.opacity='0'; gunGroup.visible=false; }
+  if (isScoped){ scopeEl.classList.add('active'); crosshairEl.style.opacity='0'; gunGroup.visible=false; }
   else { scopeEl.classList.remove('active'); crosshairEl.style.opacity=adsAmount>0.75?'0.15':'1'; gunGroup.visible=true; }
   const spread=currentSpread(); const gapPx=clamp(6+spread*900,4,52);
   crosshairEl.style.setProperty('--gap',gapPx.toFixed(1)+'px');
-  if(!Net.isHost&&Net.hostConn&&Net.hostConn.open){ const t=performance.now(); if(t-Net.lastStateSend>100){ Net.lastStateSend=t; sendToHost({type:'state',x:PLAYER.pos.x,y:PLAYER.pos.y,z:PLAYER.pos.z,yaw:PLAYER.yaw,pitch:PLAYER.pitch,health:PLAYER.health,alive:PLAYER.alive,weapon:curWeapon}); } }
+  if (!Net.isHost && Net.hostConn && Net.hostConn.open){ const t=performance.now(); if (t-Net.lastStateSend>100){ Net.lastStateSend=t; sendToHost({type:'state', x:PLAYER.pos.x, y:PLAYER.pos.y, z:PLAYER.pos.z, yaw:PLAYER.yaw, pitch:PLAYER.pitch, health:PLAYER.health, alive:PLAYER.alive, weapon:curWeapon}); } }
 }
 function updateViewmodel(dt){
-  const m=gunGroup.userData.model; if(!m) return;
-  let rT=0; if(reloading){ const w=WEAPONS[curWeapon]; const p=1-(reloadTimer/w.reloadTime); rT=Math.sin(clamp(p,0,1)*Math.PI); }
+  const m=gunGroup.userData.model; if (!m) return;
+  let rT=0; if (reloading){ const w=WEAPONS[curWeapon]; const p=1-(reloadTimer/w.reloadTime); rT=Math.sin(clamp(p,0,1)*Math.PI); }
   recoilKick.z=damp(recoilKick.z,0,16,dt); recoilKick.rotX=damp(recoilKick.rotX,0,14,dt); recoilKick.rotZ=damp(recoilKick.rotZ,0,14,dt);
   const hX=0.24,hY=-0.235,hZ=-0.46; const aX=0,aY=-0.135,aZ=-0.33;
   m.position.x=lerp(hX,aX,adsAmount); m.position.y=lerp(hY,aY,adsAmount)+rT*0.14;
   m.position.z=lerp(hZ,aZ,adsAmount)+recoilKick.z; m.rotation.x=recoilKick.rotX+rT*0.65;
   m.rotation.z=recoilKick.rotZ+rT*0.35;
-  if(muzzleTimer>0){ muzzleTimer-=dt; muzzleFlash.visible=true; muzzleFlashMat.opacity=clamp(muzzleTimer/0.05,0,1); muzzleFlash.scale.setScalar(rand(0.8,1.4)); if(muzzleTimer<=0) muzzleFlash.visible=false; }
+  if (muzzleTimer>0){ muzzleTimer-=dt; muzzleFlash.visible=true; muzzleFlashMat.opacity=clamp(muzzleTimer/0.05,0,1); muzzleFlash.scale.setScalar(rand(0.8,1.4)); if (muzzleTimer<=0) muzzleFlash.visible=false; }
 }
 function update(dt){
-  if(!G.running||G.paused) return;
+  if (!G.running||G.paused) return;
   G.timeLeft-=dt;
-  if(G.timeLeft<=0){ G.timeLeft=0; endMatch(G.kills>=G.enemyScore); return; }
+  if (G.timeLeft<=0){ G.timeLeft=0; endMatch(G.kills>=G.enemyScore); return; }
   updateTimerHud(); updatePlayer(dt); updateViewmodel(dt); updateRemotes(dt); updateEffects(dt);
-  if(vignetteTimer>0){ vignetteTimer-=dt; vignetteEl.style.opacity=String(clamp(vignetteTimer/0.45,0,1)*0.9); if(vignetteTimer<=0) vignetteEl.style.opacity='0'; }
+  if (vignetteTimer>0){ vignetteTimer-=dt; vignetteEl.style.opacity=String(clamp(vignetteTimer/0.45,0,1)*0.9); if (vignetteTimer<=0) vignetteEl.style.opacity='0'; }
   updateAmmoHud(); updateHealthHud();
 }
 let lastTime=performance.now();
-function loop(t){ requestAnimationFrame(loop); const dt=Math.min((t-lastTime)/1000,0.05); lastTime=t; update(dt); renderer.render(scene,camera); }
+function loop(t){ requestAnimationFrame(loop); const dt=Math.min((t-lastTime)/1000,0.05); lastTime=t; update(dt); renderer.render(scene, camera); }
 requestAnimationFrame(loop);
-function onResize(){ camera.aspect=window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth,window.innerHeight); }
-window.addEventListener('resize',onResize);
+function onResize(){ camera.aspect=window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); }
+window.addEventListener('resize', onResize);
+
+/* ============ Keepalive ============ */
+setInterval(() => {
+  if (Net.peer && !Net.peer.destroyed && Net.peer.disconnected) {
+    try { Net.peer.reconnect(); } catch(_){}
+  }
+  if (VoiceChat.peer && !VoiceChat.peer.destroyed && VoiceChat.peer.disconnected) {
+    try { VoiceChat.peer.reconnect(); } catch(_){}
+  }
+}, 5000);
 
 /* ============ UI WIRING ============ */
-$('btnCreate').addEventListener('click',async()=>{
+$('setPeerServer').addEventListener('change', e => {
+  const v = e.target.value.trim() || '0.peerjs.com';
+  try { localStorage.setItem('baz-peer-host', v); } catch(_){}
+  showToast('سرور PeerJS ذخیره شد. صفحه را رفرش کنید.');
+});
+try { const saved = localStorage.getItem('baz-peer-host'); if (saved) $('setPeerServer').value = saved; } catch(_){}
+
+$('btnCreate').addEventListener('click', async () => {
   Sfx.init(); Sfx.resume();
-  Net.myName=($('setName').value||'Player').trim().slice(0,16)||'Player';
-  $('btnCreate').disabled=true; $('btnCreate').textContent='در حال ساخت...';
-  try{ await hostRoom(); showLobby(true); } catch(e){ alert('خطا: '+e.message); }
-  finally { $('btnCreate').disabled=false; $('btnCreate').textContent='ساخت روم بازی'; }
+  Net.myName = ($('setName').value || 'Player').trim().slice(0,16) || 'Player';
+  $('btnCreate').disabled = true;
+  $('btnCreate').textContent = 'در حال ساخت...';
+  showConnStatus('در حال ساخت روم...');
+  try {
+    await hostRoom((status) => { showConnStatus(status); });
+    hideConnStatus();
+    showLobby(true);
+  } catch (e) {
+    hideConnStatus();
+    alert('خطا در ساخت روم: ' + e.message + '\n\nممکن است سرور PeerJS موقتاً در دسترس نباشد.');
+  } finally {
+    $('btnCreate').disabled = false;
+    $('btnCreate').textContent = 'ساخت روم بازی';
+  }
 });
-$('btnJoin').addEventListener('click',()=>{ $('menu').classList.remove('on'); $('joinScreen').classList.add('on'); $('joinCode').value=''; $('joinError').textContent=''; setTimeout(()=>$('joinCode').focus(),100); });
-$('joinCode').addEventListener('input',e=>{ e.target.value=e.target.value.replace(/\D/g,'').slice(0,4); });
-$('btnBackMenu').addEventListener('click',()=>{ $('joinScreen').classList.remove('on'); $('menu').classList.add('on'); });
-$('btnDoJoin').addEventListener('click',async()=>{
-  const code=$('joinCode').value.trim();
-  if(!/^\d{4}$/.test(code)){ $('joinError').textContent='کد باید ۴ رقم باشد'; return; }
-  Net.myName=($('setName').value||'Player').trim().slice(0,16)||'Player';
-  $('btnDoJoin').disabled=true; $('btnDoJoin').textContent='در حال اتصال...'; $('joinError').textContent='';
-  try{ await joinRoom(code,Net.myName); showLobby(false); } catch(e){ $('joinError').textContent='اتصال ناموفق.'; }
-  finally { $('btnDoJoin').disabled=false; $('btnDoJoin').textContent='اتصال'; }
+$('btnJoin').addEventListener('click', () => { $('menu').classList.remove('on'); $('joinScreen').classList.add('on'); $('joinCode').value=''; $('joinError').textContent=''; setTimeout(()=>$('joinCode').focus(), 100); });
+$('joinCode').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g,'').slice(0,4); });
+$('btnBackMenu').addEventListener('click', () => { $('joinScreen').classList.remove('on'); $('menu').classList.add('on'); });
+
+$('btnDoJoin').addEventListener('click', async () => {
+  const code = $('joinCode').value.trim();
+  if (!/^\d{4}$/.test(code)){ $('joinError').textContent = 'کد باید ۴ رقم باشد'; return; }
+  Net.myName = ($('setName').value || 'Player').trim().slice(0,16) || 'Player';
+  $('btnDoJoin').disabled = true;
+  $('btnDoJoin').textContent = 'در حال اتصال...';
+  $('joinError').textContent = '';
+  try {
+    await joinRoom(code, Net.myName, (status) => {
+      $('joinError').textContent = status;
+    });
+    showLobby(false);
+  } catch (e) {
+    $('joinError').textContent = 'روم پیدا نشد. مطمئن شو کد درست است و میزبان هنوز متصل است.\n' + (e.message || '');
+  } finally {
+    $('btnDoJoin').disabled = false;
+    $('btnDoJoin').textContent = 'اتصال';
+  }
 });
-$('btnCopyCode').addEventListener('click',()=>{
-  const code=$('roomCode').textContent;
-  if(navigator.clipboard){ navigator.clipboard.writeText(code).then(()=>{ $('btnCopyCode').textContent='کپی شد'; setTimeout(()=>$('btnCopyCode').textContent='کپی کد',1500); }); }
-  else { const r=document.createRange(); r.selectNode($('roomCode')); window.getSelection().removeAllRanges(); window.getSelection().addRange(r); document.execCommand('copy'); $('btnCopyCode').textContent='کپی شد'; setTimeout(()=>$('btnCopyCode').textContent='کپی کد',1500); }
+
+$('btnCopyCode').addEventListener('click', () => {
+  const code = $('roomCode').textContent;
+  if (navigator.clipboard){ navigator.clipboard.writeText(code).then(()=>{ $('btnCopyCode').textContent='کپی شد'; setTimeout(()=>$('btnCopyCode').textContent='کپی کد', 1500); }); }
+  else { const r=document.createRange(); r.selectNode($('roomCode')); window.getSelection().removeAllRanges(); window.getSelection().addRange(r); document.execCommand('copy'); $('btnCopyCode').textContent='کپی شد'; setTimeout(()=>$('btnCopyCode').textContent='کپی کد', 1500); }
 });
-$('btnStartGame').addEventListener('click',()=>{ if(!Net.isHost) return; startMatch(); });
-$('btnLeaveRoom').addEventListener('click',leaveRoom);
-$('btnResume').addEventListener('click',resumeGame);
-$('btnQuit').addEventListener('click',()=>{ G.running=false; $('pause').classList.remove('on'); hudEl.classList.remove('on'); showLobby(Net.isHost); });
-$('btnBackLobby').addEventListener('click',()=>{ $('over').classList.remove('on'); if(Net.isHost){ Net.started=false; showLobby(true); } else showLobby(false); });
-$('pauseBtn').addEventListener('click',()=>{ G.paused?resumeGame():pauseGame(); });
-$('setSens').addEventListener('input',e=>{ G.sensitivity=parseInt(e.target.value,10)/100; });
-$('setVol').addEventListener('input',e=>{ Sfx.init(); Sfx.setVolume(parseInt(e.target.value,10)/100); });
-$('setQuality').addEventListener('change',e=>{ const q=e.target.value; if(q==='high'){ renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2)); sun.shadow.mapSize.set(2048,2048); } else if(q==='med'){ renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5)); sun.shadow.mapSize.set(1024,1024); } else { renderer.setPixelRatio(1); } if(sun.shadow.map){ sun.shadow.map.dispose(); sun.shadow.map=null; } renderer.shadowMap.needsUpdate=true; onResize(); });
+$('btnStartGame').addEventListener('click', () => { if (!Net.isHost) return; startMatch(); });
+$('btnLeaveRoom').addEventListener('click', leaveRoom);
+$('btnResume').addEventListener('click', resumeGame);
+$('btnQuit').addEventListener('click', () => { G.running=false; $('pause').classList.remove('on'); hudEl.classList.remove('on'); showLobby(Net.isHost); });
+$('btnBackLobby').addEventListener('click', () => { $('over').classList.remove('on'); if (Net.isHost){ Net.started=false; showLobby(true); } else showLobby(false); });
+$('pauseBtn').addEventListener('click', () => { G.paused?resumeGame():pauseGame(); });
+$('setSens').addEventListener('input', e => { G.sensitivity=parseInt(e.target.value,10)/100; });
+$('setVol').addEventListener('input', e => { Sfx.init(); Sfx.setVolume(parseInt(e.target.value,10)/100); });
+$('setQuality').addEventListener('change', e => { const q=e.target.value; if (q==='high'){ renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2)); sun.shadow.mapSize.set(2048,2048); } else if (q==='med'){ renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5)); sun.shadow.mapSize.set(1024,1024); } else { renderer.setPixelRatio(1); } if (sun.shadow.map){ sun.shadow.map.dispose(); sun.shadow.map=null; } renderer.shadowMap.needsUpdate=true; onResize(); });
 
-setInterval(()=>{ if(!Net.peer) return; if(Net.isHost){ pingEl.textContent=`بازیکنان: ${Net.clientConns.size+1} | روم: ${Net.roomCode||'-'}`; } else if(Net.hostConn&&Net.hostConn.open){ pingEl.textContent=`بازیکنان: ${remotePlayers.size+1} | روم: ${Net.roomCode||'-'}`; } },2000);
+setInterval(() => {
+  if (!Net.peer) return;
+  if (Net.isHost){ pingEl.textContent = `بازیکنان: ${Net.clientConns.size+1} | روم: ${Net.roomCode||'-'}`; }
+  else if (Net.hostConn && Net.hostConn.open){ pingEl.textContent = `بازیکنان: ${remotePlayers.size+1} | روم: ${Net.roomCode||'-'}`; }
+}, 2000);
 
-buildGunModel(0); updateHealthHud(); updateAmmoHud(); updateScoreHud(); updateTimerHud();
-updateVoiceUI();
+buildGunModel(0); updateHealthHud(); updateAmmoHud(); updateScoreHud(); updateTimerHud(); updateVoiceUI();
 
-window.addEventListener('beforeunload',()=>{
-  if(Net.peer){ try{Net.peer.destroy();}catch(_){} }
-  if(VoiceChat.peer){ try{VoiceChat.peer.destroy();}catch(_){} }
+window.addEventListener('beforeunload', () => {
+  if (Net.peer){ try { Net.peer.destroy(); } catch(_){} }
+  if (VoiceChat.peer){ try { VoiceChat.peer.destroy(); } catch(_){} }
 });
 </script>
 </body>
