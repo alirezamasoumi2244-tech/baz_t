@@ -7,9 +7,7 @@
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;overflow:hidden;background:#07090c;color:#e8eef6;
-  font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;
-  user-select:none;-webkit-user-select:none;}
+html,body{height:100%;overflow:hidden;background:#07090c;color:#e8eef6;font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;user-select:none;-webkit-user-select:none;}
 #game{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;}
 #hud{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .35s;}
 #hud.on{opacity:1;}
@@ -76,6 +74,8 @@ html,body{height:100%;overflow:hidden;background:#07090c;color:#e8eef6;
 .btn.ghost{background:rgba(255,255,255,.07);color:#dce8f5;border:1px solid rgba(255,255,255,.18);box-shadow:none;}
 .btn.warn{background:linear-gradient(180deg,#ff8a7a,#c0392b);color:#fff;}
 .btn.voice{background:linear-gradient(180deg,#22c55e,#16a34a);color:#fff;}
+.btn.public{background:linear-gradient(180deg,#fbbf24,#d97706);color:#fff;}
+.btn.private{background:linear-gradient(180deg,#a855f7,#7e22ce);color:#fff;}
 .input{background:#111a24;color:#dce8f5;border:1px solid rgba(255,255,255,.16);border-radius:8px;padding:11px 14px;font-family:inherit;font-size:15px;width:100%;max-width:320px;text-align:center;}
 .input.code{letter-spacing:10px;font-size:26px;font-weight:800;direction:ltr;font-family:monospace;}
 .keys{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:600px;}
@@ -121,7 +121,6 @@ html,body{height:100%;overflow:hidden;background:#07090c;color:#e8eef6;
 #btnSwap{right:6px;bottom:150px;width:56px;height:56px;font-size:10.5px;}
 #pauseBtn{position:absolute;top:10px;left:10px;width:38px;height:38px;border-radius:9px;background:rgba(8,12,18,.6);border:1px solid rgba(255,255,255,.18);color:#dce8f5;font-size:14px;font-weight:800;pointer-events:auto;cursor:pointer;z-index:22;display:none;font-family:inherit;}
 #pauseBtn.on{display:block;}
-
 #voice-pill{position:fixed;top:10px;left:54px;z-index:9000;display:flex;align-items:center;gap:6px;padding:0 12px;height:38px;background:rgba(8,12,18,.85);border:1px solid rgba(34,197,94,.5);border-radius:9px;backdrop-filter:blur(8px);cursor:pointer;pointer-events:auto;color:#e8eef6;font-family:inherit;font-size:12px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.5);transition:transform .12s,border-color .12s;user-select:none;}
 #voice-pill.hidden{display:none;}
 #voice-pill:active{transform:scale(.96);}
@@ -158,11 +157,7 @@ html,body{height:100%;overflow:hidden;background:#07090c;color:#e8eef6;
 #voice-panel .vchat .vempty{color:#475569;text-align:center;font-style:italic;padding:20px 0;font-size:11px;}
 #voice-panel .vinput-row{display:flex;gap:5px;}
 #voice-panel .vinput{flex:1;background:#0a1018;color:#dce8f5;border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:7px 9px;font-family:inherit;font-size:12px;direction:rtl;}
-#voice-panel .vinput::placeholder{color:#475569;font-size:11px;}
 #voice-panel .vsend{padding:7px 12px;border-radius:6px;border:1px solid rgba(56,189,248,.4);background:rgba(56,189,248,.2);color:#79d3ff;font-weight:700;cursor:pointer;font-family:inherit;font-size:11.5px;}
-#voice-panel .vchat::-webkit-scrollbar,#voice-panel .vlist::-webkit-scrollbar{width:4px;}
-#voice-panel .vchat::-webkit-scrollbar-thumb,#voice-panel .vlist::-webkit-scrollbar-thumb{background:rgba(56,189,248,.3);border-radius:2px;}
-
 #voice-modal{position:fixed;inset:0;z-index:99999;background:rgba(5,8,16,.88);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:20px;pointer-events:auto;}
 #voice-modal.on{display:flex;}
 #voice-modal .vmodal-inner{background:rgba(15,23,42,.98);border:1px solid rgba(34,197,94,.4);border-radius:18px;padding:24px 22px;width:min(380px,92vw);text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.8);}
@@ -173,27 +168,16 @@ html,body{height:100%;overflow:hidden;background:#07090c;color:#e8eef6;
 #voice-modal .vmodal-btn:active{transform:scale(.97);}
 #voice-modal .vmodal-btn.green{background:linear-gradient(135deg,#22c55e,#16a34a);border-color:#5fe08a;color:#fff;box-shadow:0 6px 20px rgba(34,197,94,.4);}
 #voice-modal .vmodal-btn.ghost{background:rgba(255,255,255,.06);color:#dce8f5;border-color:rgba(255,255,255,.18);}
-#voice-modal .vmodal-btn.red{background:rgba(239,68,68,.2);border-color:rgba(239,68,68,.5);color:#ff7a6b;}
 #voice-modal .vinput-code{width:100%;padding:14px;text-align:center;font-size:28px;letter-spacing:10px;font-family:monospace;font-weight:800;background:#0a1018;color:#79d3ff;border:2px dashed rgba(121,211,255,.4);border-radius:10px;margin-bottom:10px;direction:ltr;}
 #voice-modal .vinput-code:focus{border-color:#5fe08a;outline:none;}
 #voice-modal .verr{color:#ff7a6b;font-size:12px;min-height:18px;margin-top:8px;}
-
 .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:linear-gradient(135deg,#0284c7,#0369a1);color:#fff;padding:10px 20px;border-radius:20px;font-weight:600;font-size:13px;z-index:100001;white-space:nowrap;box-shadow:0 8px 24px rgba(56,189,248,.4);animation:tIn .25s ease;}
 .toast.warn{background:linear-gradient(135deg,#dc2626,#991b1b);}
 .toast.voice{background:linear-gradient(135deg,#16a34a,#15803d);box-shadow:0 8px 24px rgba(34,197,94,.5);}
 @keyframes tIn{from{opacity:0;transform:translateX(-50%) translateY(10px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
 #conn-status{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:200;background:rgba(8,12,18,.95);border:1px solid rgba(56,189,248,.5);border-radius:12px;padding:20px 30px;color:#79d3ff;font-weight:700;font-size:14px;text-align:center;display:none;backdrop-filter:blur(10px);box-shadow:0 10px 40px rgba(0,0,0,.8);}
 #conn-status.on{display:block;}
-#conn-status .spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(121,211,255,.3);border-top-color:#79d3ff;border-radius:50%;animation:spin 1s linear infinite;margin-left:8px;vertical-align:middle;}
-@keyframes spin{to{transform:rotate(360deg);}}
-@media (max-width:520px){
-  #hpwrap{width:130px;}
-  #ammo b{font-size:26px;}
-  #scoreboard{font-size:11px;min-width:140px;}
-  .code-box .code{font-size:40px;letter-spacing:8px;}
-  #voice-pill{left:48px;padding:0 8px;font-size:11px;}
-  #voice-panel{width:calc(100vw - 20px);max-width:340px;}
-}
+@media (max-width:520px){#hpwrap{width:130px;}#ammo b{font-size:26px;}#scoreboard{font-size:11px;min-width:140px;}.code-box .code{font-size:40px;letter-spacing:8px;}#voice-pill{left:48px;padding:0 8px;font-size:11px;}#voice-panel{width:calc(100vw - 20px);max-width:340px;}}
 </style>
 </head>
 <body>
@@ -202,18 +186,10 @@ html,body{height:100%;overflow:hidden;background:#07090c;color:#e8eef6;
 
 <div id="hud">
   <div id="scope-overlay"><div class="scope-reticle"></div></div>
-  <div id="crosshair">
-    <i class="ch-t"></i><i class="ch-b"></i><i class="ch-l"></i><i class="ch-r"></i><i class="ch-dot"></i>
-  </div>
+  <div id="crosshair"><i class="ch-t"></i><i class="ch-b"></i><i class="ch-l"></i><i class="ch-r"></i><i class="ch-dot"></i></div>
   <div id="hitmarker"></div>
   <div id="vignette"></div>
-  <div id="topbar">
-    <div class="score-box">
-      <div class="team you"><span>شما</span><b id="scoreYou">0</b></div>
-      <div class="score-mid" id="matchTimer">10:00</div>
-      <div class="team foe"><b id="scoreFoe">0</b><span>بهترین</span></div>
-    </div>
-  </div>
+  <div id="topbar"><div class="score-box"><div class="team you"><span>شما</span><b id="scoreYou">0</b></div><div class="score-mid" id="matchTimer">10:00</div><div class="team foe"><b id="scoreFoe">0</b><span>بهترین</span></div></div></div>
   <div id="pingDisplay"></div>
   <div id="killfeed"></div>
   <div id="scoreboard"><h4>جدول امتیاز</h4><div id="sbBody"></div></div>
@@ -237,8 +213,7 @@ html,body{height:100%;overflow:hidden;background:#07090c;color:#e8eef6;
 <div class="screen on" id="menu">
   <h1>BAZ</h1>
   <div class="subtitle">ساخته شده توسط تیم برنامه نویسی B-Z</div>
-  <p>شوتر اول‌شخص چندنفره P2P.<br>
-     ویس چت جدا از روم بازی کار می‌کند — با هم صحبت کنید، حتی وقتی بازی قطع شد.</p>
+  <p>شوتر اول‌شخص چندنفره P2P.<br>ویس چت جدا از روم بازی کار می‌کند — با هم صحبت کنید، حتی وقتی بازی قطع شد.</p>
   <div class="keys">
     <div class="key"><b>WASD</b> حرکت</div>
     <div class="key"><b>Shift</b> دویدن</div>
@@ -248,19 +223,16 @@ html,body{height:100%;overflow:hidden;background:#07090c;color:#e8eef6;
     <div class="key"><b>1-7</b> تعویض سلاح</div>
   </div>
   <div class="settings">
-    <label>نام نمایشی</label>
-    <input type="text" class="input" id="setName" maxlength="16" placeholder="Player" value="Player">
+    <label>نام نمایشی</label><input type="text" class="input" id="setName" maxlength="16" placeholder="Player" value="Player">
     <label>حساسیت</label><input type="range" id="setSens" min="20" max="300" value="100">
-    <label>کیفیت</label>
-    <select id="setQuality"><option value="high">بالا</option><option value="med" selected>متوسط</option><option value="low">پایین</option></select>
+    <label>کیفیت</label><select id="setQuality"><option value="high">بالا</option><option value="med" selected>متوسط</option><option value="low">پایین</option></select>
     <label>صدا</label><input type="range" id="setVol" min="0" max="100" value="60">
-    <label>سرور PeerJS</label>
-    <input type="text" id="setPeerServer" placeholder="0.peerjs.com" value="0.peerjs.com">
   </div>
-  <button class="btn voice" id="btnVoice" onclick="openVoiceModal()">🎙 ویس چت</button>
-  <button class="btn" id="btnCreate">ساخت روم بازی</button>
-  <button class="btn ghost" id="btnJoin">پیوستن به روم بازی</button>
-  <p style="font-size:11px;opacity:.5;margin-top:6px;">اگر اتصال برقرار نشد، چند ثانیه صبر کنید و دوباره تلاش کنید.</p>
+  <button class="btn voice" id="btnVoice" onclick="openVoiceModal()">ویس چت</button>
+  <button class="btn public" id="btnCreatePublic">ساخت روم عمومی</button>
+  <button class="btn ghost" id="btnJoinPublic">پیوستن به روم عمومی (خودکار)</button>
+  <button class="btn private" id="btnCreate">ساخت روم خصوصی</button>
+  <button class="btn ghost" id="btnJoin">پیوستن با کد</button>
 </div>
 
 <div id="lobby">
@@ -277,7 +249,7 @@ html,body{height:100%;overflow:hidden;background:#07090c;color:#e8eef6;
 </div>
 
 <div class="screen" id="joinScreen">
-  <h2>پیوستن به روم بازی</h2>
+  <h2>پیوستن به روم خصوصی</h2>
   <p>کد ۴ رقمی روم را وارد کن.</p>
   <input type="text" class="input code" id="joinCode" maxlength="4" placeholder="0000" inputmode="numeric">
   <button class="btn" id="btnDoJoin">اتصال</button>
@@ -298,19 +270,14 @@ html,body{height:100%;overflow:hidden;background:#07090c;color:#e8eef6;
 </div>
 
 <div id="voice-pill" class="hidden" onclick="toggleVoicePanel()">
-  <span class="vdot"></span>
-  <span class="vcount" id="vpill-count">1</span>
-  <span class="vlabel">ویس</span>
+  <span class="vdot"></span><span class="vcount" id="vpill-count">1</span><span class="vlabel">ویس</span>
 </div>
 
 <div id="voice-panel" class="hidden">
-  <div class="vhead">
-    <div class="vtitle">ویس چت</div>
-    <button class="vclose" onclick="closeVoicePanel()">×</button>
-  </div>
+  <div class="vhead"><div class="vtitle">ویس چت</div><button class="vclose" onclick="closeVoicePanel()">×</button></div>
   <div class="vcode" id="vp-code">----</div>
   <div class="vactions">
-    <button class="vbtn mic-on" id="vp-mic" onclick="voiceToggleMic()">🎙 میکروفون روشن</button>
+    <button class="vbtn mic-on" id="vp-mic" onclick="voiceToggleMic()">میکروفون روشن</button>
     <button class="vbtn red" onclick="voiceLeave()">خروج</button>
   </div>
   <div class="vsec">اعضا (<span id="vp-count">1</span>)</div>
@@ -325,7 +292,7 @@ html,body{height:100%;overflow:hidden;background:#07090c;color:#e8eef6;
 
 <div id="voice-modal">
   <div class="vmodal-inner">
-    <h2>🎙 ویس چت</h2>
+    <h2>ویس چت</h2>
     <div class="vsub">ویس چت مستقل از روم‌های بازی کار می‌کند — می‌توانید در حین بازی صحبت کنید و کد روم جدید را برای دوستانتان بفرستید.</div>
     <div id="voice-modal-body"></div>
   </div>
@@ -347,7 +314,6 @@ const lerp = (a,b,t) => a + (b-a)*t;
 const rand = (a,b) => a + Math.random()*(b-a);
 const escHtml = (s) => String(s).replace(/[<>&"']/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]));
 
-// ============ PeerJS config (custom server support) ============
 function getPeerServerHost() {
   try { return localStorage.getItem('baz-peer-host') || '0.peerjs.com'; }
   catch(e) { return '0.peerjs.com'; }
@@ -380,17 +346,9 @@ function showToast(text, type='') {
     setTimeout(() => el.remove(), 350);
   }, 2400);
 }
+function showConnStatus(text) { $('conn-status-text').textContent = text; $('conn-status').classList.add('on'); }
+function hideConnStatus() { $('conn-status').classList.remove('on'); }
 
-function showConnStatus(text) {
-  const el = $('conn-status');
-  $('conn-status-text').textContent = text;
-  el.classList.add('on');
-}
-function hideConnStatus() {
-  $('conn-status').classList.remove('on');
-}
-
-// ============ Robust peer helpers ============
 function waitPeerOpen(peer, timeout=8000) {
   return new Promise((res, rej) => {
     if (peer.open) return res();
@@ -398,87 +356,14 @@ function waitPeerOpen(peer, timeout=8000) {
     const t = setTimeout(() => rej(new Error('open-timeout')), timeout);
     const onOpen = () => { clearTimeout(t); cleanup(); res(); };
     const onErr = (e) => { clearTimeout(t); cleanup(); rej(e); };
-    function cleanup() {
-      try { peer.off('open', onOpen); peer.off('error', onErr); } catch(_){}
-    }
+    function cleanup() { try { peer.off('open', onOpen); peer.off('error', onErr); } catch(_){} }
     peer.on('open', onOpen);
     peer.on('error', onErr);
   });
 }
 
-/**
- * Try to connect to a peer ID with aggressive retries.
- * @param {string} hostId - Target peer ID
- * @param {object} opts - { maxAttempts, perAttemptTimeout, retryDelay, onStatus }
- * @returns {Promise<{peer, conn}>}
- */
-async function connectWithRetry(hostId, opts = {}) {
-  const maxAttempts = opts.maxAttempts || 5;
-  const perAttemptTimeout = opts.perAttemptTimeout || 5000;
-  const retryDelay = opts.retryDelay || 1500;
-  const onStatus = opts.onStatus || (() => {});
-  let lastErr = null;
-
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    onStatus(`تلاش ${attempt} از ${maxAttempts}...`);
-    const peer = new Peer(undefined, peerCfg);
-
-    try {
-      // Wait for peer to open on signaling
-      await waitPeerOpen(peer, 8000);
-
-      // Create a promise that rejects if peer-unavailable happens
-      const unavailable = new Promise((_, rej) => {
-        const handler = (err) => {
-          if (err && err.type === 'peer-unavailable') {
-            rej(new Error('peer-unavailable'));
-          }
-        };
-        peer.on('error', handler);
-      });
-
-      // Attempt connect
-      const conn = peer.connect(hostId, { reliable: true });
-
-      // Set up data/close handlers early (before open)
-      conn.on('data', handleFromHost);
-      conn.on('close', () => {
-        if (!Net.isHost) {
-          $('joinError').textContent = 'اتصال به میزبان قطع شد';
-          leaveRoom();
-        }
-      });
-      conn.on('error', () => {});
-
-      // Race: open vs unavailable vs timeout
-      await Promise.race([
-        new Promise((res, rej) => {
-          if (conn.open) return res();
-          const t = setTimeout(() => rej(new Error('conn-timeout')), perAttemptTimeout);
-          conn.on('open', () => { clearTimeout(t); res(); });
-        }),
-        unavailable,
-        new Promise((_, rej) => setTimeout(() => rej(new Error('conn-timeout')), perAttemptTimeout + 500))
-      ]);
-
-      // Success!
-      return { peer, conn };
-
-    } catch (e) {
-      lastErr = e;
-      try { peer.destroy(); } catch(_){}
-      if (attempt < maxAttempts) {
-        onStatus(`تلاش ${attempt} ناموفق (${e.message}) - تلاش مجدد...`);
-        await new Promise(r => setTimeout(r, retryDelay));
-      }
-    }
-  }
-
-  throw new Error(lastErr ? lastErr.message : 'connection-failed');
-}
-
 /* ==============================================================
-   ====  VOICE CHAT SYSTEM (مستقل از روم بازی)  =====
+   VOICE CHAT (مستقل)
    ============================================================== */
 const VoiceChat = {
   peer: null, code: null, isHost: false, active: false,
@@ -491,10 +376,7 @@ async function voiceEnsureStream() {
   try {
     VoiceChat.localStream = await navigator.mediaDevices.getUserMedia({ audio:true, video:false });
     VoiceChat.localStream.getAudioTracks().forEach(t => { t.enabled = VoiceChat.micOn; });
-  } catch(e) {
-    showToast('دسترسی به میکروفون رد شد', 'warn');
-    throw new Error('mic-denied');
-  }
+  } catch(e) { showToast('دسترسی به میکروفون رد شد', 'warn'); throw new Error('mic-denied'); }
 }
 
 async function voiceCreate(onStatus = () => {}) {
@@ -505,18 +387,12 @@ async function voiceCreate(onStatus = () => {}) {
     const peer = new Peer('bv' + code, peerCfg);
     try {
       await waitPeerOpen(peer, 8000);
-      VoiceChat.peer = peer;
-      VoiceChat.code = code;
-      VoiceChat.isHost = true;
-      VoiceChat.active = true;
+      VoiceChat.peer = peer; VoiceChat.code = code; VoiceChat.isHost = true; VoiceChat.active = true;
       voiceSetup();
       onStatus('آماده');
-      // Wait a moment for server propagation
       await new Promise(r => setTimeout(r, 1500));
       return code;
-    } catch(e) {
-      try { peer.destroy(); } catch(_){}
-    }
+    } catch(e) { try { peer.destroy(); } catch(_){} }
   }
   throw new Error('cannot-create');
 }
@@ -525,101 +401,60 @@ async function voiceJoin(code, onStatus = () => {}) {
   await voiceEnsureStream();
   const hostId = 'bv' + code;
   let lastErr = null;
-
   for (let attempt = 1; attempt <= 5; attempt++) {
     onStatus(`تلاش ${attempt} از 5...`);
     const peer = new Peer(undefined, peerCfg);
     try {
       await waitPeerOpen(peer, 8000);
-
-      const unavailable = new Promise((_, rej) => {
-        const handler = (err) => {
-          if (err && err.type === 'peer-unavailable') rej(new Error('peer-unavailable'));
-        };
-        peer.on('error', handler);
-      });
-
       const conn = peer.connect(hostId, { reliable: true });
       voiceWireConn(conn, true);
-
       await Promise.race([
         new Promise((res, rej) => {
           if (conn.open) return res();
           const t = setTimeout(() => rej(new Error('conn-timeout')), 5000);
           conn.on('open', () => { clearTimeout(t); res(); });
         }),
-        unavailable,
         new Promise((_, rej) => setTimeout(() => rej(new Error('conn-timeout')), 5500))
       ]);
-
-      VoiceChat.peer = peer;
-      VoiceChat.code = code;
-      VoiceChat.isHost = false;
-      VoiceChat.active = true;
+      VoiceChat.peer = peer; VoiceChat.code = code; VoiceChat.isHost = false; VoiceChat.active = true;
       voiceSetup();
-
       conn.send({ type:'hello', name: voiceGetName() });
-
-      // Call host for voice
       if (VoiceChat.localStream && !VoiceChat.calls.has(hostId)) {
         const call = peer.call(hostId, VoiceChat.localStream);
         voiceWireCall(call);
       }
-
       onStatus('متصل شد');
       return;
     } catch(e) {
-      lastErr = e;
-      try { peer.destroy(); } catch(_){}
+      lastErr = e; try { peer.destroy(); } catch(_){}
       if (attempt < 5) await new Promise(r => setTimeout(r, 1500));
     }
   }
   throw new Error(lastErr ? lastErr.message : 'cannot-join');
 }
 
-function voiceGetName() {
-  const n = ($('setName')?.value || '').trim();
-  return (n || 'Player').slice(0,16);
-}
+function voiceGetName() { const n = ($('setName')?.value || '').trim(); return (n || 'Player').slice(0,16); }
 
 function voiceSetup() {
   const peer = VoiceChat.peer;
-  peer.on('call', call => {
-    call.answer(VoiceChat.localStream || undefined);
-    voiceWireCall(call);
-  });
+  peer.on('call', call => { call.answer(VoiceChat.localStream || undefined); voiceWireCall(call); });
   peer.on('connection', conn => voiceWireConn(conn, false));
-  peer.on('error', e => {
-    if (e.type !== 'peer-unavailable') console.warn('voice peer error', e);
-  });
-  peer.on('disconnected', () => {
-    try { if (!peer.destroyed) peer.reconnect(); } catch(_){}
-  });
+  peer.on('error', e => { if (e.type !== 'peer-unavailable') console.warn('voice peer error', e); });
+  peer.on('disconnected', () => { try { if (!peer.destroyed) peer.reconnect(); } catch(_){} });
 }
 
 function voiceWireConn(conn, isJoiner) {
   const peerId = conn.peer;
-  if (!VoiceChat.connections.has(peerId)) {
-    VoiceChat.connections.set(peerId, { conn, name: 'Player' + peerId.slice(-4) });
-  } else {
-    VoiceChat.connections.get(peerId).conn = conn;
-  }
+  if (!VoiceChat.connections.has(peerId)) VoiceChat.connections.set(peerId, { conn, name: 'Player' + peerId.slice(-4) });
+  else VoiceChat.connections.get(peerId).conn = conn;
 
   conn.on('open', () => {
     if (VoiceChat.isHost) {
       const list = [];
-      for (const [id, c] of VoiceChat.connections) {
-        if (id !== peerId && c.conn.open) list.push({ id, name: c.name });
-      }
+      for (const [id, c] of VoiceChat.connections) if (id !== peerId && c.conn.open) list.push({ id, name: c.name });
       try { conn.send({ type:'peer-list', peers:list }); } catch(_){}
-      for (const [id, c] of VoiceChat.connections) {
-        if (id !== peerId && c.conn.open) {
-          try { c.conn.send({ type:'peer-joined', peerId }); } catch(_){}
-        }
-      }
-    } else if (!isJoiner) {
-      try { conn.send({ type:'hello', name: voiceGetName() }); } catch(_){}
-    }
+      for (const [id, c] of VoiceChat.connections) if (id !== peerId && c.conn.open) try { c.conn.send({ type:'peer-joined', peerId }); } catch(_){}
+    } else if (!isJoiner) try { conn.send({ type:'hello', name: voiceGetName() }); } catch(_){}
     updateVoiceUI();
   });
 
@@ -627,14 +462,7 @@ function voiceWireConn(conn, isJoiner) {
     if (data.type === 'hello') {
       const c = VoiceChat.connections.get(peerId);
       if (c) c.name = (data.name || c.name).slice(0,16);
-      // If we're the host, tell all others
-      if (VoiceChat.isHost) {
-        for (const [id, c] of VoiceChat.connections) {
-          if (id !== peerId && c.conn.open) {
-            try { c.conn.send({ type:'peer-renamed', peerId, name: c.name }); } catch(_){}
-          }
-        }
-      }
+      if (VoiceChat.isHost) for (const [id, c] of VoiceChat.connections) if (id !== peerId && c.conn.open) try { c.conn.send({ type:'peer-renamed', peerId, name: c.name }); } catch(_){}
       updateVoiceUI();
     }
     else if (data.type === 'peer-list') {
@@ -644,20 +472,12 @@ function voiceWireConn(conn, isJoiner) {
           VoiceChat.connections.set(p.id, { conn:pc, name:p.name || 'Player' });
           voiceWireConn(pc, false);
         }
-        if (VoiceChat.localStream && !VoiceChat.calls.has(p.id)) {
-          const call = VoiceChat.peer.call(p.id, VoiceChat.localStream);
-          voiceWireCall(call);
-        }
+        if (VoiceChat.localStream && !VoiceChat.calls.has(p.id)) voiceWireCall(VoiceChat.peer.call(p.id, VoiceChat.localStream));
       }
       updateVoiceUI();
     }
-    else if (data.type === 'peer-renamed') {
-      const c = VoiceChat.connections.get(data.peerId);
-      if (c) { c.name = data.name; updateVoiceUI(); }
-    }
-    else if (data.type === 'chat') {
-      voiceAddChatMsg(data.name || 'Player', data.text || '', false);
-    }
+    else if (data.type === 'peer-renamed') { const c = VoiceChat.connections.get(data.peerId); if (c) { c.name = data.name; updateVoiceUI(); } }
+    else if (data.type === 'chat') voiceAddChatMsg(data.name || 'Player', data.text || '', false);
   });
 
   conn.on('close', () => {
@@ -678,47 +498,31 @@ function voiceWireCall(call) {
   call.on('stream', stream => {
     let el = VoiceChat.audioElements.get(peerId);
     if (!el) {
-      el = document.createElement('audio');
-      el.autoplay = true;
-      el.style.display = 'none';
-      document.body.appendChild(el);
-      VoiceChat.audioElements.set(peerId, el);
+      el = document.createElement('audio'); el.autoplay = true; el.style.display = 'none';
+      document.body.appendChild(el); VoiceChat.audioElements.set(peerId, el);
     }
-    el.srcObject = stream;
-    el.volume = VoiceChat.outputVolume;
+    el.srcObject = stream; el.volume = VoiceChat.outputVolume;
   });
-  call.on('close', () => {
-    VoiceChat.calls.delete(peerId);
-    const el = VoiceChat.audioElements.get(peerId);
-    if (el) { el.remove(); VoiceChat.audioElements.delete(peerId); }
-  });
+  call.on('close', () => { VoiceChat.calls.delete(peerId); const el = VoiceChat.audioElements.get(peerId); if (el) { el.remove(); VoiceChat.audioElements.delete(peerId); } });
   call.on('error', () => {});
 }
 
 function voiceToggleMic() {
   if (!VoiceChat.active) return;
   VoiceChat.micOn = !VoiceChat.micOn;
-  if (VoiceChat.localStream) {
-    VoiceChat.localStream.getAudioTracks().forEach(t => { t.enabled = VoiceChat.micOn; });
-  }
+  if (VoiceChat.localStream) VoiceChat.localStream.getAudioTracks().forEach(t => { t.enabled = VoiceChat.micOn; });
   updateVoiceUI();
-  showToast(VoiceChat.micOn ? '🎙 میکروفون روشن' : '🔇 میکروفون خاموش', VoiceChat.micOn ? 'voice' : 'warn');
+  showToast(VoiceChat.micOn ? 'میکروفون روشن' : 'میکروفون خاموش', VoiceChat.micOn ? 'voice' : 'warn');
 }
 
 function voiceLeave() {
   if (VoiceChat.peer) { try { VoiceChat.peer.destroy(); } catch(_){} VoiceChat.peer = null; }
-  if (VoiceChat.localStream) {
-    VoiceChat.localStream.getTracks().forEach(t => t.stop());
-    VoiceChat.localStream = null;
-  }
+  if (VoiceChat.localStream) { VoiceChat.localStream.getTracks().forEach(t => t.stop()); VoiceChat.localStream = null; }
   for (const el of VoiceChat.audioElements.values()) el.remove();
   VoiceChat.audioElements.clear();
   for (const call of VoiceChat.calls.values()) { try { call.close(); } catch(_){} }
-  VoiceChat.calls.clear();
-  VoiceChat.connections.clear();
-  VoiceChat.active = false;
-  VoiceChat.panelOpen = false;
-  VoiceChat.code = null;
+  VoiceChat.calls.clear(); VoiceChat.connections.clear();
+  VoiceChat.active = false; VoiceChat.panelOpen = false; VoiceChat.code = null;
   updateVoiceUI();
   showToast('از ویس چت خارج شدید');
 }
@@ -726,11 +530,7 @@ function voiceLeave() {
 function voiceSendChat(text) {
   text = String(text || '').trim();
   if (!text) return;
-  for (const c of VoiceChat.connections.values()) {
-    if (c.conn.open) {
-      try { c.conn.send({ type:'chat', name: voiceGetName(), text }); } catch(_){}
-    }
-  }
+  for (const c of VoiceChat.connections.values()) if (c.conn.open) try { c.conn.send({ type:'chat', name: voiceGetName(), text }); } catch(_){}
   voiceAddChatMsg(voiceGetName(), text, true);
 }
 
@@ -757,89 +557,59 @@ function voiceAddChatMsg(name, text, isMe) {
 }
 
 function updateVoiceUI() {
-  const pill = $('voice-pill');
-  const panel = $('voice-panel');
-  if (!VoiceChat.active) {
-    pill.classList.add('hidden');
-    panel.classList.add('hidden');
-    return;
-  }
+  const pill = $('voice-pill'), panel = $('voice-panel');
+  if (!VoiceChat.active) { pill.classList.add('hidden'); panel.classList.add('hidden'); return; }
   pill.classList.remove('hidden');
   pill.classList.toggle('muted', !VoiceChat.micOn);
   $('vpill-count').textContent = (VoiceChat.connections.size + 1);
-
   if (VoiceChat.panelOpen) {
     panel.classList.remove('hidden');
     $('vp-code').textContent = VoiceChat.code || '----';
     $('vp-count').textContent = (VoiceChat.connections.size + 1);
-    const listEl = $('vp-peers');
     let html = `<div class="vpeer me"><span class="vp-dot"></span><span class="vp-name">${escHtml(voiceGetName())}</span><span class="vp-tag">شما</span></div>`;
-    for (const [id, c] of VoiceChat.connections) {
-      html += `<div class="vpeer"><span class="vp-dot"></span><span class="vp-name">${escHtml(c.name || 'Player')}</span></div>`;
-    }
-    listEl.innerHTML = html;
+    for (const [id, c] of VoiceChat.connections) html += `<div class="vpeer"><span class="vp-dot"></span><span class="vp-name">${escHtml(c.name || 'Player')}</span></div>`;
+    $('vp-peers').innerHTML = html;
     const micBtn = $('vp-mic');
-    if (VoiceChat.micOn) { micBtn.textContent = '🎙 میکروفون روشن'; micBtn.className = 'vbtn mic-on'; }
-    else { micBtn.textContent = '🔇 میکروفون خاموش'; micBtn.className = 'vbtn mic-off'; }
-  } else {
-    panel.classList.add('hidden');
-  }
+    if (VoiceChat.micOn) { micBtn.textContent = 'میکروفون روشن'; micBtn.className = 'vbtn mic-on'; }
+    else { micBtn.textContent = 'میکروفون خاموش'; micBtn.className = 'vbtn mic-off'; }
+  } else panel.classList.add('hidden');
 }
 
 function openVoicePanel() { VoiceChat.panelOpen = true; updateVoiceUI(); }
 function closeVoicePanel() { VoiceChat.panelOpen = false; updateVoiceUI(); }
 function toggleVoicePanel() { VoiceChat.panelOpen = !VoiceChat.panelOpen; updateVoiceUI(); }
 
-/* ============ VOICE MODAL ============ */
 function openVoiceModal() { $('voice-modal').classList.add('on'); voiceModalMain(); }
 function closeVoiceModal() { $('voice-modal').classList.remove('on'); }
 function voiceModalMain() {
   const body = $('voice-modal-body');
   if (VoiceChat.active) {
-    body.innerHTML = `
-      <div style="font-family:monospace;font-size:32px;letter-spacing:8px;color:#5fe08a;font-weight:800;padding:12px;background:rgba(34,197,94,.12);border:2px dashed rgba(34,197,94,.4);border-radius:10px;margin-bottom:14px;direction:ltr;">${VoiceChat.code}</div>
+    body.innerHTML = `<div style="font-family:monospace;font-size:32px;letter-spacing:8px;color:#5fe08a;font-weight:800;padding:12px;background:rgba(34,197,94,.12);border:2px dashed rgba(34,197,94,.4);border-radius:10px;margin-bottom:14px;direction:ltr;">${VoiceChat.code}</div>
       <div style="font-size:12px;opacity:.7;margin-bottom:16px;">شما به ویس چت متصل هستید (${VoiceChat.connections.size+1} نفر)</div>
-      <div class="vmodal-actions">
-        <button class="vmodal-btn green" onclick="closeVoiceModal();openVoicePanel()">مشاهده پنل</button>
-        <button class="vmodal-btn ghost" onclick="closeVoiceModal()">بستن</button>
-      </div>`;
+      <div class="vmodal-actions"><button class="vmodal-btn green" onclick="closeVoiceModal();openVoicePanel()">مشاهده پنل</button><button class="vmodal-btn ghost" onclick="closeVoiceModal()">بستن</button></div>`;
   } else {
-    body.innerHTML = `
-      <div class="vmodal-actions">
-        <button class="vmodal-btn green" onclick="voiceModalCreate()">ساخت ویس چت</button>
-        <button class="vmodal-btn" onclick="voiceModalShowJoin()">پیوستن با کد</button>
-        <button class="vmodal-btn ghost" onclick="closeVoiceModal()">بستن</button>
-      </div>`;
+    body.innerHTML = `<div class="vmodal-actions"><button class="vmodal-btn green" onclick="voiceModalCreate()">ساخت ویس چت</button><button class="vmodal-btn" onclick="voiceModalShowJoin()">پیوستن با کد</button><button class="vmodal-btn ghost" onclick="closeVoiceModal()">بستن</button></div>`;
   }
 }
 async function voiceModalCreate() {
   const body = $('voice-modal-body');
   body.innerHTML = `<div style="padding:20px;color:#79d3ff;">در حال ساخت...</div>`;
   try {
-    const code = await voiceCreate((status) => {
-      body.innerHTML = `<div style="padding:20px;color:#79d3ff;">${status}</div>`;
-    });
-    body.innerHTML = `
-      <div style="font-size:13px;margin-bottom:8px;">ویس چت ساخته شد! این کد را برای دوستانت بفرست:</div>
+    const code = await voiceCreate((status) => { body.innerHTML = `<div style="padding:20px;color:#79d3ff;">${status}</div>`; });
+    body.innerHTML = `<div style="font-size:13px;margin-bottom:8px;">ویس چت ساخته شد! این کد را برای دوستانت بفرست:</div>
       <div style="font-family:monospace;font-size:40px;letter-spacing:10px;color:#79d3ff;font-weight:800;padding:14px;background:rgba(46,159,224,.15);border:2px dashed rgba(121,211,255,.5);border-radius:10px;margin-bottom:16px;direction:ltr;">${code}</div>
-      <div class="vmodal-actions">
-        <button class="vmodal-btn green" onclick="closeVoiceModal();openVoicePanel()">شروع</button>
-      </div>`;
-    showToast('ویس چت ساخته شد ✓', 'voice');
+      <div class="vmodal-actions"><button class="vmodal-btn green" onclick="closeVoiceModal();openVoicePanel()">شروع</button></div>`;
+    showToast('ویس چت ساخته شد', 'voice');
   } catch(e) {
-    body.innerHTML = `<div style="color:#ff7a6b;margin-bottom:12px;">خطا: ${e.message === 'mic-denied' ? 'دسترسی به میکروفون رد شد' : 'اتصال برقرار نشد. دوباره تلاش کن.'}</div>
+    body.innerHTML = `<div style="color:#ff7a6b;margin-bottom:12px;">خطا: ${e.message === 'mic-denied' ? 'دسترسی به میکروفون رد شد' : 'اتصال برقرار نشد.'}</div>
       <div class="vmodal-actions"><button class="vmodal-btn" onclick="voiceModalMain()">تلاش مجدد</button></div>`;
   }
 }
 function voiceModalShowJoin() {
   const body = $('voice-modal-body');
-  body.innerHTML = `
-    <div style="font-size:13px;margin-bottom:10px;">کد ویس چت را وارد کن:</div>
+  body.innerHTML = `<div style="font-size:13px;margin-bottom:10px;">کد ویس چت را وارد کن:</div>
     <input type="text" class="vinput-code" id="vjoin-input" maxlength="4" inputmode="numeric" placeholder="0000">
-    <div class="vmodal-actions">
-      <button class="vmodal-btn green" onclick="voiceModalDoJoin()">اتصال</button>
-      <button class="vmodal-btn ghost" onclick="voiceModalMain()">بازگشت</button>
-    </div>
+    <div class="vmodal-actions"><button class="vmodal-btn green" onclick="voiceModalDoJoin()">اتصال</button><button class="vmodal-btn ghost" onclick="voiceModalMain()">بازگشت</button></div>
     <div class="verr" id="vjoin-err"></div>`;
   setTimeout(() => $('vjoin-input').focus(), 100);
   $('vjoin-input').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g,'').slice(0,4); });
@@ -849,20 +619,16 @@ async function voiceModalDoJoin() {
   if (!/^\d{4}$/.test(code)) { $('vjoin-err').textContent = 'کد باید ۴ رقم باشد'; return; }
   const body = $('voice-modal-body');
   try {
-    await voiceJoin(code, (status) => {
-      body.innerHTML = `<div style="padding:20px;color:#79d3ff;">${status}</div>`;
-    });
+    await voiceJoin(code, (status) => { body.innerHTML = `<div style="padding:20px;color:#79d3ff;">${status}</div>`; });
     await new Promise(r => setTimeout(r, 1200));
-    closeVoiceModal();
-    openVoicePanel();
-    showToast('به ویس چت متصل شدید ✓', 'voice');
+    closeVoiceModal(); openVoicePanel();
+    showToast('به ویس چت متصل شدید', 'voice');
   } catch(e) {
-    body.innerHTML = `<div style="color:#ff7a6b;margin-bottom:12px;">خطا: ${e.message === 'mic-denied' ? 'دسترسی به میکروفون رد شد' : 'کد اشتباه است یا ویس چت وجود ندارد.'}</div>
+    body.innerHTML = `<div style="color:#ff7a6b;margin-bottom:12px;">خطا: ${e.message === 'mic-denied' ? 'دسترسی به میکروفون رد شد' : 'کد اشتباه است.'}</div>
       <div class="vmodal-actions"><button class="vmodal-btn" onclick="voiceModalShowJoin()">تلاش مجدد</button></div>`;
   }
 }
 
-// expose to global scope
 window.openVoiceModal = openVoiceModal;
 window.closeVoiceModal = closeVoiceModal;
 window.voiceModalMain = voiceModalMain;
@@ -921,11 +687,9 @@ sun.shadow.camera.near=1; sun.shadow.camera.far=600;
 sun.shadow.bias=-0.0008; sun.shadow.normalBias=0.02;
 scene.add(sun); scene.add(sun.target);
 
-/* ============ TEXTURES ============ */
 function makeGroundTexture(){ const c=document.createElement('canvas'); c.width=c.height=512; const g=c.getContext('2d'); g.fillStyle='#6e6b5e'; g.fillRect(0,0,512,512); for(let i=0;i<9000;i++){ const v=60+Math.random()*70; g.fillStyle=`rgba(${v|0},${(v*0.97)|0},${(v*0.86)|0},${Math.random()*0.55})`; const s=Math.random()*3.2+0.6; g.fillRect(Math.random()*512,Math.random()*512,s,s); } const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(100,100); t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy()); t.colorSpace=THREE.SRGBColorSpace; return t; }
 function makeCrateTexture(){ const c=document.createElement('canvas'); c.width=c.height=256; const g=c.getContext('2d'); g.fillStyle='#9a7248'; g.fillRect(0,0,256,256); g.strokeStyle='rgba(60,40,20,.55)'; g.lineWidth=8; g.strokeRect(6,6,244,244); g.beginPath(); g.moveTo(10,10); g.lineTo(246,246); g.stroke(); g.beginPath(); g.moveTo(246,10); g.lineTo(10,246); g.stroke(); const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; return t; }
 
-/* ============ WORLD ============ */
 let A=230;
 const worldGroup=new THREE.Group(); scene.add(worldGroup);
 const colliders=[]; const worldMeshes=[];
@@ -943,12 +707,10 @@ function addRoom(cx,cz,w,d,h,mat,door){ const t=0.8,dw=4.5,hw=w/2,hd=d/2,segX=(w
 function buildMap(){ addBox(0,0,-A,A*2,20,5,matWall); addBox(0,0,A,A*2,20,5,matWall); addBox(-A,0,0,5,20,A*2,matWall); addBox(A,0,0,5,20,A*2,matWall); addBox(0,0,0,40,2,40,matConcrete); addBox(0,2,0,30,12,30,matDark); addBox(0,14,0,34,2,34,matConcrete); addBox(-15,2,-15,8,16,8,matRed); addBox(15,2,-15,8,16,8,matRed); addBox(-15,2,15,8,16,8,matRed); addBox(15,2,15,8,16,8,matRed); addBox(0,0,25,10,1,10,matConcrete); addBox(0,1,20,10,1,10,matConcrete); addBox(0,2,15,10,1,10,matConcrete); addRoom(-80,-80,40,30,6,matConcrete,'s'); addRoom(80,-80,35,40,6,matMetal,'w'); addRoom(-80,80,30,30,5,matBlue,'e'); addRoom(80,80,45,35,7,matConcrete,'n'); addRoom(0,-140,60,20,5,matRed,'s'); addRoom(0,140,60,20,5,matRed,'n'); addRoom(-140,0,20,60,5,matMetal,'e'); addRoom(140,0,20,60,5,matMetal,'w'); addBox(-160,0,-160,10,25,10,matDark); addBox(-160,25,-160,12,2,12,matConcrete); addBox(160,0,160,10,25,10,matDark); addBox(160,25,160,12,2,12,matConcrete); for(let i=0;i<30;i++){ const x=rand(-200,200),z=rand(-200,200); if(Math.abs(x)<30&&Math.abs(z)<30) continue; addBox(x,0,z,6.5,2.7,2.6,i%2===0?matMetal:matRed); } for(let i=0;i<80;i++){ const x=rand(-200,200),z=rand(-200,200); if(Math.abs(x)<30&&Math.abs(z)<30) continue; addBox(x,0,z,1.5,1.5,1.5,matCrate); if(Math.random()>0.5) addBox(x,1.5,z,1.5,1.5,1.5,matCrate); } for(let i=0;i<20;i++){ const x=rand(-200,200),z=rand(-200,200); if(Math.abs(x)<30&&Math.abs(z)<30) continue; if(i%2===0) addBox(x,0,z,8,1.2,1.0,matConcrete); else addBox(x,0,z,1.0,1.2,8,matConcrete); } }
 buildMap();
 
-/* ============ SPAWN ============ */
 const SPAWN_POINTS=[];
 for(let i=0;i<40;i++){ const a=(i/40)*Math.PI*2; const r=150+rand(-20,20); SPAWN_POINTS.push(new THREE.Vector3(Math.cos(a)*r,20,Math.sin(a)*r)); }
 for(let i=0;i<20;i++){ SPAWN_POINTS.push(new THREE.Vector3(rand(-100,100),20,rand(-100,100))); }
 
-/* ============ PLAYER ============ */
 const PLAYER={ pos:new THREE.Vector3(0,20,0), vel:new THREE.Vector3(), yaw:Math.PI, pitch:0, radius:0.42, height:1.75, eyeStand:1.62, eyeCrouch:1.05, eye:1.62, onGround:false, crouching:false, sprinting:false, health:100, maxHealth:100, alive:true, respawnTimer:0 };
 const GRAVITY=22.0, JUMP_SPEED=7.3, SPEED_WALK=5.4, SPEED_RUN=8.1, SPEED_CROUCH=2.6;
 let START_POS=new THREE.Vector3(0,20,0);
@@ -957,7 +719,6 @@ function playerRight(){ return new THREE.Vector3(Math.cos(PLAYER.yaw),0,-Math.si
 function resolveHorizontal(pos,radius){ for(let i=0;i<colliders.length;i++){ const b=colliders[i]; if(b.max.x-b.min.x>100||b.max.z-b.min.z>100) continue; const minX=b.min.x-radius,maxX=b.max.x+radius,minZ=b.min.z-radius,maxZ=b.max.z+radius; if(pos.x<=minX||pos.x>=maxX||pos.z<=minZ||pos.z>=maxZ) continue; if(pos.y>=b.max.y-0.06) continue; if(pos.y+PLAYER.height<=b.min.y) continue; const dxL=pos.x-minX,dxR=maxX-pos.x,dzL=pos.z-minZ,dzR=maxZ-pos.z; const m=Math.min(dxL,dxR,dzL,dzR); if(m===dxL) pos.x=minX; else if(m===dxR) pos.x=maxX; else if(m===dzL) pos.z=minZ; else pos.z=maxZ; } }
 function groundHeightAt(x,z,y){ let h=0; const pad=PLAYER.radius*0.55; for(let i=0;i<colliders.length;i++){ const b=colliders[i]; if(x<b.min.x-pad||x>b.max.x+pad) continue; if(z<b.min.z-pad||z>b.max.z+pad) continue; if(b.max.y<=y+0.5&&b.max.y>h) h=b.max.y; } return h; }
 
-/* ============ WEAPONS ============ */
 const WEAPONS=[
   {id:'ar',name:'AR-15',magSize:30,reserveMax:210,damage:26,headMul:2.4,rpm:700,spread:0.014,adsSpread:0.0035,moveSpread:0.020,recoil:1.0,reloadTime:1.9,auto:true,baseFov:78,adsFov:50,range:150,sound:'ar'},
   {id:'smg',name:'SMG-9',magSize:35,reserveMax:245,damage:19,headMul:2.0,rpm:950,spread:0.020,adsSpread:0.0085,moveSpread:0.026,recoil:0.65,reloadTime:1.55,auto:true,baseFov:80,adsFov:60,range:100,sound:'smg'},
@@ -994,37 +755,13 @@ const muzzleFlash=new THREE.Mesh(new THREE.SphereGeometry(0.09,8,8),muzzleFlashM
 muzzleFlash.position.set(0.24,-0.20,-0.95); muzzleFlash.visible=false; camera.add(muzzleFlash);
 let muzzleTimer=0;
 
-/* ============ EFFECTS ============ */
 const effects=[];
 function spawnTracer(from,to,color){ const geo=new THREE.BufferGeometry().setFromPoints([from.clone(),to.clone()]); const mat=new THREE.LineBasicMaterial({color:color||0xffe08a,transparent:true,opacity:0.95,depthWrite:false}); const line=new THREE.Line(geo,mat); line.frustumCulled=false; scene.add(line); effects.push({type:'tracer',obj:line,life:0.06,max:0.06}); }
 function spawnImpact(point,color){ const geo=new THREE.SphereGeometry(0.09,6,6); const mat=new THREE.MeshBasicMaterial({color:color||0xffcc66,transparent:true,opacity:0.95,blending:THREE.AdditiveBlending,depthWrite:false}); const m=new THREE.Mesh(geo,mat); m.position.copy(point); scene.add(m); effects.push({type:'impact',obj:m,life:0.18,max:0.18}); }
 function updateEffects(dt){ for(let i=effects.length-1;i>=0;i--){ const e=effects[i]; e.life-=dt; if(e.life<=0){scene.remove(e.obj); if(e.obj.geometry)e.obj.geometry.dispose(); if(e.obj.material)e.obj.material.dispose(); effects.splice(i,1); continue;} const t=e.life/e.max; if(e.type==='tracer') e.obj.material.opacity=0.95*t; else { e.obj.material.opacity=0.95*t; e.obj.scale.setScalar(1+(1-t)*2.4); } } }
 
-/* ============ GAME NETWORK ============ */
+/* ============ NETWORK ============ */
 const Net={ peer:null, roomCode:null, isHost:false, hostConn:null, clientConns:new Map(), myId:null, myName:'Player', started:false, tickTimer:null, lastStateSend:0 };
-
-async function hostRoom(onStatus = () => {}) {
-  for (let attempt = 1; attempt <= 5; attempt++) {
-    onStatus(`تلاش ${attempt} برای ساخت روم...`);
-    const code = String(1000 + Math.floor(Math.random()*9000));
-    const peer = new Peer('br' + code, peerCfg);
-    try {
-      await waitPeerOpen(peer, 8000);
-      Net.peer = peer;
-      Net.roomCode = code;
-      Net.isHost = true;
-      Net.myId = peer.id;
-      setupHost(peer);
-      onStatus('روم ساخته شد');
-      // Wait for server propagation
-      await new Promise(r => setTimeout(r, 2000));
-      return code;
-    } catch(e) {
-      try { peer.destroy(); } catch(_){}
-    }
-  }
-  throw new Error('cannot-create');
-}
 
 function setupHost(peer){
   peer.on('connection', conn => {
@@ -1032,9 +769,7 @@ function setupHost(peer){
     handleNewClient(conn);
   });
   peer.on('error', e => { if (e.type !== 'peer-unavailable') console.warn('[host] peer error', e); });
-  peer.on('disconnected', () => {
-    try { if (!peer.destroyed) peer.reconnect(); } catch(_){}
-  });
+  peer.on('disconnected', () => { try { if (!peer.destroyed) peer.reconnect(); } catch(_){} });
 }
 
 function handleNewClient(conn){
@@ -1077,29 +812,132 @@ function handleFromClient(fromId, data){
 
 function startHostTick(){ if (Net.tickTimer) clearInterval(Net.tickTimer); Net.tickTimer = setInterval(()=>{ if (!Net.isHost) return; broadcastAll({type:'states', players:getAllStates()}); }, 100); }
 
-async function joinRoom(code, name, onStatus = () => {}) {
+/* ==============================================================
+   PUBLIC ROOMS
+   ============================================================== */
+const PUBLIC_PREFIX = 'baz-pub-';
+const PUBLIC_MAX = 20;
+
+async function createPublicRoom(onStatus = () => {}) {
+  for (let index = 1; index <= PUBLIC_MAX; index++) {
+    onStatus(`تلاش برای سرور عمومی #${index}...`);
+    const targetId = PUBLIC_PREFIX + index;
+    const peer = new Peer(targetId, peerCfg);
+    try {
+      await waitPeerOpen(peer, 6000);
+      Net.peer = peer;
+      Net.roomCode = 'PUBLIC #' + index;
+      Net.isHost = true;
+      Net.myId = peer.id;
+      setupHost(peer);
+      onStatus('روم عمومی ساخته شد');
+      await new Promise(r => setTimeout(r, 1500));
+      return;
+    } catch(e) {
+      try { peer.destroy(); } catch(_){}
+    }
+  }
+  throw new Error('cannot-create');
+}
+
+async function joinPublicRoom(onStatus = () => {}) {
+  const myPeer = new Peer(undefined, peerCfg);
+  await waitPeerOpen(myPeer, 8000);
+  Net.peer = myPeer;
+  Net.myId = myPeer.id;
+  Net.myName = ($('setName').value || 'Player').trim().slice(0,16) || 'Player';
+
+  const unavailableIds = new Set();
+  myPeer.on('error', (e) => {
+    if (e && e.type === 'peer-unavailable' && e.message) {
+      const m = e.message.match(/baz-pub-\d+/);
+      if (m) unavailableIds.add(m[0]);
+    }
+  });
+
+  for (let index = 1; index <= PUBLIC_MAX; index++) {
+    const targetId = PUBLIC_PREFIX + index;
+    if (unavailableIds.has(targetId)) continue;
+    onStatus(`جستجوی سرور #${index}...`);
+    try {
+      const conn = myPeer.connect(targetId, { reliable: true });
+      conn.on('data', handleFromHost);
+      conn.on('error', () => {});
+      await Promise.race([
+        new Promise((res, rej) => {
+          if (conn.open) return res();
+          const t = setTimeout(() => rej(new Error('timeout')), 1400);
+          conn.on('open', () => { clearTimeout(t); res(); });
+        }),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 1800))
+      ]);
+      Net.hostConn = conn;
+      Net.isHost = false;
+      Net.roomCode = 'PUBLIC #' + index;
+      conn.on('close', () => {
+        if (!Net.isHost) { showToast('اتصال قطع شد', 'warn'); leaveRoom(); }
+      });
+      try { conn.send({ type: 'name', name: Net.myName }); } catch(_){}
+      onStatus('متصل شد');
+      return;
+    } catch(e) {
+      try { conn.close(); } catch(_){}
+    }
+  }
+  try { myPeer.destroy(); } catch(_){}
+  Net.peer = null;
+  throw new Error('no-public-rooms');
+}
+
+/* ============ PRIVATE ROOMS ============ */
+async function hostPrivateRoom(onStatus = () => {}) {
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    onStatus(`تلاش ${attempt} برای ساخت روم خصوصی...`);
+    const code = String(1000 + Math.floor(Math.random()*9000));
+    const peer = new Peer('br' + code, peerCfg);
+    try {
+      await waitPeerOpen(peer, 8000);
+      Net.peer = peer; Net.roomCode = code; Net.isHost = true; Net.myId = peer.id;
+      setupHost(peer);
+      onStatus('روم ساخته شد');
+      await new Promise(r => setTimeout(r, 2000));
+      return code;
+    } catch(e) { try { peer.destroy(); } catch(_){} }
+  }
+  throw new Error('cannot-create');
+}
+
+async function joinPrivateRoom(code, name, onStatus = () => {}) {
   const hostId = 'br' + code;
-  const result = await connectWithRetry(hostId, {
-    maxAttempts: 5,
-    perAttemptTimeout: 5000,
-    retryDelay: 1500,
-    onStatus
-  });
-
-  Net.peer = result.peer;
-  Net.hostConn = result.conn;
-  Net.isHost = false;
-  Net.roomCode = code;
-  Net.myId = result.peer.id;
-  Net.myName = name;
-
-  // Send name
-  try { result.conn.send({ type:'name', name }); } catch(_){}
-
-  // Reconnect handler
-  result.peer.on('disconnected', () => {
-    try { if (!result.peer.destroyed) result.peer.reconnect(); } catch(_){}
-  });
+  let lastErr = null;
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    onStatus(`تلاش ${attempt} از 5...`);
+    const peer = new Peer(undefined, peerCfg);
+    try {
+      await waitPeerOpen(peer, 8000);
+      const conn = peer.connect(hostId, { reliable: true });
+      conn.on('data', handleFromHost);
+      conn.on('close', () => { if (!Net.isHost) { showToast('اتصال قطع شد', 'warn'); leaveRoom(); } });
+      conn.on('error', () => {});
+      await Promise.race([
+        new Promise((res, rej) => {
+          if (conn.open) return res();
+          const t = setTimeout(() => rej(new Error('conn-timeout')), 5000);
+          conn.on('open', () => { clearTimeout(t); res(); });
+        }),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('conn-timeout')), 5500))
+      ]);
+      Net.peer = peer; Net.hostConn = conn; Net.isHost = false;
+      Net.roomCode = code; Net.myId = peer.id; Net.myName = name;
+      try { conn.send({ type:'name', name }); } catch(_){}
+      peer.on('disconnected', () => { try { if (!peer.destroyed) peer.reconnect(); } catch(_){} });
+      return;
+    } catch(e) {
+      lastErr = e; try { peer.destroy(); } catch(_){}
+      if (attempt < 5) await new Promise(r => setTimeout(r, 1500));
+    }
+  }
+  throw new Error(lastErr ? lastErr.message : 'connection-failed');
 }
 
 function handleFromHost(data){
@@ -1205,7 +1043,6 @@ function damagePlayer(amount, fromId){ if (!PLAYER.alive||!G.running) return; PL
 function playerDie(kId, kName){ PLAYER.alive=false; PLAYER.respawnTimer=3; G.deaths++; updateScoreHud(); addKillFeed(kName||'حریف','شما',true); Sfx.kill(); $('vignette').style.opacity='1'; }
 function respawnPlayer(){ PLAYER.alive=true; PLAYER.health=100; PLAYER.vel.set(0,0,0); const sp=SPAWN_POINTS[(Math.random()*SPAWN_POINTS.length)|0]; PLAYER.pos.set(sp.x, sp.y||20, sp.z); PLAYER.pitch=0; updateHealthHud(); $('vignette').style.opacity='0'; vignetteTimer=0; if (!Net.isHost) sendToHost({type:'respawn'}); }
 
-/* ============ GAME STATE ============ */
 const G={ running:false, paused:false, over:false, playerScore:0, enemyScore:0, scoreTarget:25, timeLeft:600, kills:0, deaths:0, sensitivity:1.0 };
 
 /* ============ INPUT ============ */
@@ -1298,7 +1135,7 @@ function onHitMarker(k){ k?hitmarkerKill():hitmarkerHit(); }
 
 /* ============ LOBBY UI ============ */
 function updateLobbyUI(){ const t=(Net.isHost?1:0)+Net.clientConns.size+(Net.isHost?0:1); $('playerCount').textContent=t+' / 50'; const list=[]; if (Net.isHost){ list.push({name:Net.myName, isHost:true, isMe:true}); for (const c of Net.clientConns.values()) list.push({name:c.state.name, isHost:false, isMe:false}); } else list.push({name:Net.myName, isHost:false, isMe:true}); $('playerListBody').innerHTML=list.map(p=>`<div class="pl${p.isHost?' host':''}"><div class="dot"></div><div class="nm">${escHtml(p.name)}${p.isMe?' (شما)':''}</div>${p.isHost?'<div class="role">میزبان</div>':''}</div>`).join(''); }
-function showLobby(isHost){ $('menu').classList.remove('on'); $('joinScreen').classList.remove('on'); $('lobby').classList.add('on'); $('roomCode').textContent=Net.roomCode; $('btnStartGame').style.display=isHost?'inline-block':'none'; $('lobbyTitle').textContent=isHost?'روم شما':'اتاق انتظار'; $('lobbyStatus').textContent=isHost?'دکمه شروع را بزن یا منتظر بازیکنان بمان.':'منتظر شروع بازی توسط میزبان...'; updateLobbyUI(); }
+function showLobby(isHost){ $('menu').classList.remove('on'); $('joinScreen').classList.remove('on'); $('lobby').classList.add('on'); $('roomCode').textContent=Net.roomCode; $('btnStartGame').style.display=isHost?'inline-block':'none'; $('lobbyTitle').textContent=isHost?(Net.roomCode.includes('PUBLIC')?'روم عمومی شما':'روم شما'):'اتاق انتظار'; $('lobbyStatus').textContent=isHost?'دکمه شروع را بزن یا منتظر بازیکنان بمان.':'منتظر شروع بازی توسط میزبان...'; updateLobbyUI(); }
 
 /* ============ MATCH ============ */
 function startMatch(){
@@ -1415,42 +1252,64 @@ requestAnimationFrame(loop);
 function onResize(){ camera.aspect=window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); }
 window.addEventListener('resize', onResize);
 
-/* ============ Keepalive ============ */
 setInterval(() => {
-  if (Net.peer && !Net.peer.destroyed && Net.peer.disconnected) {
-    try { Net.peer.reconnect(); } catch(_){}
-  }
-  if (VoiceChat.peer && !VoiceChat.peer.destroyed && VoiceChat.peer.disconnected) {
-    try { VoiceChat.peer.reconnect(); } catch(_){}
-  }
+  if (Net.peer && !Net.peer.destroyed && Net.peer.disconnected) { try { Net.peer.reconnect(); } catch(_){} }
+  if (VoiceChat.peer && !VoiceChat.peer.destroyed && VoiceChat.peer.disconnected) { try { VoiceChat.peer.reconnect(); } catch(_){} }
 }, 5000);
 
 /* ============ UI WIRING ============ */
-$('setPeerServer').addEventListener('change', e => {
-  const v = e.target.value.trim() || '0.peerjs.com';
-  try { localStorage.setItem('baz-peer-host', v); } catch(_){}
-  showToast('سرور PeerJS ذخیره شد. صفحه را رفرش کنید.');
+$('btnCreatePublic').addEventListener('click', async () => {
+  Sfx.init(); Sfx.resume();
+  Net.myName = ($('setName').value || 'Player').trim().slice(0,16) || 'Player';
+  $('btnCreatePublic').disabled = true;
+  $('btnCreatePublic').textContent = 'در حال ساخت...';
+  showConnStatus('در حال ساخت روم عمومی...');
+  try {
+    await createPublicRoom((s) => showConnStatus(s));
+    hideConnStatus(); showLobby(true);
+  } catch (e) {
+    hideConnStatus();
+    alert('همه ۲۰ سرور عمومی پر است! بعداً دوباره تلاش کن.');
+  } finally {
+    $('btnCreatePublic').disabled = false;
+    $('btnCreatePublic').textContent = 'ساخت روم عمومی';
+  }
 });
-try { const saved = localStorage.getItem('baz-peer-host'); if (saved) $('setPeerServer').value = saved; } catch(_){}
+
+$('btnJoinPublic').addEventListener('click', async () => {
+  Sfx.init(); Sfx.resume();
+  Net.myName = ($('setName').value || 'Player').trim().slice(0,16) || 'Player';
+  $('btnJoinPublic').disabled = true;
+  $('btnJoinPublic').textContent = 'در حال جستجو...';
+  showConnStatus('در حال جستجوی روم‌های عمومی...');
+  try {
+    await joinPublicRoom((s) => showConnStatus(s));
+    hideConnStatus(); showLobby(false);
+  } catch (e) {
+    hideConnStatus();
+    alert('هیچ روم عمومی پیدا نشد. می‌تونی خودت یکی بسازی!');
+  } finally {
+    $('btnJoinPublic').disabled = false;
+    $('btnJoinPublic').textContent = 'پیوستن به روم عمومی (خودکار)';
+  }
+});
 
 $('btnCreate').addEventListener('click', async () => {
   Sfx.init(); Sfx.resume();
   Net.myName = ($('setName').value || 'Player').trim().slice(0,16) || 'Player';
-  $('btnCreate').disabled = true;
-  $('btnCreate').textContent = 'در حال ساخت...';
-  showConnStatus('در حال ساخت روم...');
+  $('btnCreate').disabled = true; $('btnCreate').textContent = 'در حال ساخت...';
+  showConnStatus('در حال ساخت روم خصوصی...');
   try {
-    await hostRoom((status) => { showConnStatus(status); });
-    hideConnStatus();
-    showLobby(true);
+    await hostPrivateRoom((s) => showConnStatus(s));
+    hideConnStatus(); showLobby(true);
   } catch (e) {
     hideConnStatus();
-    alert('خطا در ساخت روم: ' + e.message + '\n\nممکن است سرور PeerJS موقتاً در دسترس نباشد.');
+    alert('خطا در ساخت روم: ' + e.message);
   } finally {
-    $('btnCreate').disabled = false;
-    $('btnCreate').textContent = 'ساخت روم بازی';
+    $('btnCreate').disabled = false; $('btnCreate').textContent = 'ساخت روم خصوصی';
   }
 });
+
 $('btnJoin').addEventListener('click', () => { $('menu').classList.remove('on'); $('joinScreen').classList.add('on'); $('joinCode').value=''; $('joinError').textContent=''; setTimeout(()=>$('joinCode').focus(), 100); });
 $('joinCode').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g,'').slice(0,4); });
 $('btnBackMenu').addEventListener('click', () => { $('joinScreen').classList.remove('on'); $('menu').classList.add('on'); });
@@ -1459,19 +1318,15 @@ $('btnDoJoin').addEventListener('click', async () => {
   const code = $('joinCode').value.trim();
   if (!/^\d{4}$/.test(code)){ $('joinError').textContent = 'کد باید ۴ رقم باشد'; return; }
   Net.myName = ($('setName').value || 'Player').trim().slice(0,16) || 'Player';
-  $('btnDoJoin').disabled = true;
-  $('btnDoJoin').textContent = 'در حال اتصال...';
+  $('btnDoJoin').disabled = true; $('btnDoJoin').textContent = 'در حال اتصال...';
   $('joinError').textContent = '';
   try {
-    await joinRoom(code, Net.myName, (status) => {
-      $('joinError').textContent = status;
-    });
+    await joinPrivateRoom(code, Net.myName, (status) => { $('joinError').textContent = status; });
     showLobby(false);
   } catch (e) {
-    $('joinError').textContent = 'روم پیدا نشد. مطمئن شو کد درست است و میزبان هنوز متصل است.\n' + (e.message || '');
+    $('joinError').textContent = 'روم پیدا نشد. مطمئن شو کد درست است و میزبان هنوز متصل است.';
   } finally {
-    $('btnDoJoin').disabled = false;
-    $('btnDoJoin').textContent = 'اتصال';
+    $('btnDoJoin').disabled = false; $('btnDoJoin').textContent = 'اتصال';
   }
 });
 
@@ -1492,8 +1347,8 @@ $('setQuality').addEventListener('change', e => { const q=e.target.value; if (q=
 
 setInterval(() => {
   if (!Net.peer) return;
-  if (Net.isHost){ pingEl.textContent = `بازیکنان: ${Net.clientConns.size+1} | روم: ${Net.roomCode||'-'}`; }
-  else if (Net.hostConn && Net.hostConn.open){ pingEl.textContent = `بازیکنان: ${remotePlayers.size+1} | روم: ${Net.roomCode||'-'}`; }
+  if (Net.isHost){ pingEl.textContent = `بازیکنان: ${Net.clientConns.size+1} | ${Net.roomCode||'-'}`; }
+  else if (Net.hostConn && Net.hostConn.open){ pingEl.textContent = `بازیکنان: ${remotePlayers.size+1} | ${Net.roomCode||'-'}`; }
 }, 2000);
 
 buildGunModel(0); updateHealthHud(); updateAmmoHud(); updateScoreHud(); updateTimerHud(); updateVoiceUI();
