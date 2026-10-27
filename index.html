@@ -362,6 +362,27 @@ function waitPeerOpen(peer, timeout=8000) {
   });
 }
 
+function waitConnOpen(conn, timeout=6000) {
+  return new Promise((res, rej) => {
+    if (conn.open) return res();
+    let done = false;
+    const finish = (err) => {
+      if (done) return;
+      done = true;
+      clearInterval(poll);
+      clearTimeout(t);
+      try { conn.off('open', onOpen); conn.off('error', onErr); } catch(_){}
+      if (err) rej(err); else res();
+    };
+    const onOpen = () => finish();
+    const onErr = (e) => finish(e);
+    const t = setTimeout(() => finish(new Error('conn-timeout')), timeout);
+    const poll = setInterval(() => { if (conn.open) finish(); }, 60);
+    conn.on('open', onOpen);
+    conn.on('error', onErr);
+  });
+}
+
 /* ==============================================================
    VOICE CHAT (مستقل)
    ============================================================== */
@@ -387,7 +408,10 @@ async function voiceCreate(onStatus = () => {}) {
     const peer = new Peer('bv' + code, peerCfg);
     try {
       await waitPeerOpen(peer, 8000);
-      VoiceChat.peer = peer; VoiceChat.code = code; VoiceChat.isHost = true; VoiceChat.active = true;
+      VoiceChat.peer = peer;
+      VoiceChat.code = code;
+      VoiceChat.isHost = true;
+      VoiceChat.active = true;
       voiceSetup();
       onStatus('آماده');
       await new Promise(r => setTimeout(r, 1500));
@@ -401,32 +425,43 @@ async function voiceJoin(code, onStatus = () => {}) {
   await voiceEnsureStream();
   const hostId = 'bv' + code;
   let lastErr = null;
+
   for (let attempt = 1; attempt <= 5; attempt++) {
     onStatus(`تلاش ${attempt} از 5...`);
     const peer = new Peer(undefined, peerCfg);
+
     try {
       await waitPeerOpen(peer, 8000);
+
+      // مهم: قبل از connect، peer رو ست کن
+      VoiceChat.peer = peer;
+      VoiceChat.code = code;
+      VoiceChat.isHost = false;
+
       const conn = peer.connect(hostId, { reliable: true });
       voiceWireConn(conn, true);
-      await Promise.race([
-        new Promise((res, rej) => {
-          if (conn.open) return res();
-          const t = setTimeout(() => rej(new Error('conn-timeout')), 5000);
-          conn.on('open', () => { clearTimeout(t); res(); });
-        }),
-        new Promise((_, rej) => setTimeout(() => rej(new Error('conn-timeout')), 5500))
-      ]);
-      VoiceChat.peer = peer; VoiceChat.code = code; VoiceChat.isHost = false; VoiceChat.active = true;
+
+      // به جای تکیه صرف به رویداد open، هر 60ms چک کن
+      await waitConnOpen(conn, 6000);
+
+      VoiceChat.active = true;
       voiceSetup();
-      conn.send({ type:'hello', name: voiceGetName() });
+
+      try { conn.send({ type:'hello', name: voiceGetName() }); } catch(_){}
+
       if (VoiceChat.localStream && !VoiceChat.calls.has(hostId)) {
-        const call = peer.call(hostId, VoiceChat.localStream);
-        voiceWireCall(call);
+        try {
+          const call = peer.call(hostId, VoiceChat.localStream);
+          voiceWireCall(call);
+        } catch(_){}
       }
+
       onStatus('متصل شد');
       return;
     } catch(e) {
-      lastErr = e; try { peer.destroy(); } catch(_){}
+      lastErr = e;
+      if (VoiceChat.peer === peer) VoiceChat.peer = null;
+      try { peer.destroy(); } catch(_){}
       if (attempt < 5) await new Promise(r => setTimeout(r, 1500));
     }
   }
@@ -437,7 +472,11 @@ function voiceGetName() { const n = ($('setName')?.value || '').trim(); return (
 
 function voiceSetup() {
   const peer = VoiceChat.peer;
-  peer.on('call', call => { call.answer(VoiceChat.localStream || undefined); voiceWireCall(call); });
+  if (!peer) return;
+  peer.on('call', call => {
+    try { call.answer(VoiceChat.localStream || undefined); } catch(_){}
+    voiceWireCall(call);
+  });
   peer.on('connection', conn => voiceWireConn(conn, false));
   peer.on('error', e => { if (e.type !== 'peer-unavailable') console.warn('voice peer error', e); });
   peer.on('disconnected', () => { try { if (!peer.destroyed) peer.reconnect(); } catch(_){} });
@@ -445,39 +484,70 @@ function voiceSetup() {
 
 function voiceWireConn(conn, isJoiner) {
   const peerId = conn.peer;
-  if (!VoiceChat.connections.has(peerId)) VoiceChat.connections.set(peerId, { conn, name: 'Player' + peerId.slice(-4) });
-  else VoiceChat.connections.get(peerId).conn = conn;
+  if (!VoiceChat.connections.has(peerId)) {
+    VoiceChat.connections.set(peerId, { conn, name: 'Player' + peerId.slice(-4) });
+  } else {
+    VoiceChat.connections.get(peerId).conn = conn;
+  }
 
   conn.on('open', () => {
+    if (!VoiceChat.peer || VoiceChat.peer.destroyed) return;
     if (VoiceChat.isHost) {
       const list = [];
-      for (const [id, c] of VoiceChat.connections) if (id !== peerId && c.conn.open) list.push({ id, name: c.name });
+      for (const [id, c] of VoiceChat.connections) {
+        if (id !== peerId && c.conn.open) list.push({ id, name: c.name });
+      }
       try { conn.send({ type:'peer-list', peers:list }); } catch(_){}
-      for (const [id, c] of VoiceChat.connections) if (id !== peerId && c.conn.open) try { c.conn.send({ type:'peer-joined', peerId }); } catch(_){}
-    } else if (!isJoiner) try { conn.send({ type:'hello', name: voiceGetName() }); } catch(_){}
+      for (const [id, c] of VoiceChat.connections) {
+        if (id !== peerId && c.conn.open) {
+          try { c.conn.send({ type:'peer-joined', peerId }); } catch(_){}
+        }
+      }
+    } else if (!isJoiner) {
+      try { conn.send({ type:'hello', name: voiceGetName() }); } catch(_){}
+    }
     updateVoiceUI();
   });
 
   conn.on('data', data => {
+    if (!data || !data.type) return;
     if (data.type === 'hello') {
       const c = VoiceChat.connections.get(peerId);
       if (c) c.name = (data.name || c.name).slice(0,16);
-      if (VoiceChat.isHost) for (const [id, c] of VoiceChat.connections) if (id !== peerId && c.conn.open) try { c.conn.send({ type:'peer-renamed', peerId, name: c.name }); } catch(_){}
-      updateVoiceUI();
-    }
-    else if (data.type === 'peer-list') {
-      for (const p of (data.peers || [])) {
-        if (!VoiceChat.connections.has(p.id)) {
-          const pc = VoiceChat.peer.connect(p.id, { reliable:true });
-          VoiceChat.connections.set(p.id, { conn:pc, name:p.name || 'Player' });
-          voiceWireConn(pc, false);
+      if (VoiceChat.isHost) {
+        for (const [id, cc] of VoiceChat.connections) {
+          if (id !== peerId && cc.conn.open) {
+            try { cc.conn.send({ type:'peer-renamed', peerId, name: c.name }); } catch(_){}
+          }
         }
-        if (VoiceChat.localStream && !VoiceChat.calls.has(p.id)) voiceWireCall(VoiceChat.peer.call(p.id, VoiceChat.localStream));
       }
       updateVoiceUI();
     }
-    else if (data.type === 'peer-renamed') { const c = VoiceChat.connections.get(data.peerId); if (c) { c.name = data.name; updateVoiceUI(); } }
-    else if (data.type === 'chat') voiceAddChatMsg(data.name || 'Player', data.text || '', false);
+    else if (data.type === 'peer-list') {
+      if (!VoiceChat.peer || VoiceChat.peer.destroyed) return;
+      for (const p of (data.peers || [])) {
+        if (!p || !p.id || VoiceChat.connections.has(p.id)) continue;
+        try {
+          const pc = VoiceChat.peer.connect(p.id, { reliable:true });
+          VoiceChat.connections.set(p.id, { conn:pc, name:p.name || 'Player' });
+          voiceWireConn(pc, false);
+          if (VoiceChat.localStream && !VoiceChat.calls.has(p.id)) {
+            try { voiceWireCall(VoiceChat.peer.call(p.id, VoiceChat.localStream)); } catch(_){}
+          }
+        } catch(err) { console.warn('voice peer-list connect failed', err); }
+      }
+      updateVoiceUI();
+    }
+    else if (data.type === 'peer-joined') {
+      updateVoiceUI();
+    }
+    else if (data.type === 'peer-renamed') {
+      const c = VoiceChat.connections.get(data.peerId);
+      if (c) { c.name = data.name; updateVoiceUI(); }
+    }
+    else if (data.type === 'chat') {
+      voiceAddChatMsg(data.name || 'Player', data.text || '', false);
+    }
   });
 
   conn.on('close', () => {
@@ -498,12 +568,20 @@ function voiceWireCall(call) {
   call.on('stream', stream => {
     let el = VoiceChat.audioElements.get(peerId);
     if (!el) {
-      el = document.createElement('audio'); el.autoplay = true; el.style.display = 'none';
-      document.body.appendChild(el); VoiceChat.audioElements.set(peerId, el);
+      el = document.createElement('audio');
+      el.autoplay = true;
+      el.style.display = 'none';
+      document.body.appendChild(el);
+      VoiceChat.audioElements.set(peerId, el);
     }
-    el.srcObject = stream; el.volume = VoiceChat.outputVolume;
+    el.srcObject = stream;
+    el.volume = VoiceChat.outputVolume;
   });
-  call.on('close', () => { VoiceChat.calls.delete(peerId); const el = VoiceChat.audioElements.get(peerId); if (el) { el.remove(); VoiceChat.audioElements.delete(peerId); } });
+  call.on('close', () => {
+    VoiceChat.calls.delete(peerId);
+    const el = VoiceChat.audioElements.get(peerId);
+    if (el) { el.remove(); VoiceChat.audioElements.delete(peerId); }
+  });
   call.on('error', () => {});
 }
 
@@ -521,8 +599,11 @@ function voiceLeave() {
   for (const el of VoiceChat.audioElements.values()) el.remove();
   VoiceChat.audioElements.clear();
   for (const call of VoiceChat.calls.values()) { try { call.close(); } catch(_){} }
-  VoiceChat.calls.clear(); VoiceChat.connections.clear();
-  VoiceChat.active = false; VoiceChat.panelOpen = false; VoiceChat.code = null;
+  VoiceChat.calls.clear();
+  VoiceChat.connections.clear();
+  VoiceChat.active = false;
+  VoiceChat.panelOpen = false;
+  VoiceChat.code = null;
   updateVoiceUI();
   showToast('از ویس چت خارج شدید');
 }
@@ -581,6 +662,7 @@ function toggleVoicePanel() { VoiceChat.panelOpen = !VoiceChat.panelOpen; update
 
 function openVoiceModal() { $('voice-modal').classList.add('on'); voiceModalMain(); }
 function closeVoiceModal() { $('voice-modal').classList.remove('on'); }
+
 function voiceModalMain() {
   const body = $('voice-modal-body');
   if (VoiceChat.active) {
@@ -591,6 +673,7 @@ function voiceModalMain() {
     body.innerHTML = `<div class="vmodal-actions"><button class="vmodal-btn green" onclick="voiceModalCreate()">ساخت ویس چت</button><button class="vmodal-btn" onclick="voiceModalShowJoin()">پیوستن با کد</button><button class="vmodal-btn ghost" onclick="closeVoiceModal()">بستن</button></div>`;
   }
 }
+
 async function voiceModalCreate() {
   const body = $('voice-modal-body');
   body.innerHTML = `<div style="padding:20px;color:#79d3ff;">در حال ساخت...</div>`;
@@ -605,6 +688,7 @@ async function voiceModalCreate() {
       <div class="vmodal-actions"><button class="vmodal-btn" onclick="voiceModalMain()">تلاش مجدد</button></div>`;
   }
 }
+
 function voiceModalShowJoin() {
   const body = $('voice-modal-body');
   body.innerHTML = `<div style="font-size:13px;margin-bottom:10px;">کد ویس چت را وارد کن:</div>
@@ -614,17 +698,19 @@ function voiceModalShowJoin() {
   setTimeout(() => $('vjoin-input').focus(), 100);
   $('vjoin-input').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g,'').slice(0,4); });
 }
+
 async function voiceModalDoJoin() {
   const code = $('vjoin-input').value.trim();
   if (!/^\d{4}$/.test(code)) { $('vjoin-err').textContent = 'کد باید ۴ رقم باشد'; return; }
   const body = $('voice-modal-body');
   try {
     await voiceJoin(code, (status) => { body.innerHTML = `<div style="padding:20px;color:#79d3ff;">${status}</div>`; });
-    await new Promise(r => setTimeout(r, 1200));
-    closeVoiceModal(); openVoicePanel();
+    await new Promise(r => setTimeout(r, 800));
+    closeVoiceModal();
+    openVoicePanel();
     showToast('به ویس چت متصل شدید', 'voice');
   } catch(e) {
-    body.innerHTML = `<div style="color:#ff7a6b;margin-bottom:12px;">خطا: ${e.message === 'mic-denied' ? 'دسترسی به میکروفون رد شد' : 'کد اشتباه است.'}</div>
+    body.innerHTML = `<div style="color:#ff7a6b;margin-bottom:12px;">خطا: ${e.message === 'mic-denied' ? 'دسترسی به میکروفون رد شد' : 'کد اشتباه است یا میزبان ویس آفلاین است.'}</div>
       <div class="vmodal-actions"><button class="vmodal-btn" onclick="voiceModalShowJoin()">تلاش مجدد</button></div>`;
   }
 }
@@ -711,7 +797,7 @@ const SPAWN_POINTS=[];
 for(let i=0;i<40;i++){ const a=(i/40)*Math.PI*2; const r=150+rand(-20,20); SPAWN_POINTS.push(new THREE.Vector3(Math.cos(a)*r,20,Math.sin(a)*r)); }
 for(let i=0;i<20;i++){ SPAWN_POINTS.push(new THREE.Vector3(rand(-100,100),20,rand(-100,100))); }
 
-const PLAYER={ pos:new THREE.Vector3(0,20,0), vel:new THREE.Vector3(), yaw:Math.PI, pitch:0, radius:0.42, height:1.75, eyeStand:1.62, eyeCrouch:1.05, eye:1.62, onGround:false, crouching:false, sprinting:false, health:100, maxHealth:100, alive:true, respawnTimer:0 };
+const PLAYER={ pos:new THREE.Vector3(0,20,0), vel:new THREE.Vector3(), yaw:Math.PI, pitch:0, radius:0.42, height:1.75, eyeStand:1.62, eyeCrouch:1.05, eye:1.62, onGround:false, crouching:false, sprinting:false, health:100, maxHealth:100, alive:true };
 const GRAVITY=22.0, JUMP_SPEED=7.3, SPEED_WALK=5.4, SPEED_RUN=8.1, SPEED_CROUCH=2.6;
 let START_POS=new THREE.Vector3(0,20,0);
 function playerForward(){ return new THREE.Vector3(-Math.sin(PLAYER.yaw),0,-Math.cos(PLAYER.yaw)); }
@@ -797,17 +883,94 @@ function getAllStates(){
 }
 function broadcastAll(msg, exceptId){ if (!Net.isHost) return; for (const [id,c] of Net.clientConns){ if (id===exceptId) continue; if (c.conn.open){ try { c.conn.send(msg); } catch(_){} } } }
 
+/* ==============================================================
+   سرور-محور: هاست تصمیم نهایی دمیج و مرگ رو می‌گیره
+   ============================================================== */
 function handleFromClient(fromId, data){
-  const c = Net.clientConns.get(fromId); if (!c) return;
-  if (data.type==='state'){ c.state.x=data.x; c.state.y=data.y; c.state.z=data.z; c.state.yaw=data.yaw; c.state.pitch=data.pitch; c.state.health=data.health; c.state.alive=data.alive; c.state.weapon=data.weapon||0; updateRemoteState(c.state); }
-  else if (data.type==='name'){ c.state.name = String(data.name).slice(0,16).replace(/[^\w\u0600-\u06FF ._-]/g,'') || ('Player'+fromId.slice(-4)); broadcastAll({type:'playerRenamed', id:fromId, name:c.state.name}); updateLobbyUI(); }
-  else if (data.type==='hit'){ const target = data.target===Net.myId ? null : Net.clientConns.get(data.target); if (data.target===Net.myId){ damagePlayer(data.damage, fromId); broadcastAll({type:'hitTaken', from:Net.myId, damage:data.damage, shooter:fromId}, fromId); } else if (target && target.conn.open){ target.conn.send({type:'damaged', amount:data.damage, from:fromId, fromName:c.state.name}); } }
-  else if (data.type==='killed'){ const victim = data.victim;
-    if (victim===Net.myId){ playerDie(fromId, c.state.name); broadcastAll({type:'killEvent', killer:fromId, killerName:c.state.name, victim:Net.myId, victimName:Net.myName}); }
-    else { const v = Net.clientConns.get(victim); if (v){ v.state.health=0; v.state.alive=false; v.state.deaths++; c.state.score++; c.state.kills++; broadcastAll({type:'killEvent', killer:fromId, killerName:c.state.name, victim, victimName:v.state.name}); broadcastAll({type:'respawnPlayer', id:victim}); setTimeout(()=>{ const vv=Net.clientConns.get(victim); if(!vv) return; const sp=SPAWN_POINTS[(Math.random()*SPAWN_POINTS.length)|0]; vv.state.x=sp.x; vv.state.y=sp.y||20; vv.state.z=sp.z; vv.state.health=100; vv.state.alive=true; if (vv.conn.open) vv.conn.send({type:'respawn', x:sp.x, y:sp.y||20, z:sp.z}); }, 3000); } }
-    broadcastAll({type:'scoreUpdate', players:getAllStates()});
+  const isFromHost = fromId === Net.myId;
+  const c = isFromHost ? null : Net.clientConns.get(fromId);
+  if (!isFromHost && !c) return;
+  const fromName = isFromHost ? Net.myName : (c ? c.state.name : '?');
+
+  if (data.type === 'state' && c){
+    c.state.x=data.x; c.state.y=data.y; c.state.z=data.z;
+    c.state.yaw=data.yaw; c.state.pitch=data.pitch;
+    c.state.health=data.health; c.state.alive=data.alive;
+    c.state.weapon=data.weapon||0;
+    updateRemoteState(c.state);
   }
-  else if (data.type==='shoot'){ broadcastAll({type:'remoteShoot', fromId, from:data.from, to:data.to}, fromId); }
+  else if (data.type === 'name' && c){
+    c.state.name = String(data.name).slice(0,16).replace(/[^\w\u0600-\u06FF ._-]/g,'') || ('Player'+fromId.slice(-4));
+    broadcastAll({type:'playerRenamed', id:fromId, name:c.state.name});
+    updateLobbyUI();
+  }
+  else if (data.type === 'hit'){
+    const targetId = data.target;
+    const dmg = Math.min(Math.max(0, data.damage || 0), 150);
+    if (!dmg) return;
+
+    if (targetId === Net.myId){
+      // هاست هدف قرار گرفته
+      damagePlayer(dmg, fromId);
+      if (PLAYER.health <= 0 && PLAYER.alive){
+        playerDie(fromId, fromName);
+        if (c){ c.state.score++; c.state.kills++; }
+        broadcastAll({type:'killEvent', killer:fromId, killerName:fromName, victim:Net.myId, victimName:Net.myName});
+        broadcastAll({type:'scoreUpdate', players:getAllStates()});
+        // ری‌اسپاون خود هاست
+        setTimeout(() => {
+          if (!PLAYER.alive){
+            PLAYER.alive = true;
+            PLAYER.health = 100;
+            PLAYER.vel.set(0,0,0);
+            const sp = SPAWN_POINTS[(Math.random()*SPAWN_POINTS.length)|0];
+            PLAYER.pos.set(sp.x, sp.y||20, sp.z);
+            PLAYER.pitch = 0;
+            updateHealthHud();
+            $('vignette').style.opacity = '0';
+          }
+        }, 3000);
+      }
+    } else {
+      // کلاینت هدف قرار گرفته
+      const target = Net.clientConns.get(targetId);
+      if (!target || !target.state.alive) return;
+
+      target.state.health = Math.max(0, target.state.health - dmg);
+      const fatal = target.state.health <= 0;
+
+      if (target.conn.open){
+        try { target.conn.send({type:'damaged', amount:dmg, from:fromId, fromName, fatal}); } catch(_){}
+      }
+
+      if (fatal){
+        target.state.alive = false;
+        target.state.deaths++;
+
+        if (isFromHost){
+          G.playerScore++; G.kills++;
+          Sfx.kill(); hitmarkerKill(); updateScoreHud();
+        } else if (c){
+          c.state.score++; c.state.kills++;
+        }
+
+        broadcastAll({type:'killEvent', killer:fromId, killerName:fromName, victim:targetId, victimName:target.state.name});
+        broadcastAll({type:'scoreUpdate', players:getAllStates()});
+
+        setTimeout(() => {
+          const vv = Net.clientConns.get(targetId);
+          if (!vv) return;
+          const sp = SPAWN_POINTS[(Math.random()*SPAWN_POINTS.length)|0];
+          vv.state.x=sp.x; vv.state.y=sp.y||20; vv.state.z=sp.z;
+          vv.state.health=100; vv.state.alive=true;
+          if (vv.conn.open) try { vv.conn.send({type:'respawn', x:sp.x, y:sp.y||20, z:sp.z}); } catch(_){}
+        }, 3000);
+      }
+    }
+  }
+  else if (data.type === 'shoot'){
+    broadcastAll({type:'remoteShoot', fromId, from:data.from, to:data.to}, fromId);
+  }
 }
 
 function startHostTick(){ if (Net.tickTimer) clearInterval(Net.tickTimer); Net.tickTimer = setInterval(()=>{ if (!Net.isHost) return; broadcastAll({type:'states', players:getAllStates()}); }, 100); }
@@ -833,9 +996,7 @@ async function createPublicRoom(onStatus = () => {}) {
       onStatus('روم عمومی ساخته شد');
       await new Promise(r => setTimeout(r, 1500));
       return;
-    } catch(e) {
-      try { peer.destroy(); } catch(_){}
-    }
+    } catch(e) { try { peer.destroy(); } catch(_){} }
   }
   throw new Error('cannot-create');
 }
@@ -880,9 +1041,7 @@ async function joinPublicRoom(onStatus = () => {}) {
       try { conn.send({ type: 'name', name: Net.myName }); } catch(_){}
       onStatus('متصل شد');
       return;
-    } catch(e) {
-      try { conn.close(); } catch(_){}
-    }
+    } catch(e) { try { conn.close(); } catch(_){} }
   }
   try { myPeer.destroy(); } catch(_){}
   Net.peer = null;
@@ -947,15 +1106,42 @@ function handleFromHost(data){
   else if (data.type==='playerLeft'){ removeRemote(data.id); updateLobbyUI(); }
   else if (data.type==='playerRenamed'){ const rp=remotePlayers.get(data.id); if (rp) rp.name=data.name; updateLobbyUI(); }
   else if (data.type==='started'){ startMatch(); }
-  else if (data.type==='damaged'){ damagePlayer(data.amount, data.from); addKillFeed(data.fromName||'حریف', 'شما', true); }
-  else if (data.type==='killEvent'){ if (data.killer===Net.myId){ G.playerScore++; G.kills++; Sfx.kill(); hitmarkerKill(); } addKillFeed(data.killerName||'?', data.victimName||'?', data.victim===Net.myId); updateScoreHud(); }
-  else if (data.type==='scoreUpdate'){ for (const p of data.players){ if (p.id===Net.myId){ G.kills=p.kills; G.deaths=p.deaths; } } updateScoreHud(); updateScoreboard(data.players); }
-  else if (data.type==='remoteShoot'){ spawnTracer(new THREE.Vector3(data.from.x,data.from.y,data.from.z), new THREE.Vector3(data.to.x,data.to.y,data.to.z), 0xff9a5a); Sfx.shot('smg'); }
-  else if (data.type==='respawn'){ PLAYER.alive=true; PLAYER.health=100; PLAYER.pos.set(data.x,data.y||20,data.z); PLAYER.vel.set(0,0,0); updateHealthHud(); $('vignette').style.opacity='0'; }
-  else if (data.type==='respawnPlayer'){ const rp=remotePlayers.get(data.id); if (rp){ rp.target.health=100; rp.group.visible=true; rp.dead=false; } }
+  else if (data.type==='damaged'){
+    damagePlayer(data.amount, data.from);
+    addKillFeed(data.fromName||'حریف', 'شما', true);
+  }
+  else if (data.type==='killEvent'){
+    if (data.killer===Net.myId){ G.playerScore++; G.kills++; Sfx.kill(); hitmarkerKill(); }
+    if (data.victim===Net.myId){ playerDie(data.killer, data.killerName); }
+    addKillFeed(data.killerName||'?', data.victimName||'?', data.victim===Net.myId);
+    updateScoreHud();
+  }
+  else if (data.type==='scoreUpdate'){
+    for (const p of data.players){ if (p.id===Net.myId){ G.kills=p.kills; G.deaths=p.deaths; } }
+    updateScoreHud();
+    updateScoreboard(data.players);
+  }
+  else if (data.type==='remoteShoot'){
+    spawnTracer(new THREE.Vector3(data.from.x,data.from.y,data.from.z), new THREE.Vector3(data.to.x,data.to.y,data.to.z), 0xff9a5a);
+    Sfx.shot('smg');
+  }
+  else if (data.type==='respawn'){
+    PLAYER.alive=true; PLAYER.health=100;
+    PLAYER.pos.set(data.x,data.y||20,data.z);
+    PLAYER.vel.set(0,0,0);
+    updateHealthHud();
+    $('vignette').style.opacity='0';
+  }
+  else if (data.type==='respawnPlayer'){
+    const rp=remotePlayers.get(data.id);
+    if (rp){ rp.target.health=100; rp.group.visible=true; rp.dead=false; }
+  }
 }
 
-function sendToHost(msg){ if (Net.hostConn && Net.hostConn.open){ try { Net.hostConn.send(msg); } catch(_){} } }
+function sendToHost(msg){
+  if (Net.isHost){ handleFromClient(Net.myId, msg); return; }
+  if (Net.hostConn && Net.hostConn.open){ try { Net.hostConn.send(msg); } catch(_){} }
+}
 
 /* ============ REMOTE ============ */
 const remotePlayers = new Map(); const remoteHittables = [];
@@ -1024,7 +1210,19 @@ function tryShoot(){
     const wh=raycaster.intersectObjects(shootWorldMeshes,false); const rh=raycaster.intersectObjects(remoteHittables,false);
     const wd=wh.length?wh[0].distance:Infinity; const rd=rh.length?rh[0].distance:Infinity;
     let end;
-    if (rd<wd){ const hit=rh[0]; end=hit.point; const part=hit.object.userData.part; const pid=hit.object.userData.playerId; let dmg=w.damage; if (part==='head') dmg*=w.headMul; if (part==='limb') dmg*=0.82; onHitMarker(false); spawnImpact(hit.point, part==='head'?0xffdd44:0xff6644); Sfx.hit(); const rp=remotePlayers.get(pid); if (rp && rp.target.health-dmg<=0){ sendToHost({type:'killed', victim:pid}); onHitMarker(true); } else sendToHost({type:'hit', target:pid, damage:dmg}); }
+    if (rd<wd){
+      const hit=rh[0]; end=hit.point;
+      const part=hit.object.userData.part;
+      const pid=hit.object.userData.playerId;
+      let dmg=w.damage;
+      if (part==='head') dmg*=w.headMul;
+      if (part==='limb') dmg*=0.82;
+      onHitMarker(false);
+      spawnImpact(hit.point, part==='head'?0xffdd44:0xff6644);
+      Sfx.hit();
+      // فقط اطلاع بده، تصمیم با هاست
+      sendToHost({type:'hit', target:pid, damage:dmg});
+    }
     else if (wd<Infinity){ end=wh[0].point; spawnImpact(end, 0xd8c9a0); }
     else end=origin.clone().addScaledVector(dir, w.range);
     spawnTracer(origin, end, 0xffe08a);
@@ -1039,9 +1237,29 @@ function switchWeapon(idx){ if (idx===curWeapon||idx<0||idx>=WEAPONS.length||rel
 
 /* ============ DAMAGE ============ */
 let vignetteTimer=0;
-function damagePlayer(amount, fromId){ if (!PLAYER.alive||!G.running) return; PLAYER.health-=amount; vignetteTimer=0.45; Sfx.hurt(); updateHealthHud(); if (PLAYER.health<=0){ PLAYER.health=0; if (Net.isHost){ G.deaths++; G.enemyScore++; updateScoreHud(); } } }
-function playerDie(kId, kName){ PLAYER.alive=false; PLAYER.respawnTimer=3; G.deaths++; updateScoreHud(); addKillFeed(kName||'حریف','شما',true); Sfx.kill(); $('vignette').style.opacity='1'; }
-function respawnPlayer(){ PLAYER.alive=true; PLAYER.health=100; PLAYER.vel.set(0,0,0); const sp=SPAWN_POINTS[(Math.random()*SPAWN_POINTS.length)|0]; PLAYER.pos.set(sp.x, sp.y||20, sp.z); PLAYER.pitch=0; updateHealthHud(); $('vignette').style.opacity='0'; vignetteTimer=0; if (!Net.isHost) sendToHost({type:'respawn'}); }
+function damagePlayer(amount, fromId){
+  if (!PLAYER.alive || !G.running) return;
+  PLAYER.health -= amount;
+  vignetteTimer = 0.45;
+  Sfx.hurt();
+  updateHealthHud();
+  if (PLAYER.health <= 0){ PLAYER.health = 0; }
+}
+function playerDie(kId, kName){
+  PLAYER.alive = false;
+  PLAYER.health = 0;
+  PLAYER.vel.set(0,0,0);
+  updateHealthHud();
+  addKillFeed(kName||'حریف', 'شما', true);
+  Sfx.kill();
+  $('vignette').style.opacity = '1';
+}
+function respawnPlayer(){
+  PLAYER.alive=true; PLAYER.health=100; PLAYER.vel.set(0,0,0);
+  const sp=SPAWN_POINTS[(Math.random()*SPAWN_POINTS.length)|0];
+  PLAYER.pos.set(sp.x, sp.y||20, sp.z); PLAYER.pitch=0;
+  updateHealthHud(); $('vignette').style.opacity='0'; vignetteTimer=0;
+}
 
 const G={ running:false, paused:false, over:false, playerScore:0, enemyScore:0, scoreTarget:25, timeLeft:600, kills:0, deaths:0, sensitivity:1.0 };
 
@@ -1176,7 +1394,7 @@ function leaveRoom(){
 /* ============ PLAYER UPDATE ============ */
 function doJump(){ if (!PLAYER.alive) return; if (PLAYER.onGround){ PLAYER.vel.y=JUMP_SPEED; PLAYER.onGround=false; Sfx.empty(); } }
 function updatePlayer(dt){
-  if (!PLAYER.alive){ PLAYER.respawnTimer-=dt; if (PLAYER.respawnTimer<=0) respawnPlayer(); return; }
+  if (!PLAYER.alive){ return; }
   let ix=0, iz=0;
   if (keys['KeyW']||keys['ArrowUp']) iz+=1;
   if (keys['KeyS']||keys['ArrowDown']) iz-=1;
