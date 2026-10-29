@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>BAZ — Voice & Room P2P</title>
+<title>BAZ — Battle Arena Zone</title>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
@@ -61,6 +61,69 @@ html,body{height:100%;overflow:hidden;background:#07090c;color:#e8eef6;font-fami
 #ammo span{font-size:16px;opacity:.62;margin-left:4px;}
 #ammo.low b{color:#ff7a6b;}
 #pingDisplay{position:absolute;top:10px;right:10px;font-size:11px;opacity:.7;background:rgba(8,12,18,.6);padding:3px 8px;border-radius:5px;direction:ltr;}
+
+/* ========== KILLCAM / RESPAWN OVERLAY ========== */
+#respawn-overlay{
+  position:fixed; inset:0; z-index:50;
+  display:none; flex-direction:column; align-items:stretch; justify-content:space-between;
+  pointer-events:none; padding:20px;
+  background:radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,.65) 100%);
+}
+#respawn-overlay.on{display:flex;}
+.kc-top{
+  display:flex; flex-direction:column; align-items:center; gap:10px; padding-top:24px;
+}
+.kc-badge{
+  background: linear-gradient(135deg, rgba(220,38,38,.92), rgba(153,27,27,.92));
+  color:#fff; padding:6px 22px; border-radius:4px;
+  font-size:12px; font-weight:900; letter-spacing:5px;
+  border:1px solid rgba(255,120,120,.65);
+  box-shadow:0 4px 24px rgba(220,38,38,.5);
+  animation: kcBlink 1.2s ease infinite;
+}
+@keyframes kcBlink { 50% { opacity: .55; } }
+.kc-victim{
+  font-size:13px; color:#cbd5e1; letter-spacing:1px;
+  background:rgba(0,0,0,.72); padding:8px 20px; border-radius:10px;
+  border:1px solid rgba(255,255,255,.12);
+  backdrop-filter:blur(8px);
+}
+.kc-victim b{
+  color:#ff8a5a; font-weight:800; font-size:17px;
+  text-shadow:0 0 20px rgba(255,120,80,.7);
+  padding:0 3px;
+}
+.kc-bottom{
+  display:flex; flex-direction:column; align-items:center; gap:4px; padding-bottom:24px;
+}
+.kc-countdown{
+  font-size:52px; font-weight:900; color:#fff; line-height:1;
+  text-shadow:0 4px 30px rgba(0,0,0,.95), 0 0 40px rgba(255,100,80,.55);
+  font-variant-numeric:tabular-nums;
+}
+.kc-label{
+  font-size:10px; letter-spacing:4px; color:#ff8a5a; font-weight:700;
+}
+.kc-bar{
+  width:min(240px,52vw); height:3px; background:rgba(255,255,255,.15);
+  border-radius:2px; overflow:hidden; margin-top:6px;
+}
+.kc-bar > div{
+  height:100%; width:0%; background:linear-gradient(90deg,#ff6b5e,#ffd166);
+  transition:width .3s linear;
+}
+
+/* legacy death overlay (fallback when no killer info) */
+#respawn-overlay .ro-title{display:none;}
+#respawn-overlay .ro-sub{display:none;}
+#respawn-overlay .ro-count{display:none;}
+#respawn-overlay .ro-bar{display:none;}
+
+#para-hud{position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:22;pointer-events:none;background:rgba(8,12,18,.7);border:1px solid rgba(121,211,255,.4);border-radius:12px;padding:10px 20px;display:none;flex-direction:column;align-items:center;gap:2px;backdrop-filter:blur(8px);}
+#para-hud.on{display:flex;}
+#para-hud .ph-alt{font-size:24px;font-weight:800;color:#79d3ff;font-variant-numeric:tabular-nums;}
+#para-hud .ph-lbl{font-size:10px;color:#94a3b8;letter-spacing:2px;text-transform:uppercase;}
+#para-hud .ph-hint{font-size:11px;color:#cbd5e1;margin-top:3px;opacity:.8;}
 .screen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;z-index:40;background:radial-gradient(circle at 50% 35%,#12202e 0%,#070a0e 70%);overflow-y:auto;}
 .screen.on{display:flex;}
 .screen h1{font-size:clamp(30px,8vw,58px);letter-spacing:5px;font-weight:900;background:linear-gradient(180deg,#eaf4ff,#6fa8d8);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 6px 22px rgba(60,140,220,.35));}
@@ -73,19 +136,8 @@ html,body{height:100%;overflow:hidden;background:#07090c;color:#e8eef6;font-fami
 .btn:disabled{opacity:.4;cursor:not-allowed;}
 .btn.ghost{background:rgba(255,255,255,.07);color:#dce8f5;border:1px solid rgba(255,255,255,.18);box-shadow:none;}
 .btn.warn{background:linear-gradient(180deg,#ff8a7a,#c0392b);color:#fff;}
-.btn.voice{background:linear-gradient(180deg,#22c55e,#16a34a);color:#fff;}
-.btn.public{background:linear-gradient(180deg,#fbbf24,#d97706);color:#fff;}
-.btn.private{background:linear-gradient(180deg,#a855f7,#7e22ce);color:#fff;}
 .input{background:#111a24;color:#dce8f5;border:1px solid rgba(255,255,255,.16);border-radius:8px;padding:11px 14px;font-family:inherit;font-size:15px;width:100%;max-width:320px;text-align:center;}
 .input.code{letter-spacing:10px;font-size:26px;font-weight:800;direction:ltr;font-family:monospace;}
-.keys{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:600px;}
-.key{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:7px;padding:6px 11px;font-size:12px;}
-.key b{color:#79d3ff;}
-.settings{display:grid;grid-template-columns:auto 1fr;gap:9px 16px;align-items:center;max-width:400px;width:100%;font-size:13px;margin-top:6px;}
-.settings label{opacity:.78;text-align:right;}
-.settings input[type=range]{width:100%;accent-color:#2e9fe0;}
-.settings select{background:#111a24;color:#dce8f5;border:1px solid rgba(255,255,255,.16);border-radius:6px;padding:5px 8px;font-family:inherit;font-size:13px;width:100%;}
-.settings input[type=text]{background:#111a24;color:#dce8f5;border:1px solid rgba(255,255,255,.16);border-radius:6px;padding:5px 8px;font-family:inherit;font-size:13px;width:100%;direction:ltr;text-align:center;}
 #lobby{display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;text-align:center;z-index:40;position:fixed;inset:0;background:radial-gradient(circle at 50% 35%,#12202e 0%,#070a0e 70%);overflow-y:auto;}
 #lobby.on{display:flex;}
 .code-box{background:rgba(46,159,224,.12);border:2px dashed rgba(121,211,255,.5);border-radius:12px;padding:16px 28px;margin:8px 0;}
@@ -177,7 +229,51 @@ html,body{height:100%;overflow:hidden;background:#07090c;color:#e8eef6;font-fami
 @keyframes tIn{from{opacity:0;transform:translateX(-50%) translateY(10px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
 #conn-status{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:200;background:rgba(8,12,18,.95);border:1px solid rgba(56,189,248,.5);border-radius:12px;padding:20px 30px;color:#79d3ff;font-weight:700;font-size:14px;text-align:center;display:none;backdrop-filter:blur(10px);box-shadow:0 10px 40px rgba(0,0,0,.8);}
 #conn-status.on{display:block;}
-@media (max-width:520px){#hpwrap{width:130px;}#ammo b{font-size:26px;}#scoreboard{font-size:11px;min-width:140px;}.code-box .code{font-size:40px;letter-spacing:8px;}#voice-pill{left:48px;padding:0 8px;font-size:11px;}#voice-panel{width:calc(100vw - 20px);max-width:340px;}}
+.screen#menu { padding: 0; }
+.menu-container { width: 100%; max-width: 520px; max-height: 100vh; overflow-y: auto; padding: 20px 16px; display: flex; flex-direction: column; gap: 16px; }
+.menu-container::-webkit-scrollbar { width: 4px; }
+.menu-container::-webkit-scrollbar-thumb { background: rgba(121,211,255,.3); border-radius: 2px; }
+.menu-header { text-align: center; padding: 8px 0 4px; }
+.menu-header h1 { font-size: clamp(32px, 10vw, 52px); letter-spacing: 6px; font-weight: 900; background: linear-gradient(180deg, #eaf4ff, #6fa8d8); -webkit-background-clip: text; background-clip: text; color: transparent; margin: 0; filter: drop-shadow(0 6px 22px rgba(60,140,220,.4)); line-height: 1; }
+.menu-header .subtitle { font-size: 12px; letter-spacing: 3px; color: #ffd166; margin-top: 6px; text-transform: uppercase; font-weight: 600; }
+.menu-header .team { font-size: 10px; letter-spacing: 1.5px; opacity: .5; margin-top: 2px; }
+.menu-section { display: flex; flex-direction: column; gap: 8px; }
+.section-label { font-size: 11px; color: #79d3ff; letter-spacing: 2px; text-transform: uppercase; font-weight: 700; padding: 0 4px; display: flex; align-items: center; gap: 8px; }
+.section-label::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(121,211,255,.4), transparent); }
+.mode-card { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,.12); background: rgba(20,28,38,.65); cursor: pointer; transition: all .15s ease; color: #e8eef6; font-family: inherit; text-align: right; width: 100%; backdrop-filter: blur(10px); }
+.mode-card:hover { background: rgba(30,42,58,.85); border-color: rgba(121,211,255,.35); transform: translateY(-1px); }
+.mode-card:active { transform: scale(.98); }
+.mode-card.primary { background: linear-gradient(135deg, rgba(251,191,36,.18), rgba(217,119,6,.18)); border-color: rgba(251,191,36,.5); }
+.mode-card.primary:hover { background: linear-gradient(135deg, rgba(251,191,36,.28), rgba(217,119,6,.28)); }
+.mode-card.primary .mode-icon { background: linear-gradient(135deg, #fbbf24, #d97706); color: #1a1a1a; }
+.mode-card.private { background: linear-gradient(135deg, rgba(168,85,247,.18), rgba(126,34,206,.18)); border-color: rgba(168,85,247,.5); }
+.mode-card.private .mode-icon { background: linear-gradient(135deg, #a855f7, #7e22ce); color: #fff; }
+.mode-card.voice { background: linear-gradient(135deg, rgba(34,197,94,.18), rgba(22,163,74,.18)); border-color: rgba(34,197,94,.5); }
+.mode-card.voice .mode-icon { background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff; }
+.mode-card.ghost { background: rgba(255,255,255,.04); }
+.mode-card.ghost .mode-icon { background: rgba(255,255,255,.08); color: #79d3ff; }
+.mode-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; flex-shrink: 0; background: rgba(121,211,255,.15); color: #79d3ff; }
+.mode-text { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.mode-title { font-size: 14px; font-weight: 700; line-height: 1.3; }
+.mode-desc { font-size: 11px; opacity: .6; line-height: 1.3; }
+.mode-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.mode-row .mode-card { padding: 10px 12px; }
+.mode-row .mode-icon { width: 34px; height: 34px; font-size: 15px; }
+.mode-row .mode-title { font-size: 12.5px; }
+.mode-row .mode-desc { font-size: 10px; }
+.settings-compact { background: rgba(20,28,38,.6); border: 1px solid rgba(255,255,255,.1); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 12px; backdrop-filter: blur(8px); }
+.setting-item { display: flex; align-items: center; gap: 12px; }
+.setting-item label { font-size: 12px; opacity: .75; min-width: 80px; text-align: right; }
+.input-sm { flex: 1; background: rgba(10,16,24,.8); color: #dce8f5; border: 1px solid rgba(255,255,255,.14); border-radius: 8px; padding: 8px 12px; font-family: inherit; font-size: 13px; text-align: right; }
+.input-sm:focus { outline: none; border-color: #79d3ff; }
+.slider-wrap { flex: 1; display: flex; align-items: center; gap: 10px; }
+.slider-wrap input[type="range"] { flex: 1; accent-color: #2e9fe0; height: 4px; }
+.slider-val { font-size: 12px; font-weight: 700; color: #79d3ff; min-width: 32px; text-align: left; font-variant-numeric: tabular-nums; }
+.menu-footer { margin-top: 4px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.08); }
+.keys-hint { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.keys-hint span { font-size: 10.5px; opacity: .55; padding: 4px 9px; background: rgba(255,255,255,.04); border-radius: 6px; border: 1px solid rgba(255,255,255,.06); }
+.keys-hint b { color: #79d3ff; font-weight: 700; }
+@media (max-width: 480px) { .mode-row { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -197,6 +293,24 @@ html,body{height:100%;overflow:hidden;background:#07090c;color:#e8eef6;font-fami
   <div id="bottomright"><div id="wname">AR-15</div><div id="ammo"><b id="mag">30</b><span id="res">/ 180</span></div></div>
 </div>
 
+<div id="respawn-overlay">
+  <div class="kc-top">
+    <div class="kc-badge">KILLCAM</div>
+    <div class="kc-victim">شما کشته شدید توسط <b id="respawn-killer">?</b></div>
+  </div>
+  <div class="kc-bottom">
+    <div class="kc-countdown" id="respawn-count">10</div>
+    <div class="kc-label">RESPAWN IN</div>
+    <div class="kc-bar"><div id="respawn-bar"></div></div>
+  </div>
+</div>
+
+<div id="para-hud">
+  <div class="ph-alt" id="ph-alt">0</div>
+  <div class="ph-lbl">ALTITUDE</div>
+  <div class="ph-hint">برای هدایت WASD / جوی‌استیک</div>
+</div>
+
 <button id="pauseBtn">II</button>
 
 <div id="touch">
@@ -211,37 +325,64 @@ html,body{height:100%;overflow:hidden;background:#07090c;color:#e8eef6;font-fami
 </div>
 
 <div class="screen on" id="menu">
-  <h1>BAZ</h1>
-  <div class="subtitle">ساخته شده توسط تیم برنامه نویسی B-Z</div>
-  <p>شوتر اول‌شخص چندنفره P2P.<br>ویس چت جدا از روم بازی کار می‌کند — با هم صحبت کنید، حتی وقتی بازی قطع شد.</p>
-  <div class="keys">
-    <div class="key"><b>WASD</b> حرکت</div>
-    <div class="key"><b>Shift</b> دویدن</div>
-    <div class="key"><b>Space</b> پرش</div>
-    <div class="key"><b>کلیک چپ</b> شلیک</div>
-    <div class="key"><b>راست کلیک</b> اسکوپ</div>
-    <div class="key"><b>1-7</b> تعویض سلاح</div>
+  <div class="menu-container">
+    <div class="menu-header">
+      <h1>BAZ</h1>
+      <div class="subtitle">BATTLE ARENA ZONE</div>
+      <div class="team">تیم برنامه نویسی B-Z</div>
+    </div>
+    <div class="menu-section">
+      <div class="section-label">شروع بازی</div>
+      <button class="mode-card primary" id="btnCreatePublic">
+        <div class="mode-icon">+</div>
+        <div class="mode-text"><div class="mode-title">ساخت روم عمومی</div><div class="mode-desc">میزبانی مسابقه عمومی</div></div>
+      </button>
+      <button class="mode-card ghost" id="btnJoinPublic">
+        <div class="mode-icon">→</div>
+        <div class="mode-text"><div class="mode-title">پیوستن به روم عمومی</div><div class="mode-desc">جستجوی خودکار روم باز</div></div>
+      </button>
+      <div class="mode-row">
+        <button class="mode-card private" id="btnCreate">
+          <div class="mode-icon">#</div>
+          <div class="mode-text"><div class="mode-title">روم خصوصی</div><div class="mode-desc">کد ۴ رقمی</div></div>
+        </button>
+        <button class="mode-card ghost" id="btnJoin">
+          <div class="mode-icon">?</div>
+          <div class="mode-text"><div class="mode-title">پیوستن با کد</div><div class="mode-desc">ورود با کد روم</div></div>
+        </button>
+      </div>
+    </div>
+    <div class="menu-section">
+      <div class="section-label">ارتباط</div>
+      <button class="mode-card voice" id="btnVoice" onclick="openVoiceModal()">
+        <div class="mode-icon">V</div>
+        <div class="mode-text"><div class="mode-title">ویس چت</div><div class="mode-desc">مستقل از روم بازی</div></div>
+      </button>
+    </div>
+    <div class="menu-section">
+      <div class="section-label">تنظیمات</div>
+      <div class="settings-compact">
+        <div class="setting-item"><label>نام نمایشی</label><input type="text" class="input-sm" id="setName" maxlength="16" placeholder="Player" value="Player"></div>
+        <div class="setting-item"><label>حساسیت</label><div class="slider-wrap"><input type="range" id="setSens" min="20" max="300" value="100"><span class="slider-val" id="setSensVal">100</span></div></div>
+        <div class="setting-item"><label>صدا</label><div class="slider-wrap"><input type="range" id="setVol" min="0" max="100" value="60"><span class="slider-val" id="setVolVal">60</span></div></div>
+      </div>
+    </div>
+    <div class="menu-footer">
+      <div class="keys-hint">
+        <span><b>WASD</b> حرکت</span>
+        <span><b>Shift</b> دویدن</span>
+        <span><b>Space</b> پرش</span>
+        <span><b>کلیک چپ</b> شلیک</span>
+        <span><b>راست</b> اسکوپ</span>
+        <span><b>1-7</b> سلاح</span>
+      </div>
+    </div>
   </div>
-  <div class="settings">
-    <label>نام نمایشی</label><input type="text" class="input" id="setName" maxlength="16" placeholder="Player" value="Player">
-    <label>حساسیت</label><input type="range" id="setSens" min="20" max="300" value="100">
-    <label>کیفیت</label><select id="setQuality"><option value="high">بالا</option><option value="med" selected>متوسط</option><option value="low">پایین</option></select>
-    <label>صدا</label><input type="range" id="setVol" min="0" max="100" value="60">
-  </div>
-  <button class="btn voice" id="btnVoice" onclick="openVoiceModal()">ویس چت</button>
-  <button class="btn public" id="btnCreatePublic">ساخت روم عمومی</button>
-  <button class="btn ghost" id="btnJoinPublic">پیوستن به روم عمومی (خودکار)</button>
-  <button class="btn private" id="btnCreate">ساخت روم خصوصی</button>
-  <button class="btn ghost" id="btnJoin">پیوستن با کد</button>
 </div>
 
 <div id="lobby">
   <h2 id="lobbyTitle">اتاق انتظار</h2>
-  <div class="code-box">
-    <div class="label">کد روم — برای دوستانت بفرست</div>
-    <div class="code" id="roomCode">----</div>
-    <button class="copy-btn" id="btnCopyCode">کپی کد</button>
-  </div>
+  <div class="code-box"><div class="label">کد روم — برای دوستانت بفرست</div><div class="code" id="roomCode">----</div><button class="copy-btn" id="btnCopyCode">کپی کد</button></div>
   <div class="player-list"><h4><span>بازیکنان</span><span id="playerCount">1 / 50</span></h4><div id="playerListBody"></div></div>
   <div class="waiting" id="lobbyStatus">در حال آماده‌سازی...</div>
   <button class="btn" id="btnStartGame" style="display:none;">شروع بازی</button>
@@ -257,46 +398,23 @@ html,body{height:100%;overflow:hidden;background:#07090c;color:#e8eef6;font-fami
   <div id="joinError" style="color:#ff6b5e;font-size:12px;min-height:20px;line-height:1.7;"></div>
 </div>
 
-<div class="screen" id="pause">
-  <h2>توقف</h2>
-  <button class="btn" id="btnResume">ادامه</button>
-  <button class="btn ghost" id="btnQuit">بازگشت به روم</button>
-</div>
+<div class="screen" id="pause"><h2>توقف</h2><button class="btn" id="btnResume">ادامه</button><button class="btn ghost" id="btnQuit">بازگشت به روم</button></div>
+<div class="screen" id="over"><h2 id="overTitle">پایان</h2><div id="resultLine"></div><button class="btn" id="btnBackLobby">بازگشت به اتاق انتظار</button></div>
 
-<div class="screen" id="over">
-  <h2 id="overTitle">پایان</h2>
-  <div id="resultLine"></div>
-  <button class="btn" id="btnBackLobby">بازگشت به اتاق انتظار</button>
-</div>
-
-<div id="voice-pill" class="hidden" onclick="toggleVoicePanel()">
-  <span class="vdot"></span><span class="vcount" id="vpill-count">1</span><span class="vlabel">ویس</span>
-</div>
+<div id="voice-pill" class="hidden" onclick="toggleVoicePanel()"><span class="vdot"></span><span class="vcount" id="vpill-count">1</span><span class="vlabel">ویس</span></div>
 
 <div id="voice-panel" class="hidden">
   <div class="vhead"><div class="vtitle">ویس چت</div><button class="vclose" onclick="closeVoicePanel()">×</button></div>
   <div class="vcode" id="vp-code">----</div>
-  <div class="vactions">
-    <button class="vbtn mic-on" id="vp-mic" onclick="voiceToggleMic()">میکروفون روشن</button>
-    <button class="vbtn red" onclick="voiceLeave()">خروج</button>
-  </div>
+  <div class="vactions"><button class="vbtn mic-on" id="vp-mic" onclick="voiceToggleMic()">میکروفون روشن</button><button class="vbtn red" onclick="voiceLeave()">خروج</button></div>
   <div class="vsec">اعضا (<span id="vp-count">1</span>)</div>
   <div class="vlist" id="vp-peers"></div>
   <div class="vsec">چت</div>
   <div class="vchat" id="vchat"><div class="vempty">هنوز پیامی نیست</div></div>
-  <div class="vinput-row">
-    <input class="vinput" id="vchat-input" placeholder="کد روم جدید، یا پیام..." maxlength="120" onkeydown="if(event.key==='Enter'){event.preventDefault();voiceSendChatUI();}">
-    <button class="vsend" onclick="voiceSendChatUI()">ارسال</button>
-  </div>
+  <div class="vinput-row"><input class="vinput" id="vchat-input" placeholder="کد روم جدید، یا پیام..." maxlength="120" onkeydown="if(event.key==='Enter'){event.preventDefault();voiceSendChatUI();}"><button class="vsend" onclick="voiceSendChatUI()">ارسال</button></div>
 </div>
 
-<div id="voice-modal">
-  <div class="vmodal-inner">
-    <h2>ویس چت</h2>
-    <div class="vsub">ویس چت مستقل از روم‌های بازی کار می‌کند — می‌توانید در حین بازی صحبت کنید و کد روم جدید را برای دوستانتان بفرستید.</div>
-    <div id="voice-modal-body"></div>
-  </div>
-</div>
+<div id="voice-modal"><div class="vmodal-inner"><h2>ویس چت</h2><div class="vsub">ویس چت مستقل از روم‌های بازی کار می‌کند.</div><div id="voice-modal-body"></div></div></div>
 
 <div id="conn-status"><span id="conn-status-text">در حال اتصال...</span></div>
 
@@ -314,264 +432,130 @@ const lerp = (a,b,t) => a + (b-a)*t;
 const rand = (a,b) => a + Math.random()*(b-a);
 const escHtml = (s) => String(s).replace(/[<>&"']/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]));
 
-function getPeerServerHost() {
-  try { return localStorage.getItem('baz-peer-host') || '0.peerjs.com'; }
-  catch(e) { return '0.peerjs.com'; }
-}
+function getPeerServerHost() { try { return localStorage.getItem('baz-peer-host') || '0.peerjs.com'; } catch(e) { return '0.peerjs.com'; } }
 function getPeerConfig() {
   return {
-    host: getPeerServerHost(),
-    port: 443,
-    secure: true,
+    host: getPeerServerHost(), port: 443, secure: true, debug: 0,
     config: {
       iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:stun.cloudflare.com:3478' }
-      ]
+        { urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' }, { urls: 'stun:stun3.l.google.com:19302' },
+        { urls: 'stun:stun.cloudflare.com:3478' }, { urls: 'stun:global.stun.twilio.com:3478' },
+        { urls: ['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:80?transport=tcp','turn:openrelay.metered.ca:443','turn:openrelay.metered.ca:443?transport=tcp'], username: 'openrelayproject', credential: 'openrelayproject' },
+        { urls: ['turn:relay1.expressturn.com:3478','turn:relay1.expressturn.com:3478?transport=tcp'], username: 'efIU3M7A0T7VPA7T4S', credential: 'S0yo1AGH80mmPEhr' }
+      ],
+      iceCandidatePoolSize: 10, iceTransportPolicy: 'all', bundlePolicy: 'max-bundle', rtcpMuxPolicy: 'require'
     }
   };
 }
 const peerCfg = getPeerConfig();
 
 function showToast(text, type='') {
-  const el = document.createElement('div');
-  el.className = 'toast ' + type;
-  el.textContent = text;
+  const el = document.createElement('div'); el.className = 'toast ' + type; el.textContent = text;
   document.body.appendChild(el);
-  setTimeout(() => {
-    el.style.transition = 'opacity .3s,transform .3s';
-    el.style.opacity = '0';
-    el.style.transform = 'translateX(-50%) translateY(8px)';
-    setTimeout(() => el.remove(), 350);
-  }, 2400);
+  setTimeout(() => { el.style.transition = 'opacity .3s,transform .3s'; el.style.opacity = '0'; el.style.transform = 'translateX(-50%) translateY(8px)'; setTimeout(() => el.remove(), 350); }, 2400);
 }
 function showConnStatus(text) { $('conn-status-text').textContent = text; $('conn-status').classList.add('on'); }
 function hideConnStatus() { $('conn-status').classList.remove('on'); }
-
 function waitPeerOpen(peer, timeout=8000) {
   return new Promise((res, rej) => {
-    if (peer.open) return res();
-    if (peer.destroyed) return rej(new Error('destroyed'));
+    if (peer.open) return res(); if (peer.destroyed) return rej(new Error('destroyed'));
     const t = setTimeout(() => rej(new Error('open-timeout')), timeout);
     const onOpen = () => { clearTimeout(t); cleanup(); res(); };
     const onErr = (e) => { clearTimeout(t); cleanup(); rej(e); };
     function cleanup() { try { peer.off('open', onOpen); peer.off('error', onErr); } catch(_){} }
-    peer.on('open', onOpen);
-    peer.on('error', onErr);
+    peer.on('open', onOpen); peer.on('error', onErr);
   });
 }
-function waitConnOpen(conn, timeout=6000) {
+function waitConnOpen(conn, timeout=15000) {
   return new Promise((res, rej) => {
     if (conn.open) return res();
     let done = false;
-    const finish = (err) => {
-      if (done) return;
-      done = true;
-      clearInterval(poll); clearTimeout(t);
-      try { conn.off('open', onOpen); conn.off('error', onErr); } catch(_){}
-      if (err) rej(err); else res();
-    };
+    const finish = (err) => { if (done) return; done = true; clearInterval(poll); clearTimeout(t); try { conn.off('open', onOpen); conn.off('error', onErr); } catch(_){} if (err) rej(err); else res(); };
     const onOpen = () => finish();
     const onErr = (e) => finish(e);
     const t = setTimeout(() => finish(new Error('conn-timeout')), timeout);
     const poll = setInterval(() => { if (conn.open) finish(); }, 60);
-    conn.on('open', onOpen);
-    conn.on('error', onErr);
+    conn.on('open', onOpen); conn.on('error', onErr);
   });
 }
 
-/* ============ VOICE CHAT ============ */
-const VoiceChat = {
-  peer: null, code: null, isHost: false, active: false,
-  connections: new Map(), calls: new Map(), audioElements: new Map(),
-  localStream: null, micOn: true, outputVolume: 1.0, panelOpen: false
-};
-
+const VoiceChat = { peer: null, code: null, isHost: false, active: false, connections: new Map(), calls: new Map(), audioElements: new Map(), localStream: null, micOn: true, outputVolume: 1.0, panelOpen: false };
 async function voiceEnsureStream() {
   if (VoiceChat.localStream) return;
   try {
-    const constraints = {
-      audio: {
-        echoCancellation: { ideal: true },
-        noiseSuppression: { ideal: true },
-        autoGainControl: { ideal: true },
-        sampleRate: { ideal: 48000 },
-        sampleSize: { ideal: 16 },
-        channelCount: { ideal: 1 },
-        latency: { ideal: 0.01 }
-      },
-      video: false
-    };
-    VoiceChat.localStream = await navigator.mediaDevices.getUserMedia(constraints);
-    VoiceChat.localStream.getAudioTracks().forEach(t => {
-      t.enabled = VoiceChat.micOn;
-      try { t.contentHint = 'speech'; } catch(_){}
-    });
+    VoiceChat.localStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: { ideal: true }, noiseSuppression: { ideal: true }, autoGainControl: { ideal: true }, sampleRate: { ideal: 48000 }, sampleSize: { ideal: 16 }, channelCount: { ideal: 1 }, latency: { ideal: 0.01 } }, video: false });
+    VoiceChat.localStream.getAudioTracks().forEach(t => { t.enabled = VoiceChat.micOn; try { t.contentHint = 'speech'; } catch(_){} });
   } catch(e) { showToast('دسترسی به میکروفون رد شد', 'warn'); throw new Error('mic-denied'); }
 }
-
-function voiceCallOptions() {
-  return {
-    sdpTransform: (sdp) => {
-      let out = sdp;
-      out = out.replace(/(a=fmtp:\d+ minptime=\d+[^\r\n]*)/g, (m) => {
-        if (m.includes('maxaveragebitrate')) return m;
-        return m + ';maxaveragebitrate=96000;useinbandfec=1;usedtx=0;stereo=0;sprop-stereo=0';
-      });
-      out = out.replace(/(a=ptime:\d+)/g, 'a=ptime:10');
-      return out;
-    }
-  };
-}
-
+function voiceCallOptions() { return { sdpTransform: (sdp) => { let out = sdp; out = out.replace(/(a=fmtp:\d+ minptime=\d+[^\r\n]*)/g, (m) => { if (m.includes('maxaveragebitrate')) return m; return m + ';maxaveragebitrate=96000;useinbandfec=1;usedtx=0;stereo=0;sprop-stereo=0'; }); out = out.replace(/(a=ptime:\d+)/g, 'a=ptime:10'); return out; } }; }
 async function voiceCreate(onStatus = () => {}) {
   await voiceEnsureStream();
   for (let attempt = 1; attempt <= 5; attempt++) {
     onStatus(`تلاش ${attempt} برای ساخت...`);
     const code = String(1000 + Math.floor(Math.random()*9000));
     const peer = new Peer('bv' + code, peerCfg);
-    try {
-      await waitPeerOpen(peer, 8000);
-      VoiceChat.peer = peer; VoiceChat.code = code; VoiceChat.isHost = true; VoiceChat.active = true;
-      voiceSetup();
-      onStatus('آماده');
-      await new Promise(r => setTimeout(r, 1500));
-      return code;
-    } catch(e) { try { peer.destroy(); } catch(_){} }
+    try { await waitPeerOpen(peer, 8000); VoiceChat.peer = peer; VoiceChat.code = code; VoiceChat.isHost = true; VoiceChat.active = true; voiceSetup(); onStatus('آماده'); await new Promise(r => setTimeout(r, 1500)); return code; }
+    catch(e) { try { peer.destroy(); } catch(_){} }
   }
   throw new Error('cannot-create');
 }
-
 async function voiceJoin(code, onStatus = () => {}) {
   await voiceEnsureStream();
-  const hostId = 'bv' + code;
-  let lastErr = null;
+  const hostId = 'bv' + code; let lastErr = null;
   for (let attempt = 1; attempt <= 5; attempt++) {
     onStatus(`تلاش ${attempt} از 5...`);
     const peer = new Peer(undefined, peerCfg);
     try {
       await waitPeerOpen(peer, 8000);
       VoiceChat.peer = peer; VoiceChat.code = code; VoiceChat.isHost = false;
-      const conn = peer.connect(hostId, { reliable: true });
-      voiceWireConn(conn, true);
-      await waitConnOpen(conn, 6000);
-      VoiceChat.active = true;
-      voiceSetup();
+      const conn = peer.connect(hostId, { reliable: true }); voiceWireConn(conn, true);
+      await waitConnOpen(conn, 15000);
+      VoiceChat.active = true; voiceSetup();
       try { conn.send({ type:'hello', name: voiceGetName() }); } catch(_){}
-      if (VoiceChat.localStream && !VoiceChat.calls.has(hostId)) {
-        try { const call = peer.call(hostId, VoiceChat.localStream, voiceCallOptions()); voiceWireCall(call); } catch(_){}
-      }
-      onStatus('متصل شد');
-      return;
-    } catch(e) {
-      lastErr = e;
-      if (VoiceChat.peer === peer) VoiceChat.peer = null;
-      try { peer.destroy(); } catch(_){}
-      if (attempt < 5) await new Promise(r => setTimeout(r, 1500));
-    }
+      if (VoiceChat.localStream && !VoiceChat.calls.has(hostId)) try { const call = peer.call(hostId, VoiceChat.localStream, voiceCallOptions()); voiceWireCall(call); } catch(_){}
+      onStatus('متصل شد'); return;
+    } catch(e) { lastErr = e; if (VoiceChat.peer === peer) VoiceChat.peer = null; try { peer.destroy(); } catch(_){} if (attempt < 5) await new Promise(r => setTimeout(r, 1500)); }
   }
   throw new Error(lastErr ? lastErr.message : 'cannot-join');
 }
-
 function voiceGetName() { const n = ($('setName')?.value || '').trim(); return (n || 'Player').slice(0,16); }
-
 function voiceSetup() {
-  const peer = VoiceChat.peer;
-  if (!peer) return;
-  peer.on('call', call => {
-    try { call.answer(VoiceChat.localStream || undefined, voiceCallOptions()); } catch(_){}
-    voiceWireCall(call);
-  });
+  const peer = VoiceChat.peer; if (!peer) return;
+  peer.on('call', call => { try { call.answer(VoiceChat.localStream || undefined, voiceCallOptions()); } catch(_){} voiceWireCall(call); });
   peer.on('connection', conn => voiceWireConn(conn, false));
   peer.on('error', e => { if (e.type !== 'peer-unavailable') console.warn('voice peer error', e); });
   peer.on('disconnected', () => { try { if (!peer.destroyed) peer.reconnect(); } catch(_){} });
 }
-
 function voiceWireConn(conn, isJoiner) {
   const peerId = conn.peer;
   if (!VoiceChat.connections.has(peerId)) VoiceChat.connections.set(peerId, { conn, name: 'Player' + peerId.slice(-4) });
   else VoiceChat.connections.get(peerId).conn = conn;
-
   conn.on('open', () => {
     if (!VoiceChat.peer || VoiceChat.peer.destroyed) return;
-    if (VoiceChat.isHost) {
-      const list = [];
-      for (const [id, c] of VoiceChat.connections) if (id !== peerId && c.conn.open) list.push({ id, name: c.name });
-      try { conn.send({ type:'peer-list', peers:list }); } catch(_){}
-      for (const [id, c] of VoiceChat.connections) if (id !== peerId && c.conn.open) try { c.conn.send({ type:'peer-joined', peerId }); } catch(_){}
-    } else if (!isJoiner) try { conn.send({ type:'hello', name: voiceGetName() }); } catch(_){}
+    if (VoiceChat.isHost) { const list = []; for (const [id, c] of VoiceChat.connections) if (id !== peerId && c.conn.open) list.push({ id, name: c.name }); try { conn.send({ type:'peer-list', peers:list }); } catch(_){} for (const [id, c] of VoiceChat.connections) if (id !== peerId && c.conn.open) try { c.conn.send({ type:'peer-joined', peerId }); } catch(_){} }
+    else if (!isJoiner) try { conn.send({ type:'hello', name: voiceGetName() }); } catch(_){}
     updateVoiceUI();
   });
-
   conn.on('data', data => {
     if (!data || !data.type) return;
-    if (data.type === 'hello') {
-      const c = VoiceChat.connections.get(peerId);
-      if (c) c.name = (data.name || c.name).slice(0,16);
-      if (VoiceChat.isHost) for (const [id, cc] of VoiceChat.connections) if (id !== peerId && cc.conn.open) try { cc.conn.send({ type:'peer-renamed', peerId, name: c.name }); } catch(_){}
-      updateVoiceUI();
-    }
-    else if (data.type === 'peer-list') {
-      if (!VoiceChat.peer || VoiceChat.peer.destroyed) return;
-      for (const p of (data.peers || [])) {
-        if (!p || !p.id || VoiceChat.connections.has(p.id)) continue;
-        try {
-          const pc = VoiceChat.peer.connect(p.id, { reliable:true });
-          VoiceChat.connections.set(p.id, { conn:pc, name:p.name || 'Player' });
-          voiceWireConn(pc, false);
-          if (VoiceChat.localStream && !VoiceChat.calls.has(p.id)) try { voiceWireCall(VoiceChat.peer.call(p.id, VoiceChat.localStream, voiceCallOptions())); } catch(_){}
-        } catch(err) { console.warn('voice peer-list connect failed', err); }
-      }
-      updateVoiceUI();
-    }
+    if (data.type === 'hello') { const c = VoiceChat.connections.get(peerId); if (c) c.name = (data.name || c.name).slice(0,16); if (VoiceChat.isHost) for (const [id, cc] of VoiceChat.connections) if (id !== peerId && cc.conn.open) try { cc.conn.send({ type:'peer-renamed', peerId, name: c.name }); } catch(_){} updateVoiceUI(); }
+    else if (data.type === 'peer-list') { if (!VoiceChat.peer || VoiceChat.peer.destroyed) return; for (const p of (data.peers || [])) { if (!p || !p.id || VoiceChat.connections.has(p.id)) continue; try { const pc = VoiceChat.peer.connect(p.id, { reliable:true }); VoiceChat.connections.set(p.id, { conn:pc, name:p.name || 'Player' }); voiceWireConn(pc, false); if (VoiceChat.localStream && !VoiceChat.calls.has(p.id)) try { voiceWireCall(VoiceChat.peer.call(p.id, VoiceChat.localStream, voiceCallOptions())); } catch(_){} } catch(err) { console.warn('voice peer-list connect failed', err); } } updateVoiceUI(); }
     else if (data.type === 'peer-joined') { updateVoiceUI(); }
     else if (data.type === 'peer-renamed') { const c = VoiceChat.connections.get(data.peerId); if (c) { c.name = data.name; updateVoiceUI(); } }
     else if (data.type === 'chat') voiceAddChatMsg(data.name || 'Player', data.text || '', false);
   });
-
-  conn.on('close', () => {
-    VoiceChat.connections.delete(peerId);
-    const call = VoiceChat.calls.get(peerId);
-    if (call) { try { call.close(); } catch(_){} VoiceChat.calls.delete(peerId); }
-    const el = VoiceChat.audioElements.get(peerId);
-    if (el) { el.remove(); VoiceChat.audioElements.delete(peerId); }
-    updateVoiceUI();
-  });
+  conn.on('close', () => { VoiceChat.connections.delete(peerId); const call = VoiceChat.calls.get(peerId); if (call) { try { call.close(); } catch(_){} VoiceChat.calls.delete(peerId); } const el = VoiceChat.audioElements.get(peerId); if (el) { el.remove(); VoiceChat.audioElements.delete(peerId); } updateVoiceUI(); });
   conn.on('error', () => {});
 }
-
 function voiceWireCall(call) {
-  const peerId = call.peer;
-  if (VoiceChat.calls.has(peerId)) return;
+  const peerId = call.peer; if (VoiceChat.calls.has(peerId)) return;
   VoiceChat.calls.set(peerId, call);
-  call.on('stream', stream => {
-    let el = VoiceChat.audioElements.get(peerId);
-    if (!el) {
-      el = document.createElement('audio');
-      el.autoplay = true; el.playsInline = true; el.style.display = 'none';
-      document.body.appendChild(el); VoiceChat.audioElements.set(peerId, el);
-    }
-    el.srcObject = stream;
-    el.volume = VoiceChat.outputVolume;
-    el.play().catch(()=>{});
-  });
-  call.on('close', () => {
-    VoiceChat.calls.delete(peerId);
-    const el = VoiceChat.audioElements.get(peerId);
-    if (el) { el.remove(); VoiceChat.audioElements.delete(peerId); }
-  });
+  call.on('stream', stream => { let el = VoiceChat.audioElements.get(peerId); if (!el) { el = document.createElement('audio'); el.autoplay = true; el.playsInline = true; el.style.display = 'none'; document.body.appendChild(el); VoiceChat.audioElements.set(peerId, el); } el.srcObject = stream; el.volume = VoiceChat.outputVolume; el.play().catch(()=>{}); });
+  call.on('close', () => { VoiceChat.calls.delete(peerId); const el = VoiceChat.audioElements.get(peerId); if (el) { el.remove(); VoiceChat.audioElements.delete(peerId); } });
   call.on('error', () => {});
 }
-
-function voiceToggleMic() {
-  if (!VoiceChat.active) return;
-  VoiceChat.micOn = !VoiceChat.micOn;
-  if (VoiceChat.localStream) VoiceChat.localStream.getAudioTracks().forEach(t => { t.enabled = VoiceChat.micOn; });
-  updateVoiceUI();
-  showToast(VoiceChat.micOn ? 'میکروفون روشن' : 'میکروفون خاموش', VoiceChat.micOn ? 'voice' : 'warn');
-}
-
+function voiceToggleMic() { if (!VoiceChat.active) return; VoiceChat.micOn = !VoiceChat.micOn; if (VoiceChat.localStream) VoiceChat.localStream.getAudioTracks().forEach(t => { t.enabled = VoiceChat.micOn; }); updateVoiceUI(); showToast(VoiceChat.micOn ? 'میکروفون روشن' : 'میکروفون خاموش', VoiceChat.micOn ? 'voice' : 'warn'); }
 function voiceLeave() {
   if (VoiceChat.peer) { try { VoiceChat.peer.destroy(); } catch(_){} VoiceChat.peer = null; }
   if (VoiceChat.localStream) { VoiceChat.localStream.getTracks().forEach(t => t.stop()); VoiceChat.localStream = null; }
@@ -580,121 +564,61 @@ function voiceLeave() {
   for (const call of VoiceChat.calls.values()) { try { call.close(); } catch(_){} }
   VoiceChat.calls.clear(); VoiceChat.connections.clear();
   VoiceChat.active = false; VoiceChat.panelOpen = false; VoiceChat.code = null;
-  updateVoiceUI();
-  showToast('از ویس چت خارج شدید');
+  updateVoiceUI(); showToast('از ویس چت خارج شدید');
 }
-
-function voiceSendChat(text) {
-  text = String(text || '').trim(); if (!text) return;
-  for (const c of VoiceChat.connections.values()) if (c.conn.open) try { c.conn.send({ type:'chat', name: voiceGetName(), text }); } catch(_){}
-  voiceAddChatMsg(voiceGetName(), text, true);
-}
-function voiceSendChatUI() {
-  const input = $('vchat-input'); if (!input) return;
-  const text = input.value.trim(); if (!text) return;
-  voiceSendChat(text); input.value = '';
-}
-function voiceAddChatMsg(name, text, isMe) {
-  const chatEl = $('vchat'); if (!chatEl) return;
-  const empty = chatEl.querySelector('.vempty'); if (empty) empty.remove();
-  const div = document.createElement('div');
-  div.className = 'vmsg' + (isMe ? ' me' : '');
-  div.innerHTML = `<span class="vname">${escHtml(name)}:</span> ${escHtml(text)}`;
-  chatEl.appendChild(div);
-  chatEl.scrollTop = chatEl.scrollHeight;
-  while (chatEl.children.length > 40) chatEl.firstChild.remove();
-}
-
+function voiceSendChat(text) { text = String(text || '').trim(); if (!text) return; for (const c of VoiceChat.connections.values()) if (c.conn.open) try { c.conn.send({ type:'chat', name: voiceGetName(), text }); } catch(_){} voiceAddChatMsg(voiceGetName(), text, true); }
+function voiceSendChatUI() { const input = $('vchat-input'); if (!input) return; const text = input.value.trim(); if (!text) return; voiceSendChat(text); input.value = ''; }
+function voiceAddChatMsg(name, text, isMe) { const chatEl = $('vchat'); if (!chatEl) return; const empty = chatEl.querySelector('.vempty'); if (empty) empty.remove(); const div = document.createElement('div'); div.className = 'vmsg' + (isMe ? ' me' : ''); div.innerHTML = `<span class="vname">${escHtml(name)}:</span> ${escHtml(text)}`; chatEl.appendChild(div); chatEl.scrollTop = chatEl.scrollHeight; while (chatEl.children.length > 40) chatEl.firstChild.remove(); }
 function updateVoiceUI() {
   const pill = $('voice-pill'), panel = $('voice-panel');
   if (!VoiceChat.active) { pill.classList.add('hidden'); panel.classList.add('hidden'); return; }
-  pill.classList.remove('hidden');
-  pill.classList.toggle('muted', !VoiceChat.micOn);
+  pill.classList.remove('hidden'); pill.classList.toggle('muted', !VoiceChat.micOn);
   $('vpill-count').textContent = (VoiceChat.connections.size + 1);
   if (VoiceChat.panelOpen) {
-    panel.classList.remove('hidden');
-    $('vp-code').textContent = VoiceChat.code || '----';
+    panel.classList.remove('hidden'); $('vp-code').textContent = VoiceChat.code || '----';
     $('vp-count').textContent = (VoiceChat.connections.size + 1);
     let html = `<div class="vpeer me"><span class="vp-dot"></span><span class="vp-name">${escHtml(voiceGetName())}</span><span class="vp-tag">شما</span></div>`;
     for (const [id, c] of VoiceChat.connections) html += `<div class="vpeer"><span class="vp-dot"></span><span class="vp-name">${escHtml(c.name || 'Player')}</span></div>`;
     $('vp-peers').innerHTML = html;
-    const micBtn = $('vp-mic');
-    if (VoiceChat.micOn) { micBtn.textContent = 'میکروفون روشن'; micBtn.className = 'vbtn mic-on'; }
-    else { micBtn.textContent = 'میکروفون خاموش'; micBtn.className = 'vbtn mic-off'; }
+    const micBtn = $('vp-mic'); if (VoiceChat.micOn) { micBtn.textContent = 'میکروفون روشن'; micBtn.className = 'vbtn mic-on'; } else { micBtn.textContent = 'میکروفون خاموش'; micBtn.className = 'vbtn mic-off'; }
   } else panel.classList.add('hidden');
 }
-
 function openVoicePanel() { VoiceChat.panelOpen = true; updateVoiceUI(); }
 function closeVoicePanel() { VoiceChat.panelOpen = false; updateVoiceUI(); }
 function toggleVoicePanel() { VoiceChat.panelOpen = !VoiceChat.panelOpen; updateVoiceUI(); }
 function openVoiceModal() { $('voice-modal').classList.add('on'); voiceModalMain(); }
 function closeVoiceModal() { $('voice-modal').classList.remove('on'); }
-
 function voiceModalMain() {
   const body = $('voice-modal-body');
   if (VoiceChat.active) {
-    body.innerHTML = `<div style="font-family:monospace;font-size:32px;letter-spacing:8px;color:#5fe08a;font-weight:800;padding:12px;background:rgba(34,197,94,.12);border:2px dashed rgba(34,197,94,.4);border-radius:10px;margin-bottom:14px;direction:ltr;">${VoiceChat.code}</div>
-      <div style="font-size:12px;opacity:.7;margin-bottom:16px;">شما به ویس چت متصل هستید (${VoiceChat.connections.size+1} نفر)</div>
-      <div class="vmodal-actions"><button class="vmodal-btn green" onclick="closeVoiceModal();openVoicePanel()">مشاهده پنل</button><button class="vmodal-btn ghost" onclick="closeVoiceModal()">بستن</button></div>`;
+    body.innerHTML = `<div style="font-family:monospace;font-size:32px;letter-spacing:8px;color:#5fe08a;font-weight:800;padding:12px;background:rgba(34,197,94,.12);border:2px dashed rgba(34,197,94,.4);border-radius:10px;margin-bottom:14px;direction:ltr;">${VoiceChat.code}</div><div style="font-size:12px;opacity:.7;margin-bottom:16px;">شما به ویس چت متصل هستید (${VoiceChat.connections.size+1} نفر)</div><div class="vmodal-actions"><button class="vmodal-btn green" onclick="closeVoiceModal();openVoicePanel()">مشاهده پنل</button><button class="vmodal-btn ghost" onclick="closeVoiceModal()">بستن</button></div>`;
   } else {
     body.innerHTML = `<div class="vmodal-actions"><button class="vmodal-btn green" onclick="voiceModalCreate()">ساخت ویس چت</button><button class="vmodal-btn" onclick="voiceModalShowJoin()">پیوستن با کد</button><button class="vmodal-btn ghost" onclick="closeVoiceModal()">بستن</button></div>`;
   }
 }
-
 async function voiceModalCreate() {
-  const body = $('voice-modal-body');
-  body.innerHTML = `<div style="padding:20px;color:#79d3ff;">در حال ساخت...</div>`;
-  try {
-    const code = await voiceCreate((status) => { body.innerHTML = `<div style="padding:20px;color:#79d3ff;">${status}</div>`; });
-    body.innerHTML = `<div style="font-size:13px;margin-bottom:8px;">ویس چت ساخته شد! این کد را برای دوستانت بفرست:</div>
-      <div style="font-family:monospace;font-size:40px;letter-spacing:10px;color:#79d3ff;font-weight:800;padding:14px;background:rgba(46,159,224,.15);border:2px dashed rgba(121,211,255,.5);border-radius:10px;margin-bottom:16px;direction:ltr;">${code}</div>
-      <div class="vmodal-actions"><button class="vmodal-btn green" onclick="closeVoiceModal();openVoicePanel()">شروع</button></div>`;
-    showToast('ویس چت ساخته شد', 'voice');
-  } catch(e) {
-    body.innerHTML = `<div style="color:#ff7a6b;margin-bottom:12px;">خطا: ${e.message === 'mic-denied' ? 'دسترسی به میکروفون رد شد' : 'اتصال برقرار نشد.'}</div>
-      <div class="vmodal-actions"><button class="vmodal-btn" onclick="voiceModalMain()">تلاش مجدد</button></div>`;
-  }
+  const body = $('voice-modal-body'); body.innerHTML = `<div style="padding:20px;color:#79d3ff;">در حال ساخت...</div>`;
+  try { const code = await voiceCreate((status) => { body.innerHTML = `<div style="padding:20px;color:#79d3ff;">${status}</div>`; }); body.innerHTML = `<div style="font-size:13px;margin-bottom:8px;">ویس چت ساخته شد!</div><div style="font-family:monospace;font-size:40px;letter-spacing:10px;color:#79d3ff;font-weight:800;padding:14px;background:rgba(46,159,224,.15);border:2px dashed rgba(121,211,255,.5);border-radius:10px;margin-bottom:16px;direction:ltr;">${code}</div><div class="vmodal-actions"><button class="vmodal-btn green" onclick="closeVoiceModal();openVoicePanel()">شروع</button></div>`; showToast('ویس چت ساخته شد', 'voice'); }
+  catch(e) { body.innerHTML = `<div style="color:#ff7a6b;margin-bottom:12px;">خطا: ${e.message === 'mic-denied' ? 'دسترسی به میکروفون رد شد' : 'اتصال برقرار نشد.'}</div><div class="vmodal-actions"><button class="vmodal-btn" onclick="voiceModalMain()">تلاش مجدد</button></div>`; }
 }
-
 function voiceModalShowJoin() {
   const body = $('voice-modal-body');
-  body.innerHTML = `<div style="font-size:13px;margin-bottom:10px;">کد ویس چت را وارد کن:</div>
-    <input type="text" class="vinput-code" id="vjoin-input" maxlength="4" inputmode="numeric" placeholder="0000">
-    <div class="vmodal-actions"><button class="vmodal-btn green" onclick="voiceModalDoJoin()">اتصال</button><button class="vmodal-btn ghost" onclick="voiceModalMain()">بازگشت</button></div>
-    <div class="verr" id="vjoin-err"></div>`;
+  body.innerHTML = `<div style="font-size:13px;margin-bottom:10px;">کد ویس چت را وارد کن:</div><input type="text" class="vinput-code" id="vjoin-input" maxlength="4" inputmode="numeric" placeholder="0000"><div class="vmodal-actions"><button class="vmodal-btn green" onclick="voiceModalDoJoin()">اتصال</button><button class="vmodal-btn ghost" onclick="voiceModalMain()">بازگشت</button></div><div class="verr" id="vjoin-err"></div>`;
   setTimeout(() => $('vjoin-input').focus(), 100);
   $('vjoin-input').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g,'').slice(0,4); });
 }
-
 async function voiceModalDoJoin() {
   const code = $('vjoin-input').value.trim();
   if (!/^\d{4}$/.test(code)) { $('vjoin-err').textContent = 'کد باید ۴ رقم باشد'; return; }
   const body = $('voice-modal-body');
-  try {
-    await voiceJoin(code, (status) => { body.innerHTML = `<div style="padding:20px;color:#79d3ff;">${status}</div>`; });
-    await new Promise(r => setTimeout(r, 800));
-    closeVoiceModal(); openVoicePanel();
-    showToast('به ویس چت متصل شدید', 'voice');
-  } catch(e) {
-    body.innerHTML = `<div style="color:#ff7a6b;margin-bottom:12px;">خطا: ${e.message === 'mic-denied' ? 'دسترسی به میکروفون رد شد' : 'کد اشتباه است یا میزبان ویس آفلاین است.'}</div>
-      <div class="vmodal-actions"><button class="vmodal-btn" onclick="voiceModalShowJoin()">تلاش مجدد</button></div>`;
-  }
+  try { await voiceJoin(code, (status) => { body.innerHTML = `<div style="padding:20px;color:#79d3ff;">${status}</div>`; }); await new Promise(r => setTimeout(r, 800)); closeVoiceModal(); openVoicePanel(); showToast('به ویس چت متصل شدید', 'voice'); }
+  catch(e) { body.innerHTML = `<div style="color:#ff7a6b;margin-bottom:12px;">خطا: ${e.message === 'mic-denied' ? 'دسترسی به میکروفون رد شد' : 'کد اشتباه است.'}</div><div class="vmodal-actions"><button class="vmodal-btn" onclick="voiceModalShowJoin()">تلاش مجدد</button></div>`; }
 }
+window.openVoiceModal = openVoiceModal; window.closeVoiceModal = closeVoiceModal; window.voiceModalMain = voiceModalMain;
+window.voiceModalCreate = voiceModalCreate; window.voiceModalShowJoin = voiceModalShowJoin; window.voiceModalDoJoin = voiceModalDoJoin;
+window.voiceToggleMic = voiceToggleMic; window.voiceLeave = voiceLeave; window.voiceSendChatUI = voiceSendChatUI;
+window.openVoicePanel = openVoicePanel; window.closeVoicePanel = closeVoicePanel; window.toggleVoicePanel = toggleVoicePanel;
 
-window.openVoiceModal = openVoiceModal;
-window.closeVoiceModal = closeVoiceModal;
-window.voiceModalMain = voiceModalMain;
-window.voiceModalCreate = voiceModalCreate;
-window.voiceModalShowJoin = voiceModalShowJoin;
-window.voiceModalDoJoin = voiceModalDoJoin;
-window.voiceToggleMic = voiceToggleMic;
-window.voiceLeave = voiceLeave;
-window.voiceSendChatUI = voiceSendChatUI;
-window.openVoicePanel = openVoicePanel;
-window.closeVoicePanel = closeVoicePanel;
-window.toggleVoicePanel = toggleVoicePanel;
-
-/* ============ SFX ============ */
 const Sfx = (() => {
   let ctx=null, master=null, vol=0.6, enabled=true;
   function init(){ if(ctx)return; const AC=window.AudioContext||window.webkitAudioContext; if(!AC){enabled=false;return;} ctx=new AC(); master=ctx.createGain(); master.gain.value=vol; master.connect(ctx.destination); }
@@ -713,7 +637,6 @@ const Sfx = (() => {
   };
 })();
 
-/* ============ RENDERER ============ */
 const canvas=$('game');
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
@@ -725,24 +648,24 @@ renderer.toneMappingExposure=1.05;
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x9dbfe0);
-scene.fog=new THREE.Fog(0x9dbfe0,150,400);
+scene.fog=new THREE.Fog(0x9dbfe0, 300, 1000);
 const camera=new THREE.PerspectiveCamera(78,window.innerWidth/window.innerHeight,0.1,3000);
 camera.rotation.order='YXZ';
 scene.add(camera);
 scene.add(new THREE.HemisphereLight(0xcfe3ff,0x6b6151,1.1));
 const sun=new THREE.DirectionalLight(0xfff0d8,2.15);
-sun.position.set(100,200,100);
+sun.position.set(250,500,250);
 sun.castShadow=true; sun.shadow.mapSize.set(2048,2048);
-sun.shadow.camera.left=-250; sun.shadow.camera.right=250;
-sun.shadow.camera.top=250; sun.shadow.camera.bottom=-250;
-sun.shadow.camera.near=1; sun.shadow.camera.far=600;
+sun.shadow.camera.left=-700; sun.shadow.camera.right=700;
+sun.shadow.camera.top=700; sun.shadow.camera.bottom=-700;
+sun.shadow.camera.near=1; sun.shadow.camera.far=1500;
 sun.shadow.bias=-0.0008; sun.shadow.normalBias=0.02;
 scene.add(sun); scene.add(sun.target);
 
 function makeGroundTexture(){ const c=document.createElement('canvas'); c.width=c.height=512; const g=c.getContext('2d'); g.fillStyle='#6e6b5e'; g.fillRect(0,0,512,512); for(let i=0;i<9000;i++){ const v=60+Math.random()*70; g.fillStyle=`rgba(${v|0},${(v*0.97)|0},${(v*0.86)|0},${Math.random()*0.55})`; const s=Math.random()*3.2+0.6; g.fillRect(Math.random()*512,Math.random()*512,s,s); } const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(100,100); t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy()); t.colorSpace=THREE.SRGBColorSpace; return t; }
 function makeCrateTexture(){ const c=document.createElement('canvas'); c.width=c.height=256; const g=c.getContext('2d'); g.fillStyle='#9a7248'; g.fillRect(0,0,256,256); g.strokeStyle='rgba(60,40,20,.55)'; g.lineWidth=8; g.strokeRect(6,6,244,244); g.beginPath(); g.moveTo(10,10); g.lineTo(246,246); g.stroke(); g.beginPath(); g.moveTo(246,10); g.lineTo(10,246); g.stroke(); const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; return t; }
 
-let A=230;
+let A=460;
 const worldGroup=new THREE.Group(); scene.add(worldGroup);
 const colliders=[]; const worldMeshes=[];
 const matWall=new THREE.MeshStandardMaterial({color:0x9a9384,roughness:0.95});
@@ -756,32 +679,39 @@ const ground=new THREE.Mesh(new THREE.PlaneGeometry(4000,4000), new THREE.MeshSt
 ground.rotation.x=-Math.PI/2; ground.receiveShadow=true; scene.add(ground);
 function addBox(x,yB,z,w,h,d,mat,opts={}){ const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat); mesh.position.set(x,yB+h/2,z); mesh.castShadow=opts.cast!==false; mesh.receiveShadow=true; worldGroup.add(mesh); if(opts.collide!==false){ colliders.push({min:new THREE.Vector3(x-w/2,yB,z-d/2),max:new THREE.Vector3(x+w/2,yB+h,z+d/2)}); worldMeshes.push(mesh); } return mesh; }
 function addRoom(cx,cz,w,d,h,mat,door){ const t=0.8,dw=4.5,hw=w/2,hd=d/2,segX=(w-dw)/2,segZ=(d-dw)/2; const lx=cx-(w+dw)/4,rx=cx+(w+dw)/4,lz=cz-(d+dw)/4,rz=cz+(d+dw)/4; if(door==='n'){addBox(lx,0,cz-hd,segX,h,t,mat);addBox(rx,0,cz-hd,segX,h,t,mat);} else addBox(cx,0,cz-hd,w,h,t,mat); if(door==='s'){addBox(lx,0,cz+hd,segX,h,t,mat);addBox(rx,0,cz+hd,segX,h,t,mat);} else addBox(cx,0,cz+hd,w,h,t,mat); if(door==='w'){addBox(cx-hw,0,lz,t,h,segZ,mat);addBox(cx-hw,0,rz,t,h,segZ,mat);} else addBox(cx-hw,0,cz,t,h,d,mat); if(door==='e'){addBox(cx+hw,0,lz,t,h,segZ,mat);addBox(cx+hw,0,rz,t,h,segZ,mat);} else addBox(cx+hw,0,cz,t,h,d,mat); }
-function buildMap(){ addBox(0,0,-A,A*2,20,5,matWall); addBox(0,0,A,A*2,20,5,matWall); addBox(-A,0,0,5,20,A*2,matWall); addBox(A,0,0,5,20,A*2,matWall); addBox(0,0,0,40,2,40,matConcrete); addBox(0,2,0,30,12,30,matDark); addBox(0,14,0,34,2,34,matConcrete); addBox(-15,2,-15,8,16,8,matRed); addBox(15,2,-15,8,16,8,matRed); addBox(-15,2,15,8,16,8,matRed); addBox(15,2,15,8,16,8,matRed); addBox(0,0,25,10,1,10,matConcrete); addBox(0,1,20,10,1,10,matConcrete); addBox(0,2,15,10,1,10,matConcrete); addRoom(-80,-80,40,30,6,matConcrete,'s'); addRoom(80,-80,35,40,6,matMetal,'w'); addRoom(-80,80,30,30,5,matBlue,'e'); addRoom(80,80,45,35,7,matConcrete,'n'); addRoom(0,-140,60,20,5,matRed,'s'); addRoom(0,140,60,20,5,matRed,'n'); addRoom(-140,0,20,60,5,matMetal,'e'); addRoom(140,0,20,60,5,matMetal,'w'); addBox(-160,0,-160,10,25,10,matDark); addBox(-160,25,-160,12,2,12,matConcrete); addBox(160,0,160,10,25,10,matDark); addBox(160,25,160,12,2,12,matConcrete); for(let i=0;i<30;i++){ const x=rand(-200,200),z=rand(-200,200); if(Math.abs(x)<30&&Math.abs(z)<30) continue; addBox(x,0,z,6.5,2.7,2.6,i%2===0?matMetal:matRed); } for(let i=0;i<80;i++){ const x=rand(-200,200),z=rand(-200,200); if(Math.abs(x)<30&&Math.abs(z)<30) continue; addBox(x,0,z,1.5,1.5,1.5,matCrate); if(Math.random()>0.5) addBox(x,1.5,z,1.5,1.5,1.5,matCrate); } for(let i=0;i<20;i++){ const x=rand(-200,200),z=rand(-200,200); if(Math.abs(x)<30&&Math.abs(z)<30) continue; if(i%2===0) addBox(x,0,z,8,1.2,1.0,matConcrete); else addBox(x,0,z,1.0,1.2,8,matConcrete); } }
+function buildMap(){
+  addBox(0,0,-A,A*2,20,5,matWall); addBox(0,0,A,A*2,20,5,matWall); addBox(-A,0,0,5,20,A*2,matWall); addBox(A,0,0,5,20,A*2,matWall);
+  addBox(0,0,0,80,2,80,matConcrete); addBox(0,2,0,60,12,60,matDark); addBox(0,14,0,68,2,68,matConcrete);
+  addBox(-30,2,-30,16,16,16,matRed); addBox(30,2,-30,16,16,16,matRed); addBox(-30,2,30,16,16,16,matRed); addBox(30,2,30,16,16,16,matRed);
+  addBox(0,0,50,20,1,20,matConcrete); addBox(0,1,40,20,1,20,matConcrete); addBox(0,2,30,20,1,20,matConcrete);
+  addRoom(-160,-160,80,60,6,matConcrete,'s'); addRoom(160,-160,70,80,6,matMetal,'w'); addRoom(-160,160,60,60,5,matBlue,'e'); addRoom(160,160,90,70,7,matConcrete,'n');
+  addRoom(0,-280,120,40,5,matRed,'s'); addRoom(0,280,120,40,5,matRed,'n'); addRoom(-280,0,40,120,5,matMetal,'e'); addRoom(280,0,40,120,5,matMetal,'w');
+  addBox(-320,0,-320,20,50,20,matDark); addBox(-320,50,-320,24,4,24,matConcrete); addBox(320,0,320,20,50,20,matDark); addBox(320,50,320,24,4,24,matConcrete);
+  for(let i=0;i<60;i++){ const x=rand(-400,400),z=rand(-400,400); if(Math.abs(x)<60&&Math.abs(z)<60) continue; addBox(x,0,z,13,2.7,5.2,i%2===0?matMetal:matRed); }
+  for(let i=0;i<160;i++){ const x=rand(-400,400),z=rand(-400,400); if(Math.abs(x)<60&&Math.abs(z)<60) continue; addBox(x,0,z,3,3,3,matCrate); if(Math.random()>0.5) addBox(x,3,z,3,3,3,matCrate); }
+  for(let i=0;i<40;i++){ const x=rand(-400,400),z=rand(-400,400); if(Math.abs(x)<60&&Math.abs(z)<60) continue; if(i%2===0) addBox(x,0,z,16,1.2,2,matConcrete); else addBox(x,0,z,2,1.2,16,matConcrete); }
+}
 buildMap();
 
-/* ==============================================================
-   SPAWN — کاملاً رندوم داخل نقشه، دور از دیوارها
-   ============================================================== */
 function pickRandomSpawn(){
-  for (let i = 0; i < 80; i++){
+  for (let i = 0; i < 120; i++){
     const angle = Math.random() * Math.PI * 2;
-    const radius = Math.sqrt(Math.random()) * (A - 30);
-    const x = Math.cos(angle) * radius;
-    const z = Math.sin(angle) * radius;
+    const radius = Math.sqrt(Math.random()) * (A - 40);
+    const x = Math.cos(angle) * radius; const z = Math.sin(angle) * radius;
     let blocked = false;
     for (let j = 0; j < colliders.length; j++){
       const b = colliders[j];
       if (b.max.x - b.min.x > 100 || b.max.z - b.min.z > 100) continue;
-      if (x > b.min.x - 3 && x < b.max.x + 3 &&
-          z > b.min.z - 3 && z < b.max.z + 3){ blocked = true; break; }
+      if (x > b.min.x - 4 && x < b.max.x + 4 && z > b.min.z - 4 && z < b.max.z + 4){ blocked = true; break; }
     }
-    if (!blocked) return new THREE.Vector3(x, 20, z);
+    if (!blocked) return new THREE.Vector3(x, 0, z);
   }
-  return new THREE.Vector3(rand(-100, 100), 20, rand(-100, 100));
+  return new THREE.Vector3(rand(-200, 200), 0, rand(-200, 200));
 }
 
-const PLAYER={ pos:new THREE.Vector3(0,20,0), vel:new THREE.Vector3(), yaw:Math.PI, pitch:0, radius:0.42, height:1.75, eyeStand:1.62, eyeCrouch:1.05, eye:1.62, onGround:false, crouching:false, sprinting:false, health:100, maxHealth:100, alive:true };
+const PLAYER={ pos:new THREE.Vector3(0,20,0), vel:new THREE.Vector3(), yaw:Math.PI, pitch:0, radius:0.42, height:1.75, eyeStand:1.62, eyeCrouch:1.05, eye:1.62, onGround:false, crouching:false, sprinting:false, health:100, maxHealth:100, alive:true, parachuting:false };
 const GRAVITY=22.0, JUMP_SPEED=7.3, SPEED_WALK=5.4, SPEED_RUN=8.1, SPEED_CROUCH=2.6;
+const PARA_START_HEIGHT=200, PARA_FALL_SPEED=-8, PARA_STEER_SPEED=28;
 function playerForward(){ return new THREE.Vector3(-Math.sin(PLAYER.yaw),0,-Math.cos(PLAYER.yaw)); }
 function playerRight(){ return new THREE.Vector3(Math.cos(PLAYER.yaw),0,-Math.sin(PLAYER.yaw)); }
 function resolveHorizontal(pos,radius){ for(let i=0;i<colliders.length;i++){ const b=colliders[i]; if(b.max.x-b.min.x>100||b.max.z-b.min.z>100) continue; const minX=b.min.x-radius,maxX=b.max.x+radius,minZ=b.min.z-radius,maxZ=b.max.z+radius; if(pos.x<=minX||pos.x>=maxX||pos.z<=minZ||pos.z>=maxZ) continue; if(pos.y>=b.max.y-0.06) continue; if(pos.y+PLAYER.height<=b.min.y) continue; const dxL=pos.x-minX,dxR=maxX-pos.x,dzL=pos.z-minZ,dzR=maxZ-pos.z; const m=Math.min(dxL,dxR,dzL,dzR); if(m===dxL) pos.x=minX; else if(m===dxR) pos.x=maxX; else if(m===dzL) pos.z=minZ; else pos.z=maxZ; } }
@@ -823,48 +753,48 @@ const muzzleFlash=new THREE.Mesh(new THREE.SphereGeometry(0.09,8,8),muzzleFlashM
 muzzleFlash.position.set(0.24,-0.20,-0.95); muzzleFlash.visible=false; camera.add(muzzleFlash);
 let muzzleTimer=0;
 
+function buildParachuteMesh(){
+  const g = new THREE.Group();
+  const canopyMat = new THREE.MeshStandardMaterial({ color:0xdc2626, side:THREE.DoubleSide, roughness:0.75, metalness:0.05 });
+  const canopy = new THREE.Mesh(new THREE.SphereGeometry(4.2, 20, 14, 0, Math.PI*2, 0, Math.PI*0.55), canopyMat);
+  canopy.position.y = 8; canopy.scale.y = 0.72; g.add(canopy);
+  const lineMat = new THREE.LineBasicMaterial({ color:0x2a2a2a, transparent:true, opacity:0.8 });
+  [0, Math.PI*0.5, Math.PI, Math.PI*1.5].forEach(a => {
+    const pts = [new THREE.Vector3(Math.cos(a)*0.4, 1.6, Math.sin(a)*0.4), new THREE.Vector3(Math.cos(a)*3.6, 7.8, Math.sin(a)*3.6)];
+    g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lineMat));
+  });
+  g.visible = false; return g;
+}
+const localParachute = buildParachuteMesh();
+camera.add(localParachute);
+
 const effects=[];
 function spawnTracer(from,to,color){ const geo=new THREE.BufferGeometry().setFromPoints([from.clone(),to.clone()]); const mat=new THREE.LineBasicMaterial({color:color||0xffe08a,transparent:true,opacity:0.95,depthWrite:false}); const line=new THREE.Line(geo,mat); line.frustumCulled=false; scene.add(line); effects.push({type:'tracer',obj:line,life:0.06,max:0.06}); }
 function spawnImpact(point,color){ const geo=new THREE.SphereGeometry(0.09,6,6); const mat=new THREE.MeshBasicMaterial({color:color||0xffcc66,transparent:true,opacity:0.95,blending:THREE.AdditiveBlending,depthWrite:false}); const m=new THREE.Mesh(geo,mat); m.position.copy(point); scene.add(m); effects.push({type:'impact',obj:m,life:0.18,max:0.18}); }
 function updateEffects(dt){ for(let i=effects.length-1;i>=0;i--){ const e=effects[i]; e.life-=dt; if(e.life<=0){scene.remove(e.obj); if(e.obj.geometry)e.obj.geometry.dispose(); if(e.obj.material)e.obj.material.dispose(); effects.splice(i,1); continue;} const t=e.life/e.max; if(e.type==='tracer') e.obj.material.opacity=0.95*t; else { e.obj.material.opacity=0.95*t; e.obj.scale.setScalar(1+(1-t)*2.4); } } }
 
-/* ============ NETWORK ============ */
 const Net={ peer:null, roomCode:null, isHost:false, hostConn:null, clientConns:new Map(), myId:null, myName:'Player', started:false, tickTimer:null, lastStateSend:0 };
 
 function setupHost(peer){
-  peer.on('connection', conn => {
-    if (Net.clientConns.size >= 49) { try { conn.send({type:'error',msg:'full'}); } catch(_){} try { conn.close(); } catch(_){} return; }
-    handleNewClient(conn);
-  });
+  peer.on('connection', conn => { if (Net.clientConns.size >= 49) { try { conn.send({type:'error',msg:'full'}); } catch(_){} try { conn.close(); } catch(_){} return; } handleNewClient(conn); });
   peer.on('error', e => { if (e.type !== 'peer-unavailable') console.warn('[host] peer error', e); });
   peer.on('disconnected', () => { try { if (!peer.destroyed) peer.reconnect(); } catch(_){} });
 }
-
 function handleNewClient(conn){
-  const id = conn.peer;
-  if (!id) { try { conn.close(); } catch(_){} return; }
+  const id = conn.peer; if (!id) { try { conn.close(); } catch(_){} return; }
   Net.clientConns.set(id, { conn, state: defaultState(id) });
   conn.on('data', data => handleFromClient(id, data));
   conn.on('open', () => {
     try { conn.send({ type:'welcome', yourId:id, hostId:Net.peer.id, players:getAllStates(), started:Net.started }); } catch(_){}
-    const st = Net.clientConns.get(id);
-    if (st) updateRemoteState(st.state);
+    const st = Net.clientConns.get(id); if (st) updateRemoteState(st.state);
     broadcastAll({type:'playerJoined', player: Net.clientConns.get(id).state}, id);
     updateLobbyUI();
   });
   conn.on('close', () => { Net.clientConns.delete(id); removeRemote(id); broadcastAll({type:'playerLeft', id}); updateLobbyUI(); });
   conn.on('error', () => {});
 }
-
-function defaultState(id){
-  const sp = pickRandomSpawn();
-  return { id, name:'Player'+String(id).slice(-4), x:sp.x, y:sp.y, z:sp.z, yaw:0, pitch:0, health:100, alive:true, score:0, kills:0, deaths:0, weapon:0 };
-}
-function getAllStates(){
-  const list = [{ id:Net.myId, name:Net.myName, x:PLAYER.pos.x, y:PLAYER.pos.y, z:PLAYER.pos.z, yaw:PLAYER.yaw, pitch:PLAYER.pitch, health:PLAYER.health, alive:PLAYER.alive, score:G.playerScore, kills:G.kills, deaths:G.deaths, weapon:curWeapon }];
-  for (const c of Net.clientConns.values()) list.push(c.state);
-  return list;
-}
+function defaultState(id){ const sp = pickRandomSpawn(); return { id, name:'Player'+String(id).slice(-4), x:sp.x, y:PARA_START_HEIGHT, z:sp.z, yaw:0, pitch:0, health:100, alive:true, parachuting:true, score:0, kills:0, deaths:0, weapon:0 }; }
+function getAllStates(){ const list = [{ id:Net.myId, name:Net.myName, x:PLAYER.pos.x, y:PLAYER.pos.y, z:PLAYER.pos.z, yaw:PLAYER.yaw, pitch:PLAYER.pitch, health:PLAYER.health, alive:PLAYER.alive, parachuting:PLAYER.parachuting, score:G.playerScore, kills:G.kills, deaths:G.deaths, weapon:curWeapon }]; for (const c of Net.clientConns.values()) list.push(c.state); return list; }
 function broadcastAll(msg, exceptId){ if (!Net.isHost) return; for (const [id,c] of Net.clientConns){ if (id===exceptId) continue; if (c.conn.open){ try { c.conn.send(msg); } catch(_){} } } }
 
 function handleFromClient(fromId, data){
@@ -878,106 +808,75 @@ function handleFromClient(fromId, data){
     c.state.x=data.x; c.state.y=data.y; c.state.z=data.z;
     c.state.yaw=data.yaw; c.state.pitch=data.pitch;
     c.state.health=data.health; c.state.alive=data.alive;
+    c.state.parachuting=!!data.parachuting;
     c.state.weapon=data.weapon||0;
     updateRemoteState(c.state);
   }
   else if (data.type === 'name' && c){
     c.state.name = String(data.name).slice(0,16).replace(/[^\w\u0600-\u06FF ._-]/g,'') || ('Player'+fromId.slice(-4));
-    broadcastAll({type:'playerRenamed', id:fromId, name:c.state.name});
-    updateLobbyUI();
+    broadcastAll({type:'playerRenamed', id:fromId, name:c.state.name}); updateLobbyUI();
   }
   else if (data.type === 'hit'){
     const targetId = data.target;
     const dmg = Math.min(Math.max(0, data.damage || 0), 150);
     if (!dmg || !targetId) return;
-
     if (targetId === Net.myId){
-      if (!PLAYER.alive) return;
+      if (!PLAYER.alive || PLAYER.parachuting) return;
       damagePlayer(dmg, fromId);
       if (PLAYER.health <= 0 && PLAYER.alive){
         playerDie(fromId, fromName);
         if (c){ c.state.score++; c.state.kills++; }
         broadcastAll({type:'killEvent', killer:fromId, killerName:fromName, victim:Net.myId, victimName:Net.myName});
         broadcastAll({type:'scoreUpdate', players:getAllStates()});
-        setTimeout(() => {
-          if (!PLAYER.alive){
-            const sp = pickRandomSpawn();
-            respawnPlayer(sp.x, sp.y, sp.z);
-          }
-        }, 1500);
+        setTimeout(() => { if (!PLAYER.alive){ const sp = pickRandomSpawn(); respawnPlayer(sp.x, PARA_START_HEIGHT, sp.z, true); } }, 10000);
       }
     } else {
       const target = Net.clientConns.get(targetId);
-      if (!target) return;
+      if (!target || target.state.parachuting) return;
       target.state.health = Math.max(0, target.state.health - dmg);
       const fatal = target.state.health <= 0 && target.state.alive;
-      if (target.conn.open){
-        try { target.conn.send({type:'damaged', amount:dmg, from:fromId, fromName, fatal}); } catch(_){}
-      }
+      if (target.conn.open) try { target.conn.send({type:'damaged', amount:dmg, from:fromId, fromName, fatal}); } catch(_){}
       if (fatal){
-        target.state.alive = false;
-        target.state.deaths++;
-        // فوری پنهان
+        target.state.alive = false; target.state.deaths++;
         const rp = remotePlayers.get(targetId);
-        if (rp){ rp.dead = true; rp.group.visible = false; }
-        if (isFromHost){
-          G.playerScore++; G.kills++;
-          Sfx.kill(); hitmarkerKill(); updateScoreHud();
-        } else if (c){
-          c.state.score++; c.state.kills++;
-        }
+        if (rp){ rp.dead = true; rp.group.visible = false; if (rp.parachute) rp.parachute.visible = false; }
+        if (isFromHost){ G.playerScore++; G.kills++; Sfx.kill(); hitmarkerKill(); updateScoreHud(); }
+        else if (c){ c.state.score++; c.state.kills++; }
         broadcastAll({type:'killEvent', killer:fromId, killerName:fromName, victim:targetId, victimName:target.state.name});
         broadcastAll({type:'scoreUpdate', players:getAllStates()});
         setTimeout(() => {
           const vv = Net.clientConns.get(targetId);
           if (!vv) return;
           const sp = pickRandomSpawn();
-          vv.state.x=sp.x; vv.state.y=sp.y; vv.state.z=sp.z;
-          vv.state.health=100; vv.state.alive=true;
-          if (vv.conn.open) try { vv.conn.send({type:'respawn', x:sp.x, y:sp.y, z:sp.z}); } catch(_){}
-        }, 1500);
+          vv.state.x=sp.x; vv.state.y=PARA_START_HEIGHT; vv.state.z=sp.z;
+          vv.state.health=100; vv.state.alive=true; vv.state.parachuting=true;
+          if (vv.conn.open) try { vv.conn.send({type:'respawn', x:sp.x, y:PARA_START_HEIGHT, z:sp.z, parachute:true}); } catch(_){}
+        }, 10000);
       }
     }
   }
-  else if (data.type === 'shoot'){
-    broadcastAll({type:'remoteShoot', fromId, from:data.from, to:data.to}, fromId);
-  }
+  else if (data.type === 'shoot'){ broadcastAll({type:'remoteShoot', fromId, from:data.from, to:data.to}, fromId); }
 }
-
 function startHostTick(){ if (Net.tickTimer) clearInterval(Net.tickTimer); Net.tickTimer = setInterval(()=>{ if (!Net.isHost) return; broadcastAll({type:'states', players:getAllStates()}); }, 100); }
 
-/* PUBLIC ROOMS */
-const PUBLIC_PREFIX = 'baz-pub-';
-const PUBLIC_MAX = 20;
-
+const PUBLIC_PREFIX = 'baz-pub-'; const PUBLIC_MAX = 20;
 async function createPublicRoom(onStatus = () => {}) {
   for (let index = 1; index <= PUBLIC_MAX; index++) {
     onStatus(`تلاش برای سرور عمومی #${index}...`);
     const targetId = PUBLIC_PREFIX + index;
     const peer = new Peer(targetId, peerCfg);
-    try {
-      await waitPeerOpen(peer, 6000);
-      Net.peer = peer; Net.roomCode = 'PUBLIC #' + index; Net.isHost = true; Net.myId = peer.id;
-      setupHost(peer); onStatus('روم عمومی ساخته شد');
-      await new Promise(r => setTimeout(r, 1500));
-      return;
-    } catch(e) { try { peer.destroy(); } catch(_){} }
+    try { await waitPeerOpen(peer, 6000); Net.peer = peer; Net.roomCode = 'PUBLIC #' + index; Net.isHost = true; Net.myId = peer.id; setupHost(peer); onStatus('روم عمومی ساخته شد'); await new Promise(r => setTimeout(r, 1500)); return; }
+    catch(e) { try { peer.destroy(); } catch(_){} }
   }
   throw new Error('cannot-create');
 }
-
 async function joinPublicRoom(onStatus = () => {}) {
   const myPeer = new Peer(undefined, peerCfg);
   await waitPeerOpen(myPeer, 8000);
   Net.peer = myPeer; Net.myId = myPeer.id;
   Net.myName = ($('setName').value || 'Player').trim().slice(0,16) || 'Player';
   const unavailableIds = new Set();
-  myPeer.on('error', (e) => {
-    if (e && e.type === 'peer-unavailable' && e.message) {
-      const m = e.message.match(/baz-pub-\d+/);
-      if (m) unavailableIds.add(m[0]);
-    }
-  });
+  myPeer.on('error', (e) => { if (e && e.type === 'peer-unavailable' && e.message) { const m = e.message.match(/baz-pub-\d+/); if (m) unavailableIds.add(m[0]); } });
   for (let index = 1; index <= PUBLIC_MAX; index++) {
     const targetId = PUBLIC_PREFIX + index;
     if (unavailableIds.has(targetId)) continue;
@@ -986,11 +885,7 @@ async function joinPublicRoom(onStatus = () => {}) {
       const conn = myPeer.connect(targetId, { reliable: true });
       conn.on('data', handleFromHost); conn.on('error', () => {});
       await Promise.race([
-        new Promise((res, rej) => {
-          if (conn.open) return res();
-          const t = setTimeout(() => rej(new Error('timeout')), 1400);
-          conn.on('open', () => { clearTimeout(t); res(); });
-        }),
+        new Promise((res, rej) => { if (conn.open) return res(); const t = setTimeout(() => rej(new Error('timeout')), 1400); conn.on('open', () => { clearTimeout(t); res(); }); }),
         new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 1800))
       ]);
       Net.hostConn = conn; Net.isHost = false; Net.roomCode = 'PUBLIC #' + index;
@@ -1003,26 +898,18 @@ async function joinPublicRoom(onStatus = () => {}) {
   Net.peer = null;
   throw new Error('no-public-rooms');
 }
-
 async function hostPrivateRoom(onStatus = () => {}) {
   for (let attempt = 1; attempt <= 5; attempt++) {
     onStatus(`تلاش ${attempt} برای ساخت روم خصوصی...`);
     const code = String(1000 + Math.floor(Math.random()*9000));
     const peer = new Peer('br' + code, peerCfg);
-    try {
-      await waitPeerOpen(peer, 8000);
-      Net.peer = peer; Net.roomCode = code; Net.isHost = true; Net.myId = peer.id;
-      setupHost(peer); onStatus('روم ساخته شد');
-      await new Promise(r => setTimeout(r, 2000));
-      return code;
-    } catch(e) { try { peer.destroy(); } catch(_){} }
+    try { await waitPeerOpen(peer, 8000); Net.peer = peer; Net.roomCode = code; Net.isHost = true; Net.myId = peer.id; setupHost(peer); onStatus('روم ساخته شد'); await new Promise(r => setTimeout(r, 2000)); return code; }
+    catch(e) { try { peer.destroy(); } catch(_){} }
   }
   throw new Error('cannot-create');
 }
-
 async function joinPrivateRoom(code, name, onStatus = () => {}) {
-  const hostId = 'br' + code;
-  let lastErr = null;
+  const hostId = 'br' + code; let lastErr = null;
   for (let attempt = 1; attempt <= 5; attempt++) {
     onStatus(`تلاش ${attempt} از 5...`);
     const peer = new Peer(undefined, peerCfg);
@@ -1032,20 +919,16 @@ async function joinPrivateRoom(code, name, onStatus = () => {}) {
       conn.on('data', handleFromHost);
       conn.on('close', () => { if (!Net.isHost) { showToast('اتصال قطع شد', 'warn'); leaveRoom(); } });
       conn.on('error', () => {});
-      await waitConnOpen(conn, 6000);
+      await waitConnOpen(conn, 15000);
       Net.peer = peer; Net.hostConn = conn; Net.isHost = false;
       Net.roomCode = code; Net.myId = peer.id; Net.myName = name;
       try { conn.send({ type:'name', name }); } catch(_){}
       peer.on('disconnected', () => { try { if (!peer.destroyed) peer.reconnect(); } catch(_){} });
       return;
-    } catch(e) {
-      lastErr = e; try { peer.destroy(); } catch(_){}
-      if (attempt < 5) await new Promise(r => setTimeout(r, 1500));
-    }
+    } catch(e) { lastErr = e; try { peer.destroy(); } catch(_){} if (attempt < 5) await new Promise(r => setTimeout(r, 1500)); }
   }
   throw new Error(lastErr ? lastErr.message : 'connection-failed');
 }
-
 function handleFromHost(data){
   if (!data || !data.type) return;
   if (data.type==='welcome'){ Net.myId=data.yourId; Net.hostId=data.hostId; clearAllRemotes(); for (const p of data.players){ if (p.id!==Net.myId) addRemote(p); } if (data.started) startMatch(); else showLobby(false); return; }
@@ -1054,36 +937,14 @@ function handleFromHost(data){
   else if (data.type==='playerLeft'){ removeRemote(data.id); updateLobbyUI(); }
   else if (data.type==='playerRenamed'){ const rp=remotePlayers.get(data.id); if (rp) rp.name=data.name; updateLobbyUI(); }
   else if (data.type==='started'){ startMatch(); }
-  else if (data.type==='damaged'){
-    damagePlayer(data.amount, data.from);
-    addKillFeed(data.fromName||'حریف', 'شما', true);
-    if (data.fatal && PLAYER.alive){ playerDie(data.from, data.fromName); }
-  }
-  else if (data.type==='killEvent'){
-    if (data.killer===Net.myId){ G.playerScore++; G.kills++; Sfx.kill(); hitmarkerKill(); }
-    if (data.victim===Net.myId && PLAYER.alive){ playerDie(data.killer, data.killerName); }
-    addKillFeed(data.killerName||'?', data.victimName||'?', data.victim===Net.myId);
-    updateScoreHud();
-  }
-  else if (data.type==='scoreUpdate'){
-    for (const p of data.players){ if (p.id===Net.myId){ G.kills=p.kills; G.deaths=p.deaths; } }
-    updateScoreHud(); updateScoreboard(data.players);
-  }
-  else if (data.type==='remoteShoot'){
-    spawnTracer(new THREE.Vector3(data.from.x,data.from.y,data.from.z), new THREE.Vector3(data.to.x,data.to.y,data.to.z), 0xff9a5a);
-    Sfx.shot('smg');
-  }
-  else if (data.type==='respawn'){
-    respawnPlayer(data.x, data.y||20, data.z);
-  }
+  else if (data.type==='damaged'){ damagePlayer(data.amount, data.from); addKillFeed(data.fromName||'حریف', 'شما', true); if (data.fatal && PLAYER.alive && !PLAYER.parachuting){ playerDie(data.from, data.fromName); } }
+  else if (data.type==='killEvent'){ if (data.killer===Net.myId){ G.playerScore++; G.kills++; Sfx.kill(); hitmarkerKill(); } if (data.victim===Net.myId && PLAYER.alive && !PLAYER.parachuting){ playerDie(data.killer, data.killerName); } addKillFeed(data.killerName||'?', data.victimName||'?', data.victim===Net.myId); updateScoreHud(); }
+  else if (data.type==='scoreUpdate'){ for (const p of data.players){ if (p.id===Net.myId){ G.kills=p.kills; G.deaths=p.deaths; } } updateScoreHud(); updateScoreboard(data.players); }
+  else if (data.type==='remoteShoot'){ spawnTracer(new THREE.Vector3(data.from.x,data.from.y,data.from.z), new THREE.Vector3(data.to.x,data.to.y,data.to.z), 0xff9a5a); Sfx.shot('smg'); }
+  else if (data.type==='respawn'){ respawnPlayer(data.x, data.y || PARA_START_HEIGHT, data.z, !!data.parachute); }
 }
+function sendToHost(msg){ if (Net.isHost){ handleFromClient(Net.myId, msg); return; } if (Net.hostConn && Net.hostConn.open){ try { Net.hostConn.send(msg); } catch(_){} } }
 
-function sendToHost(msg){
-  if (Net.isHost){ handleFromClient(Net.myId, msg); return; }
-  if (Net.hostConn && Net.hostConn.open){ try { Net.hostConn.send(msg); } catch(_){} }
-}
-
-/* ============ REMOTE ============ */
 const remotePlayers = new Map(); const remoteHittables = [];
 function buildRemoteModel(){
   const g = new THREE.Group();
@@ -1108,43 +969,33 @@ function buildRemoteModel(){
 function addRemote(state){
   if (!state || !state.id || state.id===Net.myId || remotePlayers.has(state.id)) return;
   const group=buildRemoteModel();
-  group.position.set(state.x, state.y||20, state.z);
-  group.rotation.y=state.yaw||0;
+  group.position.set(state.x, state.y||20, state.z); group.rotation.y=state.yaw||0;
   group.visible = state.health > 0;
   scene.add(group);
+  const para = buildParachuteMesh();
+  para.visible = !!state.parachuting && state.health > 0;
+  group.add(para);
   for (const p of group.userData.parts) p.userData.playerId=state.id;
-  remotePlayers.set(state.id, { group, name:state.name, target:{ x:state.x, y:state.y||20, z:state.z, yaw:state.yaw||0, health:state.health }, dead: state.health <= 0 });
+  remotePlayers.set(state.id, { group, parachute: para, name:state.name, target:{ x:state.x, y:state.y||20, z:state.z, yaw:state.yaw||0, pitch:state.pitch||0, health:state.health, parachuting:!!state.parachuting }, dead: state.health <= 0 });
 }
 function updateRemoteState(state){
   if (!state || !state.id) return;
   let rp=remotePlayers.get(state.id);
   if (!rp){ addRemote(state); rp=remotePlayers.get(state.id); if (!rp) return; }
   rp.target.x=state.x; rp.target.y=state.y||20; rp.target.z=state.z;
-  rp.target.yaw=state.yaw||0; rp.target.health=state.health;
+  rp.target.yaw=state.yaw||0; rp.target.pitch=state.pitch||0;
+  rp.target.health=state.health;
+  rp.target.parachuting=!!state.parachuting;
   if (state.name) rp.name=state.name;
-  if (state.health<=0 && !rp.dead){
-    rp.dead = true;
-    rp.group.visible = false;   // فوری غیب بشه
-  } else if (state.health>0 && rp.dead){
-    rp.dead = false;
-    rp.group.visible = true;
-    rp.group.rotation.z = 0;
-    // snap به موقعیت جدید ری‌اسپاون
-    rp.group.position.set(state.x, state.y||20, state.z);
-    rp.target.x = state.x; rp.target.y = state.y||20; rp.target.z = state.z;
-  }
+  if (state.health<=0 && !rp.dead){ rp.dead = true; rp.group.visible = false; if (rp.parachute) rp.parachute.visible = false; }
+  else if (state.health>0 && rp.dead){ rp.dead = false; rp.group.visible = true; rp.group.rotation.z = 0; rp.group.position.set(state.x, state.y||20, state.z); rp.target.x = state.x; rp.target.y = state.y||20; rp.target.z = state.z; }
+  if (rp.parachute) rp.parachute.visible = !!rp.target.parachuting && !rp.dead;
 }
-function removeRemote(id){
-  const rp=remotePlayers.get(id); if (!rp) return;
-  scene.remove(rp.group);
-  for (const p of rp.group.userData.parts){ const i=remoteHittables.indexOf(p); if (i>=0) remoteHittables.splice(i,1); if (p.geometry) p.geometry.dispose(); }
-  for (const m of rp.group.userData.mats) m.dispose();
-  remotePlayers.delete(id);
-}
+function removeRemote(id){ const rp=remotePlayers.get(id); if (!rp) return; scene.remove(rp.group); for (const p of rp.group.userData.parts){ const i=remoteHittables.indexOf(p); if (i>=0) remoteHittables.splice(i,1); if (p.geometry) p.geometry.dispose(); } for (const m of rp.group.userData.mats) m.dispose(); remotePlayers.delete(id); }
 function clearAllRemotes(){ for (const id of Array.from(remotePlayers.keys())) removeRemote(id); }
 function updateRemotes(dt){
   for (const rp of remotePlayers.values()){
-    if (rp.dead) continue;  // پنهانه، انیمیشن نداریم
+    if (rp.dead) continue;
     rp.group.rotation.z=0;
     const pX=rp.group.position.x, pZ=rp.group.position.z;
     rp.group.position.x=damp(rp.group.position.x,rp.target.x,14,dt);
@@ -1156,19 +1007,18 @@ function updateRemotes(dt){
     const dx=rp.group.position.x-pX, dz=rp.group.position.z-pZ;
     const sp=Math.hypot(dx,dz)/Math.max(dt,0.001);
     const ud=rp.group.userData;
-    if (sp>0.3 && ud.limbs){ ud.animPhase+=dt*sp*1.4; const sw=Math.sin(ud.animPhase)*Math.min(sp/6,1)*0.7; ud.limbs.leftLeg.rotation.x=sw; ud.limbs.rightLeg.rotation.x=-sw; ud.limbs.leftArm.rotation.x=-sw*0.75; ud.limbs.rightArm.rotation.x=sw*0.75; }
+    if (sp>0.3 && ud.limbs && !rp.target.parachuting){ ud.animPhase+=dt*sp*1.4; const sw=Math.sin(ud.animPhase)*Math.min(sp/6,1)*0.7; ud.limbs.leftLeg.rotation.x=sw; ud.limbs.rightLeg.rotation.x=-sw; ud.limbs.leftArm.rotation.x=-sw*0.75; ud.limbs.rightArm.rotation.x=sw*0.75; }
     else if (ud.limbs){ ud.limbs.leftLeg.rotation.x*=0.85; ud.limbs.rightLeg.rotation.x*=0.85; ud.limbs.leftArm.rotation.x*=0.85; ud.limbs.rightArm.rotation.x*=0.85; }
   }
 }
 
-/* ============ SHOOTING ============ */
 const raycaster=new THREE.Raycaster();
 let shootWorldMeshes=[];
 function rebuildShootMeshes(){ shootWorldMeshes=worldMeshes.slice(); shootWorldMeshes.push(ground); }
 rebuildShootMeshes();
 function currentSpread(){ const w=WEAPONS[curWeapon]; let s=w.spread; s=lerp(s,w.adsSpread,adsAmount); const sp=Math.hypot(PLAYER.vel.x,PLAYER.vel.z); s+=w.moveSpread*clamp(sp/SPEED_RUN,0,1)*(1-adsAmount*0.75); if (!PLAYER.onGround) s+=0.03; if (PLAYER.crouching) s*=0.7; return s; }
 function tryShoot(){
-  if (!G.running||G.paused||!PLAYER.alive) return;
+  if (!G.running||G.paused||!PLAYER.alive||PLAYER.parachuting) return;
   if (reloading||fireCooldown>0) return;
   const ws=weaponState[curWeapon];
   if (ws.mag<=0){ Sfx.empty(); fireCooldown=0.25; startReload(); return; }
@@ -1192,26 +1042,16 @@ function tryShoot(){
     let end;
     if (rd<wd){
       const hit=rh[0]; end=hit.point;
-      const part=hit.object.userData.part;
-      const pid=hit.object.userData.playerId;
-      let dmg=w.damage;
-      if (part==='head') dmg*=w.headMul;
-      if (part==='limb') dmg*=0.82;
-      onHitMarker(false);
-      spawnImpact(hit.point, part==='head'?0xffdd44:0xff6644);
-      Sfx.hit();
+      const part=hit.object.userData.part; const pid=hit.object.userData.playerId;
+      let dmg=w.damage; if (part==='head') dmg*=w.headMul; if (part==='limb') dmg*=0.82;
+      onHitMarker(false); spawnImpact(hit.point, part==='head'?0xffdd44:0xff6644); Sfx.hit();
       if (pid) sendToHost({type:'hit', target:pid, damage:dmg});
-      else console.warn('Hit registered but no playerId', hit.object);
     }
     else if (wd<Infinity){ end=wh[0].point; spawnImpact(end, 0xd8c9a0); }
     else end=origin.clone().addScaledVector(dir, w.range);
     spawnTracer(origin, end, 0xffe08a);
   }
-  if (Net.hostConn){
-    const dir=new THREE.Vector3(); camera.getWorldDirection(dir);
-    const e=origin.clone().addScaledVector(dir, w.range);
-    sendToHost({type:'shoot', from:{x:origin.x,y:origin.y,z:origin.z}, to:{x:e.x,y:e.y,z:e.z}});
-  }
+  if (Net.hostConn){ const dir=new THREE.Vector3(); camera.getWorldDirection(dir); const e=origin.clone().addScaledVector(dir, w.range); sendToHost({type:'shoot', from:{x:origin.x,y:origin.y,z:origin.z}, to:{x:e.x,y:e.y,z:e.z}}); }
   raycaster.far=Infinity;
 }
 function muzzleWorldPosition(){ const v=new THREE.Vector3(0.24,-0.20,-0.95); gunGroup.localToWorld(v); return v; }
@@ -1219,74 +1059,106 @@ function startReload(){ const w=WEAPONS[curWeapon], ws=weaponState[curWeapon]; i
 function finishReload(){ const w=WEAPONS[curWeapon], ws=weaponState[curWeapon]; const n=w.magSize-ws.mag, g=Math.min(n, ws.reserve); ws.mag+=g; ws.reserve-=g; reloading=false; Sfx.reloadEnd(); updateAmmoHud(); }
 function switchWeapon(idx){ if (idx===curWeapon||idx<0||idx>=WEAPONS.length||reloading) return; curWeapon=idx; buildGunModel(idx); fireCooldown=0.28; updateAmmoHud(); $('wname').textContent=WEAPONS[curWeapon].name; Sfx.empty(); }
 
-/* ============ DAMAGE / DEATH ============ */
 let vignetteTimer=0;
-let deathAnim = { active: false, startTime: 0, duration: 1100 };
+let deathAnim = { active: false, startTime: 0, duration: 1000 };
+let respawnCountdownTimer = null;
+let currentKillerId = null;
 
-function damagePlayer(amount, fromId){
-  if (!PLAYER.alive || !G.running) return;
-  PLAYER.health -= amount;
-  vignetteTimer = 0.45;
-  Sfx.hurt();
-  updateHealthHud();
-  if (PLAYER.health <= 0){ PLAYER.health = 0; }
-}
+function damagePlayer(amount, fromId){ if (!PLAYER.alive || PLAYER.parachuting || !G.running) return; PLAYER.health -= amount; vignetteTimer = 0.45; Sfx.hurt(); updateHealthHud(); if (PLAYER.health <= 0){ PLAYER.health = 0; } }
 
 function playerDie(kId, kName){
   if (!PLAYER.alive) return;
-  PLAYER.alive = false;
-  PLAYER.health = 0;
-  PLAYER.vel.set(0,0,0);
-  reloading = false;
-  reloadTimer = 0;
-  triggerHeld = false;
-  adsHeld = false;
-  adsAmount = 0;
+  PLAYER.alive = false; PLAYER.health = 0; PLAYER.vel.set(0,0,0);
+  reloading = false; reloadTimer = 0; triggerHeld = false; adsHeld = false; adsAmount = 0;
   updateHealthHud();
   addKillFeed(kName||'حریف', 'شما', true);
   Sfx.kill();
-  $('vignette').style.opacity = '0.65';
+  $('vignette').style.opacity = '0.6';
   if (gunGroup) gunGroup.visible = false;
   const sc = $('scope-overlay'); if (sc) sc.classList.remove('active');
   const ch = $('crosshair'); if (ch) ch.style.opacity = '0';
-  deathAnim.active = true;
-  deathAnim.startTime = performance.now();
+  currentKillerId = kId || null;
+  const kEl = $('respawn-killer');
+  if (kEl) kEl.textContent = kName || 'حریف';
+  deathAnim.active = true; deathAnim.startTime = performance.now();
+  startRespawnCountdown(10);
 }
+
+function startRespawnCountdown(seconds){
+  const overlay = $('respawn-overlay'); const countEl = $('respawn-count'); const barEl = $('respawn-bar');
+  if (!overlay || !countEl) return;
+  overlay.classList.add('on');
+  let remaining = seconds; const total = seconds;
+  countEl.textContent = remaining; if (barEl) barEl.style.width = '0%';
+  if (respawnCountdownTimer) clearInterval(respawnCountdownTimer);
+  respawnCountdownTimer = setInterval(() => {
+    remaining--;
+    countEl.textContent = Math.max(0, remaining);
+    if (barEl) barEl.style.width = ((total - remaining) / total * 100) + '%';
+    if (remaining <= 0){ clearInterval(respawnCountdownTimer); respawnCountdownTimer = null; overlay.classList.remove('on'); }
+  }, 1000);
+}
+function stopRespawnCountdown(){ if (respawnCountdownTimer){ clearInterval(respawnCountdownTimer); respawnCountdownTimer = null; } const overlay = $('respawn-overlay'); if (overlay) overlay.classList.remove('on'); }
 
 function updateDeathAnimation(){
   if (!deathAnim.active) return;
   const t = clamp((performance.now() - deathAnim.startTime) / deathAnim.duration, 0, 1);
   const ease = 1 - Math.pow(1 - t, 3);
-  const eyeY = lerp(PLAYER.eyeStand, 0.4, ease);
-  const roll = ease * 1.05;
-  const pitchTarget = -0.45;
+  const eyeY = lerp(PLAYER.eyeStand, 0.5, ease);
   camera.position.set(PLAYER.pos.x, PLAYER.pos.y + eyeY, PLAYER.pos.z);
   camera.rotation.y = PLAYER.yaw;
-  camera.rotation.x = pitchTarget * ease;
-  camera.rotation.z = roll;
+  camera.rotation.x = -0.5 * ease;
+  camera.rotation.z = 1.1 * ease;
 }
 
-function respawnPlayer(x, y, z){
-  PLAYER.pos.set(x, y || 20, z);
-  PLAYER.vel.set(0,0,0);
-  PLAYER.yaw = Math.random() * Math.PI * 2;
-  PLAYER.pitch = 0;
-  PLAYER.eye = PLAYER.eyeStand;
-  PLAYER.alive = true;
-  PLAYER.health = 100;
+function updateKillcam(){
+  // Called every frame when player is dead, after the fall animation ends.
+  // Positions camera at killer's eye and mirrors their view direction.
+  if (!currentKillerId) return false;
+  const killer = remotePlayers.get(currentKillerId);
+  if (!killer || !killer.group || !killer.group.visible) return false;
+  const kp = killer.group.position;
+  camera.position.set(kp.x, kp.y + PLAYER.eyeStand, kp.z);
+  camera.rotation.y = killer.group.rotation.y;
+  camera.rotation.x = killer.target.pitch || 0;
   camera.rotation.z = 0;
-  camera.rotation.x = PLAYER.pitch;
-  deathAnim.active = false;
-  if (gunGroup) gunGroup.visible = true;
-  const ch = $('crosshair'); if (ch) ch.style.opacity = '1';
-  updateHealthHud();
-  $('vignette').style.opacity = '0';
-  vignetteTimer = 0;
+  return true;
 }
 
+function beginParachute(x, y, z){
+  stopRespawnCountdown();
+  currentKillerId = null;
+  PLAYER.pos.set(x, y, z); PLAYER.vel.set(0,0,0);
+  PLAYER.yaw = Math.random() * Math.PI * 2; PLAYER.pitch = -0.35;
+  PLAYER.eye = PLAYER.eyeStand; PLAYER.alive = true; PLAYER.health = 100; PLAYER.parachuting = true;
+  camera.rotation.z = 0; camera.rotation.x = PLAYER.pitch;
+  deathAnim.active = false;
+  if (localParachute) localParachute.visible = true;
+  if (gunGroup) gunGroup.visible = false;
+  if (crosshairEl) crosshairEl.style.opacity = '0.25';
+  updateHealthHud();
+  $('vignette').style.opacity = '0'; vignetteTimer = 0;
+  const ph = $('para-hud'); if (ph) ph.classList.add('on');
+}
+function respawnPlayer(x, y, z, useParachute){
+  if (useParachute){ beginParachute(x, y || PARA_START_HEIGHT, z); }
+  else {
+    stopRespawnCountdown(); currentKillerId = null;
+    PLAYER.pos.set(x, y || 20, z); PLAYER.vel.set(0,0,0);
+    PLAYER.yaw = Math.random() * Math.PI * 2; PLAYER.pitch = 0;
+    PLAYER.eye = PLAYER.eyeStand; PLAYER.alive = true; PLAYER.health = 100; PLAYER.parachuting = false;
+    camera.rotation.z = 0; camera.rotation.x = 0;
+    deathAnim.active = false;
+    if (localParachute) localParachute.visible = false;
+    if (gunGroup) gunGroup.visible = true;
+    if (crosshairEl) crosshairEl.style.opacity = '1';
+    updateHealthHud();
+    $('vignette').style.opacity = '0'; vignetteTimer = 0;
+    const ph = $('para-hud'); if (ph) ph.classList.remove('on');
+  }
+}
 const G={ running:false, paused:false, over:false, playerScore:0, enemyScore:0, scoreTarget:25, timeLeft:600, kills:0, deaths:0, sensitivity:1.0 };
 
-/* ============ INPUT ============ */
 const keys=Object.create(null);
 window.addEventListener('keydown', e => {
   if (e.code==='Tab') e.preventDefault();
@@ -1309,7 +1181,12 @@ window.addEventListener('keyup', e => { keys[e.code]=false; });
 let pointerLocked=false;
 canvas.addEventListener('click', () => { if (!G.running||G.paused) return; if (!pointerLocked) canvas.requestPointerLock(); });
 document.addEventListener('pointerlockchange', () => { pointerLocked=(document.pointerLockElement===canvas); });
-document.addEventListener('mousemove', e => { if (!G.running||G.paused||!pointerLocked||!PLAYER.alive) return; const s=0.0022*G.sensitivity; PLAYER.yaw-=e.movementX*s; PLAYER.pitch-=e.movementY*s; PLAYER.pitch=clamp(PLAYER.pitch,-1.45,1.45); });
+document.addEventListener('mousemove', e => {
+  if (!G.running||G.paused||!pointerLocked||!PLAYER.alive) return;
+  const s=0.0022*G.sensitivity;
+  PLAYER.yaw-=e.movementX*s; PLAYER.pitch-=e.movementY*s;
+  PLAYER.pitch=clamp(PLAYER.pitch,-1.45,1.45);
+});
 document.addEventListener('mousedown', e => { if (!G.running||G.paused) return; if (!pointerLocked){ canvas.requestPointerLock(); return; } if (e.button===0) triggerHeld=true; if (e.button===2) adsHeld=true; });
 document.addEventListener('mouseup', e => { if (e.button===0) triggerHeld=false; if (e.button===2) adsHeld=false; });
 document.addEventListener('contextmenu', e => { if (G.running) e.preventDefault(); });
@@ -1359,7 +1236,6 @@ canvas.addEventListener('touchmove', e=>{
 function endLook(e){ for (const t of e.changedTouches){ if (t.identifier===lookTouchId) lookTouchId=null; } }
 canvas.addEventListener('touchend', endLook, {passive:true}); canvas.addEventListener('touchcancel', endLook, {passive:true});
 
-/* ============ HUD ============ */
 const hudEl=$('hud'), hpBar=$('hpbar'), hpText=$('hptext'), magEl=$('mag'), resEl=$('res'), ammoEl=$('ammo');
 const scoreYouEl=$('scoreYou'), scoreFoeEl=$('scoreFoe'), timerEl=$('matchTimer');
 const crosshairEl=$('crosshair'), hitmarkerEl=$('hitmarker'), vignetteEl=$('vignette');
@@ -1377,32 +1253,27 @@ function onHitMarker(k){ k?hitmarkerKill():hitmarkerHit(); }
 function updateLobbyUI(){ const t=(Net.isHost?1:0)+Net.clientConns.size+(Net.isHost?0:1); $('playerCount').textContent=t+' / 50'; const list=[]; if (Net.isHost){ list.push({name:Net.myName, isHost:true, isMe:true}); for (const c of Net.clientConns.values()) list.push({name:c.state.name, isHost:false, isMe:false}); } else list.push({name:Net.myName, isHost:false, isMe:true}); $('playerListBody').innerHTML=list.map(p=>`<div class="pl${p.isHost?' host':''}"><div class="dot"></div><div class="nm">${escHtml(p.name)}${p.isMe?' (شما)':''}</div>${p.isHost?'<div class="role">میزبان</div>':''}</div>`).join(''); }
 function showLobby(isHost){ $('menu').classList.remove('on'); $('joinScreen').classList.remove('on'); $('lobby').classList.add('on'); $('roomCode').textContent=Net.roomCode; $('btnStartGame').style.display=isHost?'inline-block':'none'; $('lobbyTitle').textContent=isHost?(String(Net.roomCode).includes('PUBLIC')?'روم عمومی شما':'روم شما'):'اتاق انتظار'; $('lobbyStatus').textContent=isHost?'دکمه شروع را بزن یا منتظر بازیکنان بمان.':'منتظر شروع بازی توسط میزبان...'; updateLobbyUI(); }
 
-/* ============ MATCH ============ */
 function startMatch(){
   if (G.running) return;
   G.running=true; G.paused=false; G.over=false;
   G.playerScore=0; G.enemyScore=0; G.timeLeft=600; G.kills=0; G.deaths=0;
   const spawn = pickRandomSpawn();
-  PLAYER.pos.copy(spawn); PLAYER.vel.set(0,0,0);
-  PLAYER.yaw=Math.random()*Math.PI*2; PLAYER.pitch=0;
-  PLAYER.health=100; PLAYER.alive=true; PLAYER.crouching=false; PLAYER.onGround=false; PLAYER.eye=PLAYER.eyeStand;
-  camera.rotation.z = 0;
-  deathAnim.active = false;
+  PLAYER.pos.set(spawn.x, PARA_START_HEIGHT, spawn.z); PLAYER.vel.set(0,0,0);
+  PLAYER.yaw=Math.random()*Math.PI*2; PLAYER.pitch=-0.35;
+  PLAYER.health=100; PLAYER.alive=true; PLAYER.parachuting=true;
+  PLAYER.crouching=false; PLAYER.onGround=false; PLAYER.eye=PLAYER.eyeStand;
+  camera.rotation.z=0; camera.rotation.x=PLAYER.pitch;
+  deathAnim.active = false; currentKillerId = null;
+  if (localParachute) localParachute.visible = true;
   for (let i=0;i<WEAPONS.length;i++){ weaponState[i].mag=WEAPONS[i].magSize; weaponState[i].reserve=WEAPONS[i].reserveMax; }
   curWeapon=0; buildGunModel(0); reloading=false; reloadTimer=0; fireCooldown=0;
   adsHeld=false; adsAmount=0; triggerHeld=false; recoilKick={z:0,rotX:0,rotZ:0}; pendingRecovery=0;
-  if (gunGroup) gunGroup.visible = true;
-  if (crosshairEl) crosshairEl.style.opacity = '1';
+  if (gunGroup) gunGroup.visible=false;
+  if (crosshairEl) crosshairEl.style.opacity='0.25';
+  const ph = $('para-hud'); if (ph) ph.classList.add('on');
   killfeedEl.innerHTML=''; sbBodyEl.innerHTML='';
   rebuildShootMeshes();
-  if (Net.isHost){
-    Net.started=true;
-    for (const c of Net.clientConns.values()){
-      if (!remotePlayers.has(c.state.id)) addRemote(c.state);
-    }
-    broadcastAll({type:'started'});
-    startHostTick();
-  }
+  if (Net.isHost){ Net.started=true; for (const c of Net.clientConns.values()) if (!remotePlayers.has(c.state.id)) addRemote(c.state); broadcastAll({type:'started'}); startHostTick(); }
   updateScoreHud(); updateHealthHud(); updateAmmoHud(); updateTimerHud(); $('wname').textContent=WEAPONS[0].name;
   $('lobby').classList.remove('on'); $('menu').classList.remove('on'); $('over').classList.remove('on'); $('pause').classList.remove('on');
   hudEl.classList.add('on'); touchUI.classList.add('on'); $('pauseBtn').classList.add('on');
@@ -1413,6 +1284,7 @@ function resumeGame(){ if (!G.running) return; G.paused=false; $('pause').classL
 function endMatch(won){ if (G.over) return; G.over=true; G.running=false; hudEl.classList.remove('on'); touchUI.classList.remove('on'); $('pauseBtn').classList.remove('on'); if (document.pointerLockElement) document.exitPointerLock(); $('overTitle').textContent=won?'بردی':'باختی'; $('overTitle').style.color=won?'#5fe08a':'#ff6b5e'; $('resultLine').innerHTML=`امتیاز شما: <b>${G.kills}</b> کشتار`; $('over').classList.add('on'); }
 function leaveRoom(){
   G.running=false; G.paused=false;
+  stopRespawnCountdown(); currentKillerId = null;
   if (Net.tickTimer){ clearInterval(Net.tickTimer); Net.tickTimer=null; }
   if (Net.hostConn){ try { Net.hostConn.close(); } catch(_){} Net.hostConn=null; }
   for (const c of Net.clientConns.values()){ try { c.conn.close(); } catch(_){} }
@@ -1423,13 +1295,66 @@ function leaveRoom(){
   hudEl.classList.remove('on'); touchUI.classList.remove('on'); $('pauseBtn').classList.remove('on');
   $('lobby').classList.remove('on'); $('joinScreen').classList.remove('on'); $('pause').classList.remove('on'); $('over').classList.remove('on');
   $('menu').classList.add('on');
+  if (localParachute) localParachute.visible=false;
+  if (gunGroup) gunGroup.visible=true;
   if (document.pointerLockElement) document.exitPointerLock();
 }
 
-/* ============ PLAYER UPDATE ============ */
-function doJump(){ if (!PLAYER.alive) return; if (PLAYER.onGround){ PLAYER.vel.y=JUMP_SPEED; PLAYER.onGround=false; Sfx.empty(); } }
+function doJump(){ if (!PLAYER.alive || PLAYER.parachuting) return; if (PLAYER.onGround){ PLAYER.vel.y=JUMP_SPEED; PLAYER.onGround=false; Sfx.empty(); } }
 function updatePlayer(dt){
-  if (!PLAYER.alive){ updateDeathAnimation(); return; }
+  if (!PLAYER.alive){
+    // During killcam, replace first 1s with death fall, then killcam view
+    const elapsed = (performance.now() - deathAnim.startTime) / 1000;
+    if (elapsed < deathAnim.duration / 1000){
+      updateDeathAnimation();
+    } else {
+      if (!updateKillcam()) updateDeathAnimation();
+    }
+    return;
+  }
+
+  if (PLAYER.parachuting){
+    let ix=0, iz=0;
+    if (keys['KeyW']||keys['ArrowUp']) iz+=1;
+    if (keys['KeyS']||keys['ArrowDown']) iz-=1;
+    if (keys['KeyD']||keys['ArrowRight']) ix+=1;
+    if (keys['KeyA']||keys['ArrowLeft']) ix-=1;
+    ix+=moveVec.x; iz+=moveVec.y;
+    const il=Math.hypot(ix,iz); if (il>1){ ix/=il; iz/=il; }
+    if (ix !== 0 || iz !== 0){
+      const fwd = playerForward(), rgt = playerRight();
+      const wish = new THREE.Vector3().addScaledVector(fwd, iz).addScaledVector(rgt, ix);
+      if (wish.length() > 0.05){
+        wish.normalize().multiplyScalar(PARA_STEER_SPEED * dt);
+        PLAYER.pos.x += wish.x; PLAYER.pos.z += wish.z;
+      }
+    }
+    PLAYER.pos.y += PARA_FALL_SPEED * dt;
+    PLAYER.pos.x = clamp(PLAYER.pos.x, -A+3, A-3);
+    PLAYER.pos.z = clamp(PLAYER.pos.z, -A+3, A-3);
+    const gh = groundHeightAt(PLAYER.pos.x, PLAYER.pos.z, PLAYER.pos.y);
+    const landY = gh + PLAYER.eyeStand;
+    if (PLAYER.pos.y <= landY){
+      PLAYER.pos.y = landY;
+      PLAYER.parachuting = false;
+      if (localParachute) localParachute.visible = false;
+      if (gunGroup) gunGroup.visible = true;
+      if (crosshairEl) crosshairEl.style.opacity = '1';
+      PLAYER.pitch = 0;
+      const ph = $('para-hud'); if (ph) ph.classList.remove('on');
+      PLAYER.onGround = true;
+    }
+    camera.position.set(PLAYER.pos.x, PLAYER.pos.y, PLAYER.pos.z);
+    camera.rotation.y = PLAYER.yaw; camera.rotation.x = PLAYER.pitch; camera.rotation.z = 0;
+    const alt = Math.max(0, Math.round(PLAYER.pos.y - gh));
+    const phAlt = $('ph-alt'); if (phAlt) phAlt.textContent = alt + 'm';
+    if (!Net.isHost && Net.hostConn && Net.hostConn.open){
+      const t=performance.now();
+      if (t-Net.lastStateSend>66){ Net.lastStateSend=t; sendToHost({type:'state', x:PLAYER.pos.x, y:PLAYER.pos.y, z:PLAYER.pos.z, yaw:PLAYER.yaw, pitch:PLAYER.pitch, health:PLAYER.health, alive:PLAYER.alive, parachuting:PLAYER.parachuting, weapon:curWeapon}); }
+    }
+    return;
+  }
+
   let ix=0, iz=0;
   if (keys['KeyW']||keys['ArrowUp']) iz+=1;
   if (keys['KeyS']||keys['ArrowDown']) iz-=1;
@@ -1441,14 +1366,14 @@ function updatePlayer(dt){
   PLAYER.sprinting=(!!keys['ShiftLeft']||!!keys['ShiftRight'])&&!PLAYER.crouching&&iz>0;
   if (keys['Space']) doJump();
   const tEye=PLAYER.crouching?PLAYER.eyeCrouch:PLAYER.eyeStand;
-  PLAYER.eye=damp(PLAYER.eye,tEye,12,dt);
+  PLAYER.eye=damp(PLAYER.eye,tEye,8,dt);
   const fwd=playerForward(), rgt=playerRight();
   const wish=new THREE.Vector3(); wish.addScaledVector(fwd,iz); wish.addScaledVector(rgt,ix);
   let wl=wish.length(); if (wl>1){ wish.multiplyScalar(1/wl); wl=1; }
   let spd=PLAYER.crouching?SPEED_CROUCH:(PLAYER.sprinting?SPEED_RUN:SPEED_WALK);
-  if (adsAmount>0.5) spd*=0.62;
+  if (adsAmount>0.3) spd *= lerp(1.0, 0.42, adsAmount);
   const tVX=wish.x*spd*wl, tVZ=wish.z*spd*wl;
-  const accel=PLAYER.onGround?14:3.5;
+  const accel=PLAYER.onGround?6:2;
   PLAYER.vel.x=damp(PLAYER.vel.x,tVX,accel,dt); PLAYER.vel.z=damp(PLAYER.vel.z,tVZ,accel,dt);
   PLAYER.vel.y-=GRAVITY*dt; if (PLAYER.vel.y<-55) PLAYER.vel.y=-55;
   const mvD=Math.hypot(PLAYER.vel.x,PLAYER.vel.z)*dt;
@@ -1465,15 +1390,19 @@ function updatePlayer(dt){
   if (pendingRecovery>0){ const r=Math.min(pendingRecovery,5.5*dt); PLAYER.pitch-=r; pendingRecovery-=r; }
   PLAYER.pitch=clamp(PLAYER.pitch,-1.45,1.45);
   const isScoped=(curWeapon===2||curWeapon===4)&&adsAmount>0.8;
-  if (isScoped){ const t=performance.now()*0.001; PLAYER.yaw+=Math.sin(t*0.8)*0.0006; PLAYER.pitch+=Math.cos(t*0.6)*0.0006; }
+  if (isScoped){
+    const t = performance.now() * 0.001;
+    PLAYER.yaw += Math.sin(t * 0.7) * 0.00011;
+    PLAYER.pitch += Math.cos(t * 0.55) * 0.00007;
+  }
   fireCooldown=Math.max(0, fireCooldown-dt);
   if (reloading){ reloadTimer-=dt; if (reloadTimer<=0) finishReload(); }
   if (triggerHeld&&!reloading){ const w=WEAPONS[curWeapon]; if (w.auto){ if (fireCooldown<=0) tryShoot(); } else if (!semiLatch){ semiLatch=true; tryShoot(); } }
   if (!triggerHeld) semiLatch=false;
   const wantAds=adsHeld&&!reloading&&!PLAYER.sprinting;
-  adsAmount=damp(adsAmount,wantAds?1:0,12,dt);
+  adsAmount=damp(adsAmount,wantAds?1:0,10,dt);
   const w=WEAPONS[curWeapon]; const tf=lerp(w.baseFov, w.adsFov, adsAmount);
-  if (Math.abs(camera.fov-tf)>0.05){ camera.fov=damp(camera.fov, tf, 14, dt); camera.updateProjectionMatrix(); }
+  if (Math.abs(camera.fov-tf)>0.05){ camera.fov=damp(camera.fov, tf, 12, dt); camera.updateProjectionMatrix(); }
   const scopeEl=$('scope-overlay');
   if (isScoped){ scopeEl.classList.add('active'); crosshairEl.style.opacity='0'; gunGroup.visible=false; }
   else { scopeEl.classList.remove('active'); crosshairEl.style.opacity=adsAmount>0.75?'0.15':'1'; gunGroup.visible=true; }
@@ -1481,10 +1410,7 @@ function updatePlayer(dt){
   crosshairEl.style.setProperty('--gap',gapPx.toFixed(1)+'px');
   if (!Net.isHost && Net.hostConn && Net.hostConn.open){
     const t=performance.now();
-    if (t-Net.lastStateSend>66){
-      Net.lastStateSend=t;
-      sendToHost({type:'state', x:PLAYER.pos.x, y:PLAYER.pos.y, z:PLAYER.pos.z, yaw:PLAYER.yaw, pitch:PLAYER.pitch, health:PLAYER.health, alive:PLAYER.alive, weapon:curWeapon});
-    }
+    if (t-Net.lastStateSend>66){ Net.lastStateSend=t; sendToHost({type:'state', x:PLAYER.pos.x, y:PLAYER.pos.y, z:PLAYER.pos.z, yaw:PLAYER.yaw, pitch:PLAYER.pitch, health:PLAYER.health, alive:PLAYER.alive, parachuting:PLAYER.parachuting, weapon:curWeapon}); }
   }
 }
 function updateViewmodel(dt){
@@ -1516,33 +1442,29 @@ setInterval(() => {
   if (VoiceChat.peer && !VoiceChat.peer.destroyed && VoiceChat.peer.disconnected) { try { VoiceChat.peer.reconnect(); } catch(_){} }
 }, 5000);
 
-/* ============ UI WIRING ============ */
 $('btnCreatePublic').addEventListener('click', async () => {
   Sfx.init(); Sfx.resume();
   Net.myName = ($('setName').value || 'Player').trim().slice(0,16) || 'Player';
-  $('btnCreatePublic').disabled = true; $('btnCreatePublic').textContent = 'در حال ساخت...';
-  showConnStatus('در حال ساخت روم عمومی...');
+  $('btnCreatePublic').disabled = true; showConnStatus('در حال ساخت روم عمومی...');
   try { await createPublicRoom((s) => showConnStatus(s)); hideConnStatus(); showLobby(true); }
   catch (e) { hideConnStatus(); alert('همه ۲۰ سرور عمومی پر است! بعداً دوباره تلاش کن.'); }
-  finally { $('btnCreatePublic').disabled = false; $('btnCreatePublic').textContent = 'ساخت روم عمومی'; }
+  finally { $('btnCreatePublic').disabled = false; }
 });
 $('btnJoinPublic').addEventListener('click', async () => {
   Sfx.init(); Sfx.resume();
   Net.myName = ($('setName').value || 'Player').trim().slice(0,16) || 'Player';
-  $('btnJoinPublic').disabled = true; $('btnJoinPublic').textContent = 'در حال جستجو...';
-  showConnStatus('در حال جستجوی روم‌های عمومی...');
+  $('btnJoinPublic').disabled = true; showConnStatus('در حال جستجوی روم‌های عمومی...');
   try { await joinPublicRoom((s) => showConnStatus(s)); hideConnStatus(); showLobby(false); }
   catch (e) { hideConnStatus(); alert('هیچ روم عمومی پیدا نشد. می‌تونی خودت یکی بسازی!'); }
-  finally { $('btnJoinPublic').disabled = false; $('btnJoinPublic').textContent = 'پیوستن به روم عمومی (خودکار)'; }
+  finally { $('btnJoinPublic').disabled = false; }
 });
 $('btnCreate').addEventListener('click', async () => {
   Sfx.init(); Sfx.resume();
   Net.myName = ($('setName').value || 'Player').trim().slice(0,16) || 'Player';
-  $('btnCreate').disabled = true; $('btnCreate').textContent = 'در حال ساخت...';
-  showConnStatus('در حال ساخت روم خصوصی...');
+  $('btnCreate').disabled = true; showConnStatus('در حال ساخت روم خصوصی...');
   try { await hostPrivateRoom((s) => showConnStatus(s)); hideConnStatus(); showLobby(true); }
   catch (e) { hideConnStatus(); alert('خطا در ساخت روم: ' + e.message); }
-  finally { $('btnCreate').disabled = false; $('btnCreate').textContent = 'ساخت روم خصوصی'; }
+  finally { $('btnCreate').disabled = false; }
 });
 $('btnJoin').addEventListener('click', () => { $('menu').classList.remove('on'); $('joinScreen').classList.add('on'); $('joinCode').value=''; $('joinError').textContent=''; setTimeout(()=>$('joinCode').focus(), 100); });
 $('joinCode').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g,'').slice(0,4); });
@@ -1568,9 +1490,8 @@ $('btnResume').addEventListener('click', resumeGame);
 $('btnQuit').addEventListener('click', () => { G.running=false; $('pause').classList.remove('on'); hudEl.classList.remove('on'); showLobby(Net.isHost); });
 $('btnBackLobby').addEventListener('click', () => { $('over').classList.remove('on'); if (Net.isHost){ Net.started=false; showLobby(true); } else showLobby(false); });
 $('pauseBtn').addEventListener('click', () => { G.paused?resumeGame():pauseGame(); });
-$('setSens').addEventListener('input', e => { G.sensitivity=parseInt(e.target.value,10)/100; });
-$('setVol').addEventListener('input', e => { Sfx.init(); Sfx.setVolume(parseInt(e.target.value,10)/100); });
-$('setQuality').addEventListener('change', e => { const q=e.target.value; if (q==='high'){ renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2)); sun.shadow.mapSize.set(2048,2048); } else if (q==='med'){ renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5)); sun.shadow.mapSize.set(1024,1024); } else { renderer.setPixelRatio(1); } if (sun.shadow.map){ sun.shadow.map.dispose(); sun.shadow.map=null; } renderer.shadowMap.needsUpdate=true; onResize(); });
+$('setSens').addEventListener('input', e => { G.sensitivity = parseInt(e.target.value,10)/100; const el = $('setSensVal'); if (el) el.textContent = e.target.value; });
+$('setVol').addEventListener('input', e => { Sfx.init(); Sfx.setVolume(parseInt(e.target.value,10)/100); const el = $('setVolVal'); if (el) el.textContent = e.target.value; });
 
 setInterval(() => {
   if (!Net.peer) return;
