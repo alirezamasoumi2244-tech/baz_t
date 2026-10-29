@@ -65,7 +65,6 @@ html,body{height:100%;overflow:hidden;background:#07090c;color:#e8eef6;font-fami
 #hud-lives .heart{color:#ff5252;font-size:14px;}
 #hud-lives.empty{color:#ff5252;border-color:#ef4444;animation:livePulse 1s infinite;}
 @keyframes livePulse{50%{opacity:.5;}}
-
 #respawn-overlay{position:fixed;inset:0;z-index:50;display:none;flex-direction:column;align-items:stretch;justify-content:space-between;pointer-events:none;padding:20px;background:radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,.65) 100%);}
 #respawn-overlay.on{display:flex;}
 .kc-top{display:flex;flex-direction:column;align-items:center;gap:10px;padding-top:24px;}
@@ -78,18 +77,15 @@ html,body{height:100%;overflow:hidden;background:#07090c;color:#e8eef6;font-fami
 .kc-label{font-size:10px;letter-spacing:4px;color:#ff8a5a;font-weight:700;}
 .kc-bar{width:min(240px,52vw);height:3px;background:rgba(255,255,255,.15);border-radius:2px;overflow:hidden;margin-top:6px;}
 .kc-bar > div{height:100%;width:0%;background:linear-gradient(90deg,#ff6b5e,#ffd166);transition:width .3s linear;}
-
 #eliminated-overlay{position:fixed;inset:0;z-index:51;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(5,3,3,.7);pointer-events:none;}
 #eliminated-overlay.on{display:flex;}
 #eliminated-overlay .e-title{font-size:clamp(34px,10vw,68px);font-weight:900;letter-spacing:6px;color:#ff3232;text-shadow:0 6px 40px rgba(255,50,50,.6), 0 0 80px rgba(255,0,0,.4);}
 #eliminated-overlay .e-sub{font-size:13px;color:#94a3b8;letter-spacing:2px;margin-top:8px;}
-
 #spectator-overlay{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:22;display:none;background:rgba(8,12,18,.85);border:1px solid rgba(121,211,255,.4);border-radius:12px;padding:10px 22px;flex-direction:column;align-items:center;gap:2px;pointer-events:auto;cursor:pointer;backdrop-filter:blur(8px);}
 #spectator-overlay.on{display:flex;}
 #spectator-overlay .spec-badge{font-size:10px;letter-spacing:4px;color:#79d3ff;font-weight:800;}
 #spectator-overlay .spec-name{font-size:15px;font-weight:700;color:#fff;margin-top:2px;}
 #spectator-overlay .spec-hint{font-size:10px;color:#64748b;margin-top:2px;}
-
 #para-hud{position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:22;pointer-events:none;background:rgba(8,12,18,.7);border:1px solid rgba(121,211,255,.4);border-radius:12px;padding:10px 20px;display:none;flex-direction:column;align-items:center;gap:2px;backdrop-filter:blur(8px);}
 #para-hud.on{display:flex;}
 #para-hud .ph-alt{font-size:24px;font-weight:800;color:#79d3ff;font-variant-numeric:tabular-nums;}
@@ -431,9 +427,7 @@ const escHtml = (s) => String(s).replace(/[<>&"']/g,c=>({'<':'&lt;','>':'&gt;','
 const IS_MOBILE = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 
 /* ============ ROOM SETTINGS / STATE ============ */
-const ROOM_SETTINGS = {
-  maxRespawns: parseInt(localStorage.getItem('baz-max-respawns') || '3', 10)
-};
+const ROOM_SETTINGS = { maxRespawns: parseInt(localStorage.getItem('baz-max-respawns') || '3', 10) };
 let myRespawnsUsed = 0;
 let isSpectator = false;
 let spectatorIndex = 0;
@@ -525,39 +519,25 @@ renderer.outputColorSpace=THREE.SRGBColorSpace;
 const scene=new THREE.Scene();
 scene.fog=new THREE.Fog(0xb8d0e8, IS_MOBILE ? 130 : 350, IS_MOBILE ? 260 : 1100);
 
-/* Sky gradient sphere */
 function createSky(){
-  const skyCanvas = document.createElement('canvas');
-  skyCanvas.width = 512; skyCanvas.height = 512;
+  const skyCanvas = document.createElement('canvas'); skyCanvas.width = 512; skyCanvas.height = 512;
   const ctx = skyCanvas.getContext('2d');
   const grad = ctx.createLinearGradient(0, 0, 0, 512);
-  grad.addColorStop(0.0, '#2d5a99');
-  grad.addColorStop(0.35, '#5a8ec4');
-  grad.addColorStop(0.65, '#a0c0dd');
-  grad.addColorStop(1.0, '#d8e4ee');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, 512, 512);
-  const tex = new THREE.CanvasTexture(skyCanvas);
-  tex.colorSpace = THREE.SRGBColorSpace;
+  grad.addColorStop(0.0, '#2d5a99'); grad.addColorStop(0.35, '#5a8ec4');
+  grad.addColorStop(0.65, '#a0c0dd'); grad.addColorStop(1.0, '#d8e4ee');
+  ctx.fillStyle = grad; ctx.fillRect(0, 0, 512, 512);
+  const tex = new THREE.CanvasTexture(skyCanvas); tex.colorSpace = THREE.SRGBColorSpace;
   const geo = new THREE.SphereGeometry(2200, 24, 12);
   const mat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.BackSide, fog: false });
-  const sky = new THREE.Mesh(geo, mat);
-  scene.add(sky);
-  // Sun disc
-  const sunCanvas = document.createElement('canvas');
-  sunCanvas.width = sunCanvas.height = 128;
+  const sky = new THREE.Mesh(geo, mat); scene.add(sky);
+  const sunCanvas = document.createElement('canvas'); sunCanvas.width = sunCanvas.height = 128;
   const sctx = sunCanvas.getContext('2d');
   const sg = sctx.createRadialGradient(64, 64, 0, 64, 64, 64);
-  sg.addColorStop(0, 'rgba(255,255,220,1)');
-  sg.addColorStop(0.4, 'rgba(255,240,180,0.8)');
-  sg.addColorStop(1, 'rgba(255,220,100,0)');
-  sctx.fillStyle = sg;
-  sctx.fillRect(0, 0, 128, 128);
+  sg.addColorStop(0, 'rgba(255,255,220,1)'); sg.addColorStop(0.4, 'rgba(255,240,180,0.8)'); sg.addColorStop(1, 'rgba(255,220,100,0)');
+  sctx.fillStyle = sg; sctx.fillRect(0, 0, 128, 128);
   const sunTex = new THREE.CanvasTexture(sunCanvas);
   const sunSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: sunTex, transparent: true, depthWrite: false, fog: false }));
-  sunSprite.scale.set(400, 400, 1);
-  sunSprite.position.set(800, 900, 500);
-  scene.add(sunSprite);
+  sunSprite.scale.set(400, 400, 1); sunSprite.position.set(800, 900, 500); scene.add(sunSprite);
 }
 createSky();
 
@@ -572,120 +552,15 @@ sun.castShadow=true;
 const SHADOW_MAP_SIZE = IS_MOBILE ? 1024 : 2048;
 const SHADOW_FRUSTUM  = IS_MOBILE ? 350  : 700;
 sun.shadow.mapSize.set(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE);
-sun.shadow.camera.left   = -SHADOW_FRUSTUM;
-sun.shadow.camera.right  =  SHADOW_FRUSTUM;
-sun.shadow.camera.top    =  SHADOW_FRUSTUM;
-sun.shadow.camera.bottom = -SHADOW_FRUSTUM;
+sun.shadow.camera.left   = -SHADOW_FRUSTUM; sun.shadow.camera.right  =  SHADOW_FRUSTUM;
+sun.shadow.camera.top    =  SHADOW_FRUSTUM; sun.shadow.camera.bottom = -SHADOW_FRUSTUM;
 sun.shadow.camera.near=1; sun.shadow.camera.far= IS_MOBILE ? 900 : 1500;
 sun.shadow.bias=-0.0008; sun.shadow.normalBias=0.02;
 scene.add(sun); scene.add(sun.target);
 
-/* ============ TEXTURES ============ */
-function makeGroundTexture(){
-  const s = 1024;
-  const c = document.createElement('canvas'); c.width = c.height = s;
-  const g = c.getContext('2d');
-  g.fillStyle = '#556b3a'; g.fillRect(0, 0, s, s);
-  // Grass noise
-  for (let i = 0; i < 26000; i++){
-    const x = Math.random()*s, y = Math.random()*s;
-    const v = 55 + Math.random()*55;
-    g.fillStyle = `rgba(${v*0.7|0},${v|0},${v*0.4|0},${Math.random()*0.55})`;
-    const sz = Math.random()*3+0.5;
-    g.fillRect(x, y, sz, sz);
-  }
-  // Dirt patches
-  for (let i = 0; i < 40; i++){
-    const x = Math.random()*s, y = Math.random()*s;
-    const r = 25 + Math.random()*70;
-    const grad = g.createRadialGradient(x, y, 0, x, y, r);
-    grad.addColorStop(0, `rgba(95,75,50,${0.35+Math.random()*0.35})`);
-    grad.addColorStop(1, 'rgba(95,75,50,0)');
-    g.fillStyle = grad;
-    g.fillRect(x-r, y-r, r*2, r*2);
-  }
-  // Small dark grass tufts
-  for (let i = 0; i < 3000; i++){
-    const x = Math.random()*s, y = Math.random()*s;
-    g.fillStyle = `rgba(30,45,20,${0.4+Math.random()*0.4})`;
-    g.fillRect(x, y, 1.5, 1.5);
-  }
-  const t = new THREE.CanvasTexture(c);
-  t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.repeat.set(70, 70);
-  t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
-  t.colorSpace = THREE.SRGBColorSpace;
-  return t;
-}
-function makeWallTexture(){
-  const s = 1024;
-  const c = document.createElement('canvas'); c.width = c.height = s;
-  const g = c.getContext('2d');
-  g.fillStyle = '#3a2e24'; g.fillRect(0, 0, s, s);
-  const bw = s/8, bh = s/20, mortar = 5;
-  const cols = ['#a86b48','#9c6040','#b07858','#8a5030','#a86848','#956240','#7a4828','#ad7355'];
-  for (let row = 0; row < 20; row++){
-    const off = (row % 2 === 0) ? 0 : bw/2;
-    for (let col = -1; col <= 8; col++){
-      const x = col*bw + off + mortar/2;
-      const y = row*bh + mortar/2;
-      const w = bw - mortar;
-      const h = bh - mortar;
-      const baseCol = cols[Math.floor(Math.random()*cols.length)];
-      g.fillStyle = baseCol;
-      g.fillRect(x, y, w, h);
-      // Brick highlight
-      g.fillStyle = `rgba(255,255,255,${0.06 + Math.random()*0.06})`;
-      g.fillRect(x, y, w, 2);
-      g.fillStyle = `rgba(0,0,0,${0.08 + Math.random()*0.08})`;
-      g.fillRect(x, y+h-2, w, 2);
-      // Texture noise inside brick
-      for (let n = 0; n < 15; n++){
-        g.fillStyle = `rgba(0,0,0,${Math.random()*0.15})`;
-        g.fillRect(x + Math.random()*w, y + Math.random()*h, 2, 2);
-      }
-    }
-  }
-  const t = new THREE.CanvasTexture(c);
-  t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
-  t.colorSpace = THREE.SRGBColorSpace;
-  return t;
-}
-function makeCrateTexture(){
-  const s = 256;
-  const c = document.createElement('canvas'); c.width = c.height = s;
-  const g = c.getContext('2d');
-  g.fillStyle = '#a4754a'; g.fillRect(0, 0, s, s);
-  // Wood grain
-  for (let i = 0; i < 400; i++){
-    const y = Math.random()*s;
-    g.strokeStyle = `rgba(${60 + Math.random()*40},${35 + Math.random()*25},${15 + Math.random()*15},${0.15 + Math.random()*0.25})`;
-    g.lineWidth = 0.5 + Math.random()*1.5;
-    g.beginPath();
-    g.moveTo(0, y);
-    for (let x = 0; x < s; x += 10){
-      g.lineTo(x, y + Math.sin(x*0.05) * 2);
-    }
-    g.stroke();
-  }
-  // Corner braces
-  g.strokeStyle = 'rgba(60,35,15,.75)';
-  g.lineWidth = 12;
-  g.strokeRect(6, 6, s-12, s-12);
-  // Cross braces
-  g.lineWidth = 10;
-  g.beginPath(); g.moveTo(15, 15); g.lineTo(s-15, s-15); g.stroke();
-  g.beginPath(); g.moveTo(s-15, 15); g.lineTo(15, s-15); g.stroke();
-  // Nails
-  g.fillStyle = '#2a2a2a';
-  for (const [x, y] of [[20,20],[s-20,20],[20,s-20],[s-20,s-20]]){
-    g.beginPath(); g.arc(x, y, 3, 0, Math.PI*2); g.fill();
-  }
-  const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace;
-  return t;
-}
+function makeGroundTexture(){ const s=1024; const c=document.createElement('canvas'); c.width=c.height=s; const g=c.getContext('2d'); g.fillStyle='#556b3a'; g.fillRect(0,0,s,s); for(let i=0;i<26000;i++){ const x=Math.random()*s, y=Math.random()*s; const v=55+Math.random()*55; g.fillStyle=`rgba(${v*0.7|0},${v|0},${v*0.4|0},${Math.random()*0.55})`; const sz=Math.random()*3+0.5; g.fillRect(x,y,sz,sz); } for(let i=0;i<40;i++){ const x=Math.random()*s, y=Math.random()*s; const r=25+Math.random()*70; const grad=g.createRadialGradient(x,y,0,x,y,r); grad.addColorStop(0,`rgba(95,75,50,${0.35+Math.random()*0.35})`); grad.addColorStop(1,'rgba(95,75,50,0)'); g.fillStyle=grad; g.fillRect(x-r,y-r,r*2,r*2); } for(let i=0;i<3000;i++){ const x=Math.random()*s, y=Math.random()*s; g.fillStyle=`rgba(30,45,20,${0.4+Math.random()*0.4})`; g.fillRect(x,y,1.5,1.5); } const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(70,70); t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy()); t.colorSpace=THREE.SRGBColorSpace; return t; }
+function makeWallTexture(){ const s=1024; const c=document.createElement('canvas'); c.width=c.height=s; const g=c.getContext('2d'); g.fillStyle='#3a2e24'; g.fillRect(0,0,s,s); const bw=s/8, bh=s/20, mortar=5; const cols=['#a86b48','#9c6040','#b07858','#8a5030','#a86848','#956240','#7a4828','#ad7355']; for(let row=0;row<20;row++){ const off=(row%2===0)?0:bw/2; for(let col=-1;col<=8;col++){ const x=col*bw+off+mortar/2; const y=row*bh+mortar/2; const w=bw-mortar; const h=bh-mortar; const baseCol=cols[Math.floor(Math.random()*cols.length)]; g.fillStyle=baseCol; g.fillRect(x,y,w,h); g.fillStyle=`rgba(255,255,255,${0.06+Math.random()*0.06})`; g.fillRect(x,y,w,2); g.fillStyle=`rgba(0,0,0,${0.08+Math.random()*0.08})`; g.fillRect(x,y+h-2,w,2); for(let n=0;n<15;n++){ g.fillStyle=`rgba(0,0,0,${Math.random()*0.15})`; g.fillRect(x+Math.random()*w, y+Math.random()*h, 2, 2); } } } const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy()); t.colorSpace=THREE.SRGBColorSpace; return t; }
+function makeCrateTexture(){ const s=256; const c=document.createElement('canvas'); c.width=c.height=s; const g=c.getContext('2d'); g.fillStyle='#a4754a'; g.fillRect(0,0,s,s); for(let i=0;i<400;i++){ const y=Math.random()*s; g.strokeStyle=`rgba(${60+Math.random()*40},${35+Math.random()*25},${15+Math.random()*15},${0.15+Math.random()*0.25})`; g.lineWidth=0.5+Math.random()*1.5; g.beginPath(); g.moveTo(0,y); for(let x=0;x<s;x+=10){ g.lineTo(x, y + Math.sin(x*0.05)*2); } g.stroke(); } g.strokeStyle='rgba(60,35,15,.75)'; g.lineWidth=12; g.strokeRect(6,6,s-12,s-12); g.lineWidth=10; g.beginPath(); g.moveTo(15,15); g.lineTo(s-15,s-15); g.stroke(); g.beginPath(); g.moveTo(s-15,15); g.lineTo(15,s-15); g.stroke(); g.fillStyle='#2a2a2a'; for(const [x,y] of [[20,20],[s-20,20],[20,s-20],[s-20,s-20]]){ g.beginPath(); g.arc(x,y,3,0,Math.PI*2); g.fill(); } const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; return t; }
 
 let A=460;
 const worldGroup=new THREE.Group(); scene.add(worldGroup);
@@ -733,9 +608,9 @@ function registerMeshToChunk(mesh){
 }
 for (const m of worldMeshes) registerMeshToChunk(m);
 function updateChunks(){
-  if (!yawObject) return;
-  const pcx = Math.floor(yawObject.position.x / CHUNK_SIZE);
-  const pcz = Math.floor(yawObject.position.z / CHUNK_SIZE);
+  // FIXED: use PLAYER.pos instead of yawObject (which was always null)
+  const pcx = Math.floor(PLAYER.pos.x / CHUNK_SIZE);
+  const pcz = Math.floor(PLAYER.pos.z / CHUNK_SIZE);
   const kk = pcx + '_' + pcz;
   if (kk === lastChunkKey) return;
   lastChunkKey = kk;
@@ -766,7 +641,6 @@ function pickRandomSpawn(){
 const PLAYER={ pos:new THREE.Vector3(0,20,0), vel:new THREE.Vector3(), yaw:Math.PI, pitch:0, radius:0.42, height:1.75, eyeStand:1.62, eyeCrouch:1.05, eye:1.62, onGround:false, crouching:false, sprinting:false, health:100, maxHealth:100, alive:true, parachuting:false };
 const GRAVITY=22.0, JUMP_SPEED=7.3, SPEED_WALK=5.4, SPEED_RUN=8.1, SPEED_CROUCH=2.6;
 const PARA_START_HEIGHT=200, PARA_FALL_SPEED=-8, PARA_STEER_SPEED=28;
-let yawObject=null, pitchObject=null;
 function playerForward(){ return new THREE.Vector3(-Math.sin(PLAYER.yaw),0,-Math.cos(PLAYER.yaw)); }
 function playerRight(){ return new THREE.Vector3(Math.cos(PLAYER.yaw),0,-Math.sin(PLAYER.yaw)); }
 function resolveHorizontal(pos,radius){ for(let i=0;i<colliders.length;i++){ const b=colliders[i]; if(b.max.x-b.min.x>100||b.max.z-b.min.z>100) continue; const minX=b.min.x-radius,maxX=b.max.x+radius,minZ=b.min.z-radius,maxZ=b.max.z+radius; if(pos.x<=minX||pos.x>=maxX||pos.z<=minZ||pos.z>=maxZ) continue; if(pos.y>=b.max.y-0.06) continue; if(pos.y+PLAYER.height<=b.min.y) continue; const dxL=pos.x-minX,dxR=maxX-pos.x,dzL=pos.z-minZ,dzR=maxZ-pos.z; const m=Math.min(dxL,dxR,dzL,dzR); if(m===dxL) pos.x=minX; else if(m===dxR) pos.x=maxX; else if(m===dzL) pos.z=minZ; else pos.z=maxZ; } }
@@ -841,19 +715,8 @@ function handleFromClient(fromId, data){
   const c = isFromHost ? null : Net.clientConns.get(fromId);
   if (!isFromHost && !c) return;
   const fromName = isFromHost ? Net.myName : (c ? c.state.name : '?');
-
-  if (data.type === 'state' && c){
-    c.state.x=data.x; c.state.y=data.y; c.state.z=data.z;
-    c.state.yaw=data.yaw; c.state.pitch=data.pitch;
-    c.state.health=data.health; c.state.alive=data.alive;
-    c.state.parachuting=!!data.parachuting;
-    c.state.weapon=data.weapon||0;
-    updateRemoteState(c.state);
-  }
-  else if (data.type === 'name' && c){
-    c.state.name = String(data.name).slice(0,16).replace(/[^\w\u0600-\u06FF ._-]/g,'') || ('Player'+fromId.slice(-4));
-    broadcastAll({type:'playerRenamed', id:fromId, name:c.state.name}); updateLobbyUI();
-  }
+  if (data.type === 'state' && c){ c.state.x=data.x; c.state.y=data.y; c.state.z=data.z; c.state.yaw=data.yaw; c.state.pitch=data.pitch; c.state.health=data.health; c.state.alive=data.alive; c.state.parachuting=!!data.parachuting; c.state.weapon=data.weapon||0; updateRemoteState(c.state); }
+  else if (data.type === 'name' && c){ c.state.name = String(data.name).slice(0,16).replace(/[^\w\u0600-\u06FF ._-]/g,'') || ('Player'+fromId.slice(-4)); broadcastAll({type:'playerRenamed', id:fromId, name:c.state.name}); updateLobbyUI(); }
   else if (data.type === 'hit'){
     const targetId = data.target;
     const dmg = Math.min(Math.max(0, data.damage || 0), 150);
@@ -861,9 +724,7 @@ function handleFromClient(fromId, data){
     if (targetId === Net.myId){
       if (!PLAYER.alive || PLAYER.parachuting) return;
       damagePlayer(dmg, fromId);
-      if (PLAYER.health <= 0 && PLAYER.alive){
-        handleDeathOnHost(fromId, fromName);
-      }
+      if (PLAYER.health <= 0 && PLAYER.alive){ handleDeathOnHost(fromId, fromName); }
     } else {
       const target = Net.clientConns.get(targetId);
       if (!target || target.state.parachuting) return;
@@ -872,7 +733,6 @@ function handleFromClient(fromId, data){
       if (target.conn.open) try { target.conn.send({type:'damaged', amount:dmg, from:fromId, fromName, fatal}); } catch(_){}
       if (fatal){
         target.state.alive = false;
-        // increment respawnsUsed on host side
         target.respawnsUsed = (target.respawnsUsed || 0) + 1;
         target.state.respawnsUsed = target.respawnsUsed;
         const canRespawn = target.respawnsUsed < ROOM_SETTINGS.maxRespawns;
@@ -883,14 +743,7 @@ function handleFromClient(fromId, data){
         broadcastAll({type:'killEvent', killer:fromId, killerName:fromName, victim:targetId, victimName:target.state.name, canRespawn, respawnsLeft: Math.max(0, ROOM_SETTINGS.maxRespawns - target.respawnsUsed)});
         broadcastAll({type:'scoreUpdate', players:getAllStates()});
         if (canRespawn){
-          setTimeout(() => {
-            const vv = Net.clientConns.get(targetId);
-            if (!vv) return;
-            const sp = pickRandomSpawn();
-            vv.state.x=sp.x; vv.state.y=PARA_START_HEIGHT; vv.state.z=sp.z;
-            vv.state.health=100; vv.state.alive=true; vv.state.parachuting=true;
-            if (vv.conn.open) try { vv.conn.send({type:'respawn', x:sp.x, y:PARA_START_HEIGHT, z:sp.z, parachute:true}); } catch(_){}
-          }, 10000);
+          setTimeout(() => { const vv = Net.clientConns.get(targetId); if (!vv) return; const sp = pickRandomSpawn(); vv.state.x=sp.x; vv.state.y=PARA_START_HEIGHT; vv.state.z=sp.z; vv.state.health=100; vv.state.alive=true; vv.state.parachuting=true; if (vv.conn.open) try { vv.conn.send({type:'respawn', x:sp.x, y:PARA_START_HEIGHT, z:sp.z, parachute:true}); } catch(_){} }, 10000);
         } else {
           if (target.conn.open) try { target.conn.send({type:'eliminated'}); } catch(_){}
         }
@@ -901,7 +754,6 @@ function handleFromClient(fromId, data){
   else if (data.type === 'shoot'){ broadcastAll({type:'remoteShoot', fromId, from:data.from, to:data.to}, fromId); }
 }
 
-// Called by host when host kills themselves via client's hit
 function handleDeathOnHost(killerId, killerName){
   playerDie(killerId, killerName);
   myRespawnsUsed++;
@@ -911,12 +763,7 @@ function handleDeathOnHost(killerId, killerName){
   broadcastAll({type:'killEvent', killer:killerId, killerName, victim:Net.myId, victimName:Net.myName, canRespawn, respawnsLeft: Math.max(0, ROOM_SETTINGS.maxRespawns - myRespawnsUsed)});
   broadcastAll({type:'scoreUpdate', players:getAllStates()});
   if (canRespawn){
-    setTimeout(() => {
-      if (!PLAYER.alive){
-        const sp = pickRandomSpawn();
-        respawnPlayer(sp.x, PARA_START_HEIGHT, sp.z, true);
-      }
-    }, 10000);
+    setTimeout(() => { if (!PLAYER.alive){ const sp = pickRandomSpawn(); respawnPlayer(sp.x, PARA_START_HEIGHT, sp.z, true); } }, 10000);
   } else {
     setTimeout(() => enterSpectator(), 1200);
   }
@@ -930,9 +777,7 @@ function checkMatchEnd(){
   const hostIn = PLAYER.alive || (myRespawnsUsed < ROOM_SETTINGS.maxRespawns);
   if (hostIn) stillIn.push({ id: Net.myId, name: Net.myName });
   for (const [id, c] of Net.clientConns){
-    if (c.state.alive || ((c.respawnsUsed || 0) < ROOM_SETTINGS.maxRespawns)){
-      stillIn.push({ id, name: c.state.name });
-    }
+    if (c.state.alive || ((c.respawnsUsed || 0) < ROOM_SETTINGS.maxRespawns)) stillIn.push({ id, name: c.state.name });
   }
   if (stillIn.length <= 1 && G.running){
     matchOverActive = true;
@@ -943,8 +788,7 @@ function checkMatchEnd(){
 }
 
 function handleMatchOver(data){
-  G.running = false;
-  G.over = true;
+  G.running = false; G.over = true;
   if (respawnCountdownTimer) { clearInterval(respawnCountdownTimer); respawnCountdownTimer = null; }
   const ov = $('respawn-overlay'); if (ov) ov.classList.remove('on');
   const elim = $('eliminated-overlay'); if (elim) elim.classList.remove('on');
@@ -977,23 +821,30 @@ function handleFromHost(data){
   else if (data.type==='playerJoined'){ addRemote(data.player); updateLobbyUI(); }
   else if (data.type==='playerLeft'){ removeRemote(data.id); updateLobbyUI(); }
   else if (data.type==='playerRenamed'){ const rp=remotePlayers.get(data.id); if (rp) rp.name=data.name; updateLobbyUI(); }
-  else if (data.type==='started'){ startMatch(); }
+  else if (data.type==='started'){ if (data.settings && data.settings.maxRespawns) ROOM_SETTINGS.maxRespawns = data.settings.maxRespawns; startMatch(); }
   else if (data.type==='damaged'){ damagePlayer(data.amount, data.from); addKillFeed(data.fromName||'حریف', 'شما', true); if (data.fatal && PLAYER.alive && !PLAYER.parachuting){ playerDie(data.from, data.fromName); } }
   else if (data.type==='killEvent'){
     if (data.killer===Net.myId){ G.playerScore++; G.kills++; Sfx.kill(); hitmarkerKill(); }
     if (data.victim===Net.myId && PLAYER.alive && !PLAYER.parachuting){ playerDie(data.killer, data.killerName); }
     addKillFeed(data.killerName||'?', data.victimName||'?', data.victim===Net.myId);
     updateScoreHud();
-    if (data.victim===Net.myId && !data.canRespawn){
-      // we're out
-      setTimeout(() => enterSpectator(), 1200);
-    }
+    if (data.victim===Net.myId && !data.canRespawn){ setTimeout(() => enterSpectator(), 1200); }
   }
   else if (data.type==='scoreUpdate'){ for (const p of data.players){ if (p.id===Net.myId){ G.kills=p.kills; G.deaths=p.deaths; } } updateScoreHud(); updateScoreboard(data.players); }
   else if (data.type==='remoteShoot'){ spawnTracer(new THREE.Vector3(data.from.x,data.from.y,data.from.z), new THREE.Vector3(data.to.x,data.to.y,data.to.z), 0xff9a5a); Sfx.shot('smg'); }
-  else if (data.type==='respawn'){ respawnPlayer(data.x, data.y || PARA_START_HEIGHT, data.z, !!data.parachute); }
+  else if (data.type==='respawn'){ respawnPlayer(data.x, data.y ?? PARA_START_HEIGHT, data.z, !!data.parachute); }
   else if (data.type==='eliminated'){ setTimeout(() => enterSpectator(), 200); }
   else if (data.type==='matchOver'){ handleMatchOver(data); }
+  else if (data.type==='backToLobby'){
+    G.running = false; G.paused = false; G.over = false; matchOverActive = false;
+    stopRespawnCountdown(); currentKillerId = null; isSpectator = false; myRespawnsUsed = 0;
+    $('over').classList.remove('on'); $('hud').classList.remove('on'); $('mobile').classList.remove('on'); $('pauseBtn').classList.remove('on');
+    $('spectator-overlay').classList.remove('on'); $('eliminated-overlay').classList.remove('on');
+    if (localParachute) localParachute.visible = false; if (gunGroup) gunGroup.visible = true;
+    if (document.pointerLockElement) document.exitPointerLock();
+    PLAYER.alive = true; PLAYER.health = 100; PLAYER.parachuting = false;
+    showLobby(false);
+  }
 }
 function sendToHost(msg){ if (Net.isHost){ handleFromClient(Net.myId, msg); return; } if (Net.hostConn && Net.hostConn.open){ try { Net.hostConn.send(msg); } catch(_){} } }
 
@@ -1018,8 +869,41 @@ function buildRemoteModel(){
   g.userData.limbs={leftLeg:llP,rightLeg:rlP,leftArm:laP,rightArm:raP}; g.userData.animPhase=0;
   return g;
 }
-function addRemote(state){ if (!state || !state.id || state.id===Net.myId || remotePlayers.has(state.id)) return; const group=buildRemoteModel(); group.position.set(state.x, state.y||20, state.z); group.rotation.y=state.yaw||0; group.visible = state.health > 0; scene.add(group); const para = buildParachuteMesh(); para.visible = !!state.parachuting && state.health > 0; group.add(para); for (const p of group.userData.parts) p.userData.playerId=state.id; remotePlayers.set(state.id, { group, parachute: para, name:state.name, target:{ x:state.x, y:state.y||20, z:state.z, yaw:state.yaw||0, pitch:state.pitch||0, health:state.health, parachuting:!!state.parachuting }, dead: state.health <= 0 }); }
-function updateRemoteState(state){ if (!state || !state.id) return; let rp=remotePlayers.get(state.id); if (!rp){ addRemote(state); rp=remotePlayers.get(state.id); if (!rp) return; } rp.target.x=state.x; rp.target.y=state.y||20; rp.target.z=state.z; rp.target.yaw=state.yaw||0; rp.target.pitch=state.pitch||0; rp.target.health=state.health; rp.target.parachuting=!!state.parachuting; if (state.name) rp.name=state.name; if (state.health<=0 && !rp.dead){ rp.dead = true; rp.group.visible = false; if (rp.parachute) rp.parachute.visible = false; } else if (state.health>0 && rp.dead){ rp.dead = false; rp.group.visible = true; rp.group.rotation.z = 0; rp.group.position.set(state.x, state.y||20, state.z); rp.target.x = state.x; rp.target.y = state.y||20; rp.target.z = state.z; } if (rp.parachute) rp.parachute.visible = !!rp.target.parachuting && !rp.dead; }
+
+// FIXED: use ?? instead of || so y=0 isn't overridden to 20
+function addRemote(state){
+  if (!state || !state.id || state.id===Net.myId || remotePlayers.has(state.id)) return;
+  const group=buildRemoteModel();
+  const sy = state.y ?? 20;
+  group.position.set(state.x, sy, state.z); group.rotation.y=state.yaw||0; group.visible = state.health > 0;
+  scene.add(group);
+  const para = buildParachuteMesh(); para.visible = !!state.parachuting && state.health > 0; group.add(para);
+  for (const p of group.userData.parts) p.userData.playerId=state.id;
+  remotePlayers.set(state.id, { group, parachute: para, name:state.name, target:{ x:state.x, y:sy, z:state.z, yaw:state.yaw||0, pitch:state.pitch||0, health:state.health, parachuting:!!state.parachuting }, dead: state.health <= 0 });
+}
+
+// FIXED: use ?? instead of || for y everywhere
+function updateRemoteState(state){
+  if (!state || !state.id) return;
+  let rp=remotePlayers.get(state.id);
+  if (!rp){ addRemote(state); rp=remotePlayers.get(state.id); if (!rp) return; }
+  const sy = state.y ?? 20;
+  rp.target.x=state.x; rp.target.y=sy; rp.target.z=state.z;
+  rp.target.yaw=state.yaw||0; rp.target.pitch=state.pitch||0;
+  rp.target.health=state.health;
+  rp.target.parachuting=!!state.parachuting;
+  if (state.name) rp.name=state.name;
+  if (state.health<=0 && !rp.dead){
+    rp.dead = true; rp.group.visible = false;
+    if (rp.parachute) rp.parachute.visible = false;
+  } else if (state.health>0 && rp.dead){
+    rp.dead = false; rp.group.visible = true; rp.group.rotation.z = 0;
+    rp.group.position.set(state.x, sy, state.z);
+    rp.target.x = state.x; rp.target.y = sy; rp.target.z = state.z;
+  }
+  if (rp.parachute) rp.parachute.visible = !!rp.target.parachuting && !rp.dead;
+}
+
 function removeRemote(id){ const rp=remotePlayers.get(id); if (!rp) return; scene.remove(rp.group); for (const p of rp.group.userData.parts){ const i=remoteHittables.indexOf(p); if (i>=0) remoteHittables.splice(i,1); if (p.geometry) p.geometry.dispose(); } for (const m of rp.group.userData.mats) m.dispose(); remotePlayers.delete(id); }
 function clearAllRemotes(){ for (const id of Array.from(remotePlayers.keys())) removeRemote(id); }
 function updateRemotes(dt){ for (const rp of remotePlayers.values()){ if (rp.dead) continue; rp.group.rotation.z=0; const pX=rp.group.position.x, pZ=rp.group.position.z; rp.group.position.x=damp(rp.group.position.x,rp.target.x,14,dt); rp.group.position.y=damp(rp.group.position.y,rp.target.y,14,dt); rp.group.position.z=damp(rp.group.position.z,rp.target.z,14,dt); let diff=rp.target.yaw-rp.group.rotation.y; while(diff>Math.PI) diff-=Math.PI*2; while(diff<-Math.PI) diff+=Math.PI*2; rp.group.rotation.y+=diff*Math.min(1,dt*10); const dx=rp.group.position.x-pX, dz=rp.group.position.z-pZ; const sp=Math.hypot(dx,dz)/Math.max(dt,0.001); const ud=rp.group.userData; if (sp>0.3 && ud.limbs && !rp.target.parachuting){ ud.animPhase+=dt*sp*1.4; const sw=Math.sin(ud.animPhase)*Math.min(sp/6,1)*0.7; ud.limbs.leftLeg.rotation.x=sw; ud.limbs.rightLeg.rotation.x=-sw; ud.limbs.leftArm.rotation.x=-sw*0.75; ud.limbs.rightArm.rotation.x=sw*0.75; } else if (ud.limbs){ ud.limbs.leftLeg.rotation.x*=0.85; ud.limbs.rightLeg.rotation.x*=0.85; ud.limbs.leftArm.rotation.x*=0.85; ud.limbs.rightArm.rotation.x*=0.85; } } }
@@ -1096,13 +980,8 @@ function playerDie(kId, kName){
   const kEl = $('respawn-killer'); if (kEl) kEl.textContent = kName || 'حریف';
   const respawnsLeft = Math.max(0, ROOM_SETTINGS.maxRespawns - myRespawnsUsed);
   updateLivesHud();
-  if (respawnsLeft > 0){
-    deathAnim.active = true; deathAnim.startTime = performance.now();
-    startRespawnCountdown(10);
-  } else {
-    // no respawn left - spectate
-    deathAnim.active = false;
-  }
+  if (respawnsLeft > 0){ deathAnim.active = true; deathAnim.startTime = performance.now(); startRespawnCountdown(10); }
+  else { deathAnim.active = false; }
 }
 
 function startRespawnCountdown(seconds){
@@ -1145,8 +1024,7 @@ function updateKillcam(){
 
 function enterSpectator(){
   if (isSpectator) return;
-  isSpectator = true;
-  PLAYER.alive = false;
+  isSpectator = true; PLAYER.alive = false;
   stopRespawnCountdown();
   const elim = $('eliminated-overlay'); if (elim) elim.classList.add('on');
   setTimeout(() => {
@@ -1159,9 +1037,7 @@ function enterSpectator(){
   }, 1300);
 }
 
-function cycleSpectator(){
-  spectatorIndex++;
-}
+function cycleSpectator(){ spectatorIndex++; }
 
 function updateSpectatorCamera(){
   const aliveList = [];
@@ -1182,16 +1058,13 @@ function updateSpectatorCamera(){
 
 function updateLivesHud(){
   const respawnsLeft = Math.max(0, ROOM_SETTINGS.maxRespawns - myRespawnsUsed);
-  const el = $('hud-lives');
-  const cnt = $('lives-count');
+  const el = $('hud-lives'); const cnt = $('lives-count');
   if (cnt) cnt.textContent = respawnsLeft;
   if (el) el.classList.toggle('empty', respawnsLeft === 0);
 }
 
 function beginParachute(x, y, z){
-  stopRespawnCountdown();
-  currentKillerId = null;
-  isSpectator = false;
+  stopRespawnCountdown(); currentKillerId = null; isSpectator = false;
   $('spectator-overlay').classList.remove('on');
   PLAYER.pos.set(x, y, z); PLAYER.vel.set(0,0,0);
   PLAYER.yaw = Math.random() * Math.PI * 2; PLAYER.pitch = -0.35;
@@ -1207,11 +1080,12 @@ function beginParachute(x, y, z){
   lastChunkKey = '__init__';
 }
 function respawnPlayer(x, y, z, useParachute){
-  if (useParachute){ beginParachute(x, y || PARA_START_HEIGHT, z); }
+  // FIXED: use ?? so y=0 is preserved
+  if (useParachute){ beginParachute(x, y ?? PARA_START_HEIGHT, z); }
   else {
     stopRespawnCountdown(); currentKillerId = null; isSpectator = false;
     $('spectator-overlay').classList.remove('on');
-    PLAYER.pos.set(x, y || 20, z); PLAYER.vel.set(0,0,0);
+    PLAYER.pos.set(x, y ?? 20, z); PLAYER.vel.set(0,0,0);
     PLAYER.yaw = Math.random() * Math.PI * 2; PLAYER.pitch = 0;
     PLAYER.eye = PLAYER.eyeStand; PLAYER.alive = true; PLAYER.health = 100; PLAYER.parachuting = false;
     camera.rotation.z = 0; camera.rotation.x = 0;
@@ -1331,9 +1205,7 @@ function startMatch(){
   matchOverActive = false;
   myRespawnsUsed = 0; isSpectator = false; spectatorIndex = 0;
   G.playerScore=0; G.enemyScore=0; G.timeLeft=600; G.kills=0; G.deaths=0;
-  if (Net.isHost){
-    for (const c of Net.clientConns.values()) { c.respawnsUsed = 0; }
-  }
+  if (Net.isHost){ for (const c of Net.clientConns.values()) { c.respawnsUsed = 0; } }
   const spawn = pickRandomSpawn();
   PLAYER.pos.set(spawn.x, PARA_START_HEIGHT, spawn.z); PLAYER.vel.set(0,0,0);
   PLAYER.yaw=Math.random()*Math.PI*2; PLAYER.pitch=-0.35;
@@ -1366,33 +1238,17 @@ function endMatch(won){ if (G.over) return; G.over=true; G.running=false; hudEl.
 function backToLobby(){
   G.running=false; G.paused=false; G.over=false;
   matchOverActive = false;
-  stopRespawnCountdown();
-  currentKillerId = null;
-  isSpectator = false;
-  myRespawnsUsed = 0;
+  stopRespawnCountdown(); currentKillerId = null; isSpectator = false; myRespawnsUsed = 0;
   if (Net.isHost) { for (const c of Net.clientConns.values()) c.respawnsUsed = 0; }
   if (Net.tickTimer){ clearInterval(Net.tickTimer); Net.tickTimer=null; }
-  $('over').classList.remove('on');
-  $('hud').classList.remove('on');
-  $('mobile').classList.remove('on');
-  $('pauseBtn').classList.remove('on');
-  $('spectator-overlay').classList.remove('on');
-  $('eliminated-overlay').classList.remove('on');
+  $('over').classList.remove('on'); $('hud').classList.remove('on'); $('mobile').classList.remove('on'); $('pauseBtn').classList.remove('on');
+  $('spectator-overlay').classList.remove('on'); $('eliminated-overlay').classList.remove('on');
   if (localParachute) localParachute.visible=false;
   if (gunGroup) gunGroup.visible=true;
   if (document.pointerLockElement) document.exitPointerLock();
-  // Reset player state so they can play again
   PLAYER.alive = true; PLAYER.health = 100; PLAYER.parachuting = false;
   showLobby(Net.isHost);
-  if (Net.isHost) {
-    // Tell clients we're back in lobby
-    for (const c of Net.clientConns.values()) {
-      c.state.alive = true;
-      c.state.health = 100;
-      c.state.parachuting = true;
-      if (c.conn.open) try { c.conn.send({type:'backToLobby'}); } catch(_){}
-    }
-  }
+  if (Net.isHost) { for (const c of Net.clientConns.values()) { c.state.alive = true; c.state.health = 100; c.state.parachuting = true; if (c.conn.open) try { c.conn.send({type:'backToLobby'}); } catch(_){} } }
 }
 
 function leaveRoom(){
@@ -1414,49 +1270,15 @@ function leaveRoom(){
   if (document.pointerLockElement) document.exitPointerLock();
 }
 
-// Fix handleFromHost for backToLobby
-const _origHandleFromHost = handleFromHost;
-handleFromHost = function(data){
-  if (data && data.type === 'backToLobby') {
-    G.running = false; G.paused = false; G.over = false;
-    matchOverActive = false;
-    stopRespawnCountdown(); currentKillerId = null; isSpectator = false;
-    myRespawnsUsed = 0;
-    $('over').classList.remove('on');
-    $('hud').classList.remove('on');
-    $('mobile').classList.remove('on');
-    $('pauseBtn').classList.remove('on');
-    $('spectator-overlay').classList.remove('on');
-    $('eliminated-overlay').classList.remove('on');
-    if (localParachute) localParachute.visible = false;
-    if (gunGroup) gunGroup.visible = true;
-    if (document.pointerLockElement) document.exitPointerLock();
-    PLAYER.alive = true; PLAYER.health = 100; PLAYER.parachuting = false;
-    showLobby(false);
-    return;
-  }
-  if (data && data.type === 'started' && data.settings) {
-    ROOM_SETTINGS.maxRespawns = data.settings.maxRespawns;
-  }
-  _origHandleFromHost.call(this, data);
-};
-
 function doJump(){ if (!PLAYER.alive || PLAYER.parachuting || isSpectator) return; if (PLAYER.onGround){ PLAYER.vel.y=JUMP_SPEED; PLAYER.onGround=false; Sfx.empty(); } }
 function updatePlayer(dt){
-  if (isSpectator){
-    updateSpectatorCamera();
-    return;
-  }
+  if (isSpectator){ updateSpectatorCamera(); return; }
   if (!PLAYER.alive){
     const elapsed = (performance.now() - deathAnim.startTime) / 1000;
-    if (deathAnim.active && elapsed < deathAnim.duration / 1000){
-      updateDeathAnimation();
-    } else if (!updateKillcam()){
-      updateDeathAnimation();
-    }
+    if (deathAnim.active && elapsed < deathAnim.duration / 1000){ updateDeathAnimation(); }
+    else if (!updateKillcam()){ updateDeathAnimation(); }
     return;
   }
-
   if (PLAYER.parachuting){
     let ix=0, iz=0;
     if (keys['KeyW']||keys['ArrowUp']) iz+=1;
@@ -1468,10 +1290,7 @@ function updatePlayer(dt){
     if (ix !== 0 || iz !== 0){
       const fwd = playerForward(), rgt = playerRight();
       const wish = new THREE.Vector3().addScaledVector(fwd, iz).addScaledVector(rgt, ix);
-      if (wish.length() > 0.05){
-        wish.normalize().multiplyScalar(PARA_STEER_SPEED * dt);
-        PLAYER.pos.x += wish.x; PLAYER.pos.z += wish.z;
-      }
+      if (wish.length() > 0.05){ wish.normalize().multiplyScalar(PARA_STEER_SPEED * dt); PLAYER.pos.x += wish.x; PLAYER.pos.z += wish.z; }
     }
     PLAYER.pos.y += PARA_FALL_SPEED * dt;
     PLAYER.pos.x = clamp(PLAYER.pos.x, -A+3, A-3);
@@ -1498,7 +1317,6 @@ function updatePlayer(dt){
     }
     return;
   }
-
   let ix=0, iz=0;
   if (keys['KeyW']||keys['ArrowUp']) iz+=1;
   if (keys['KeyS']||keys['ArrowDown']) iz-=1;
@@ -1534,11 +1352,7 @@ function updatePlayer(dt){
   if (pendingRecovery>0){ const r=Math.min(pendingRecovery,5.5*dt); PLAYER.pitch-=r; pendingRecovery-=r; }
   PLAYER.pitch=clamp(PLAYER.pitch,-1.45,1.45);
   const isScoped=(curWeapon===2||curWeapon===4)&&adsAmount>0.8;
-  if (isScoped){
-    const t = performance.now() * 0.001;
-    PLAYER.yaw += Math.sin(t * 0.7) * 0.00011;
-    PLAYER.pitch += Math.cos(t * 0.55) * 0.00007;
-  }
+  if (isScoped){ const t = performance.now() * 0.001; PLAYER.yaw += Math.sin(t * 0.7) * 0.00011; PLAYER.pitch += Math.cos(t * 0.55) * 0.00007; }
   fireCooldown=Math.max(0, fireCooldown-dt);
   if (reloading){ reloadTimer-=dt; if (reloadTimer<=0) finishReload(); }
   if (triggerHeld&&!reloading){ const w=WEAPONS[curWeapon]; if (w.auto){ if (fireCooldown<=0) tryShoot(); } else if (!semiLatch){ semiLatch=true; tryShoot(); } }
@@ -1581,10 +1395,11 @@ function loop(t){
   const dt=Math.min((t-lastTime)/1000,0.05);
   lastTime=t;
   update(dt);
-  if (isRunning && yawObject){
+  // FIXED: use PLAYER.pos directly for chunks + sun follow
+  if (G.running && !G.paused){
     updateChunks();
-    const px = yawObject.position.x;
-    const pz = yawObject.position.z;
+    const px = PLAYER.pos.x;
+    const pz = PLAYER.pos.z;
     sun.position.set(px + 250, 500, pz + 250);
     sun.target.position.set(px, 0, pz);
     sun.target.updateMatrixWorld();
@@ -1594,71 +1409,22 @@ function loop(t){
 requestAnimationFrame(loop);
 function onResize(){ camera.aspect=window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); }
 window.addEventListener('resize', onResize);
-const isRunning = () => G.running && !G.paused;
 
 setInterval(() => {
   if (Net.peer && !Net.peer.destroyed && Net.peer.disconnected) { try { Net.peer.reconnect(); } catch(_){} }
   if (VoiceChat.peer && !VoiceChat.peer.destroyed && VoiceChat.peer.disconnected) { try { VoiceChat.peer.reconnect(); } catch(_){} }
 }, 5000);
 
-$('btnCreatePublic').addEventListener('click', async () => {
-  Sfx.init(); Sfx.resume();
-  Net.myName = ($('setName').value || 'Player').trim().slice(0,16) || 'Player';
-  $('btnCreatePublic').disabled = true; showConnStatus('در حال ساخت روم عمومی...');
-  try { await createPublicRoom((s) => showConnStatus(s)); hideConnStatus(); showLobby(true); }
-  catch (e) { hideConnStatus(); alert('همه ۲۰ سرور عمومی پر است! بعداً دوباره تلاش کن.'); }
-  finally { $('btnCreatePublic').disabled = false; }
-});
-$('btnJoinPublic').addEventListener('click', async () => {
-  Sfx.init(); Sfx.resume();
-  Net.myName = ($('setName').value || 'Player').trim().slice(0,16) || 'Player';
-  $('btnJoinPublic').disabled = true; showConnStatus('در حال جستجوی روم‌های عمومی...');
-  try { await joinPublicRoom((s) => showConnStatus(s)); hideConnStatus(); showLobby(false); }
-  catch (e) { hideConnStatus(); alert('هیچ روم عمومی پیدا نشد. می‌تونی خودت یکی بسازی!'); }
-  finally { $('btnJoinPublic').disabled = false; }
-});
-$('btnCreate').addEventListener('click', async () => {
-  Sfx.init(); Sfx.resume();
-  Net.myName = ($('setName').value || 'Player').trim().slice(0,16) || 'Player';
-  $('btnCreate').disabled = true; showConnStatus('در حال ساخت روم خصوصی...');
-  try { await hostPrivateRoom((s) => showConnStatus(s)); hideConnStatus(); showLobby(true); }
-  catch (e) { hideConnStatus(); alert('خطا در ساخت روم: ' + e.message); }
-  finally { $('btnCreate').disabled = false; }
-});
+$('btnCreatePublic').addEventListener('click', async () => { Sfx.init(); Sfx.resume(); Net.myName = ($('setName').value || 'Player').trim().slice(0,16) || 'Player'; $('btnCreatePublic').disabled = true; showConnStatus('در حال ساخت روم عمومی...'); try { await createPublicRoom((s) => showConnStatus(s)); hideConnStatus(); showLobby(true); } catch (e) { hideConnStatus(); alert('همه ۲۰ سرور عمومی پر است! بعداً دوباره تلاش کن.'); } finally { $('btnCreatePublic').disabled = false; } });
+$('btnJoinPublic').addEventListener('click', async () => { Sfx.init(); Sfx.resume(); Net.myName = ($('setName').value || 'Player').trim().slice(0,16) || 'Player'; $('btnJoinPublic').disabled = true; showConnStatus('در حال جستجوی روم‌های عمومی...'); try { await joinPublicRoom((s) => showConnStatus(s)); hideConnStatus(); showLobby(false); } catch (e) { hideConnStatus(); alert('هیچ روم عمومی پیدا نشد. می‌تونی خودت یکی بسازی!'); } finally { $('btnJoinPublic').disabled = false; } });
+$('btnCreate').addEventListener('click', async () => { Sfx.init(); Sfx.resume(); Net.myName = ($('setName').value || 'Player').trim().slice(0,16) || 'Player'; $('btnCreate').disabled = true; showConnStatus('در حال ساخت روم خصوصی...'); try { await hostPrivateRoom((s) => showConnStatus(s)); hideConnStatus(); showLobby(true); } catch (e) { hideConnStatus(); alert('خطا در ساخت روم: ' + e.message); } finally { $('btnCreate').disabled = false; } });
 $('btnJoin').addEventListener('click', () => { $('menu').classList.remove('on'); $('joinScreen').classList.add('on'); $('joinCode').value=''; $('joinError').textContent=''; setTimeout(()=>$('joinCode').focus(), 100); });
 $('joinCode').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g,'').slice(0,4); });
 $('btnBackMenu').addEventListener('click', () => { $('joinScreen').classList.remove('on'); $('menu').classList.add('on'); });
-$('btnDoJoin').addEventListener('click', async () => {
-  const code = $('joinCode').value.trim();
-  if (!/^\d{4}$/.test(code)){ $('joinError').textContent = 'کد باید ۴ رقم باشد'; return; }
-  Net.myName = ($('setName').value || 'Player').trim().slice(0,16) || 'Player';
-  $('btnDoJoin').disabled = true; $('btnDoJoin').textContent = 'در حال اتصال...';
-  $('joinError').textContent = '';
-  try { await joinPrivateRoom(code, Net.myName, (status) => { $('joinError').textContent = status; }); showLobby(false); }
-  catch (e) { $('joinError').textContent = 'روم پیدا نشد. مطمئن شو کد درست است و میزبان هنوز متصل است.'; }
-  finally { $('btnDoJoin').disabled = false; $('btnDoJoin').textContent = 'اتصال'; }
-});
-$('btnCopyCode').addEventListener('click', () => {
-  const code = $('roomCode').textContent;
-  if (navigator.clipboard){ navigator.clipboard.writeText(code).then(()=>{ $('btnCopyCode').textContent='کپی شد'; setTimeout(()=>$('btnCopyCode').textContent='کپی کد', 1500); }); }
-  else { const r=document.createRange(); r.selectNode($('roomCode')); window.getSelection().removeAllRanges(); window.getSelection().addRange(r); document.execCommand('copy'); $('btnCopyCode').textContent='کپی شد'; setTimeout(()=>$('btnCopyCode').textContent='کپی کد', 1500); }
-});
-$('btnStartGame').addEventListener('click', () => {
-  if (!Net.isHost) return;
-  const mx = parseInt($('maxRespawnsInput').value, 10);
-  if (mx >= 1 && mx <= 10) {
-    ROOM_SETTINGS.maxRespawns = mx;
-    try { localStorage.setItem('baz-max-respawns', String(mx)); } catch(_){}
-  }
-  startMatch();
-});
-$('maxRespawnsInput').addEventListener('input', e => {
-  let v = parseInt(e.target.value, 10);
-  if (isNaN(v)) return;
-  v = clamp(v, 1, 10);
-  ROOM_SETTINGS.maxRespawns = v;
-  try { localStorage.setItem('baz-max-respawns', String(v)); } catch(_){}
-});
+$('btnDoJoin').addEventListener('click', async () => { const code = $('joinCode').value.trim(); if (!/^\d{4}$/.test(code)){ $('joinError').textContent = 'کد باید ۴ رقم باشد'; return; } Net.myName = ($('setName').value || 'Player').trim().slice(0,16) || 'Player'; $('btnDoJoin').disabled = true; $('btnDoJoin').textContent = 'در حال اتصال...'; $('joinError').textContent = ''; try { await joinPrivateRoom(code, Net.myName, (status) => { $('joinError').textContent = status; }); showLobby(false); } catch (e) { $('joinError').textContent = 'روم پیدا نشد. مطمئن شو کد درست است و میزبان هنوز متصل است.'; } finally { $('btnDoJoin').disabled = false; $('btnDoJoin').textContent = 'اتصال'; } });
+$('btnCopyCode').addEventListener('click', () => { const code = $('roomCode').textContent; if (navigator.clipboard){ navigator.clipboard.writeText(code).then(()=>{ $('btnCopyCode').textContent='کپی شد'; setTimeout(()=>$('btnCopyCode').textContent='کپی کد', 1500); }); } else { const r=document.createRange(); r.selectNode($('roomCode')); window.getSelection().removeAllRanges(); window.getSelection().addRange(r); document.execCommand('copy'); $('btnCopyCode').textContent='کپی شد'; setTimeout(()=>$('btnCopyCode').textContent='کپی کد', 1500); } });
+$('btnStartGame').addEventListener('click', () => { if (!Net.isHost) return; const mx = parseInt($('maxRespawnsInput').value, 10); if (mx >= 1 && mx <= 10) { ROOM_SETTINGS.maxRespawns = mx; try { localStorage.setItem('baz-max-respawns', String(mx)); } catch(_){} } startMatch(); });
+$('maxRespawnsInput').addEventListener('input', e => { let v = parseInt(e.target.value, 10); if (isNaN(v)) return; v = clamp(v, 1, 10); ROOM_SETTINGS.maxRespawns = v; try { localStorage.setItem('baz-max-respawns', String(v)); } catch(_){} });
 $('btnLeaveRoom').addEventListener('click', leaveRoom);
 $('btnResume').addEventListener('click', resumeGame);
 $('btnQuit').addEventListener('click', () => { G.running=false; $('pause').classList.remove('on'); hudEl.classList.remove('on'); showLobby(Net.isHost); });
