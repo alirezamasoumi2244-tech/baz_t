@@ -128,6 +128,7 @@ html,body{height:100%;overflow:hidden;background:#07090c;color:#e8eef6;font-fami
 #resultLine{font-size:15px;opacity:.85;line-height:2;}
 #resultLine b{color:#ffd166;font-size:18px;}
 #winnerDisplay{font-size:22px;font-weight:800;color:#ffd166;margin:8px 0;letter-spacing:1px;}
+#overCountdown{font-size:13px;color:#79d3ff;letter-spacing:1.5px;margin:4px 0 12px;font-weight:600;}
 #touch{position:fixed;inset:0;display:none;z-index:20;pointer-events:none;}
 #touch.on{display:block;}
 #stickZone{position:absolute;left:0;bottom:0;width:46%;height:46%;pointer-events:auto;touch-action:none;}
@@ -390,6 +391,7 @@ html,body{height:100%;overflow:hidden;background:#07090c;color:#e8eef6;font-fami
   <div class="kc-badge" style="margin-bottom:8px;">MATCH OVER</div>
   <h2 id="overTitle">پایان</h2>
   <div id="winnerDisplay">---</div>
+  <div id="overCountdown"></div>
   <div id="resultLine"></div>
   <button class="btn" id="btnBackLobby">بازگشت به لابی</button>
 </div>
@@ -432,6 +434,8 @@ let myRespawnsUsed = 0;
 let isSpectator = false;
 let spectatorIndex = 0;
 let matchOverActive = false;
+let autoLobbyTimer = null;
+let overCountdownTimer = null;
 
 function getPeerServerHost(){ try { return localStorage.getItem('baz-peer-host') || '0.peerjs.com'; } catch(e){ return '0.peerjs.com'; } }
 function getPeerConfig(){
@@ -608,7 +612,6 @@ function registerMeshToChunk(mesh){
 }
 for (const m of worldMeshes) registerMeshToChunk(m);
 function updateChunks(){
-  // FIXED: use PLAYER.pos instead of yawObject (which was always null)
   const pcx = Math.floor(PLAYER.pos.x / CHUNK_SIZE);
   const pcz = Math.floor(PLAYER.pos.z / CHUNK_SIZE);
   const kk = pcx + '_' + pcz;
@@ -784,7 +787,35 @@ function checkMatchEnd(){
     const winner = stillIn.length === 1 ? stillIn[0] : null;
     broadcastAll({type:'matchOver', winner, players:getAllStates()});
     handleMatchOver({ winner });
+    // AUTO-RETURN: 5 seconds after match over, host returns everyone to lobby
+    if (autoLobbyTimer) clearTimeout(autoLobbyTimer);
+    autoLobbyTimer = setTimeout(() => {
+      autoLobbyTimer = null;
+      if (matchOverActive && Net.isHost) backToLobby();
+    }, 5000);
   }
+}
+
+function startOverCountdown(seconds){
+  if (overCountdownTimer){ clearInterval(overCountdownTimer); overCountdownTimer = null; }
+  let remaining = seconds;
+  const tick = () => {
+    const el = $('overCountdown');
+    if (!el) return;
+    if (remaining > 0) el.textContent = `⏳ بازگشت به لابی در ${remaining} ثانیه`;
+    else el.textContent = '⏳ در حال بازگشت...';
+  };
+  tick();
+  overCountdownTimer = setInterval(() => {
+    remaining--;
+    tick();
+    if (remaining < 0){ clearInterval(overCountdownTimer); overCountdownTimer = null; }
+  }, 1000);
+}
+
+function stopOverCountdown(){
+  if (overCountdownTimer){ clearInterval(overCountdownTimer); overCountdownTimer = null; }
+  const el = $('overCountdown'); if (el) el.textContent = '';
 }
 
 function handleMatchOver(data){
@@ -800,10 +831,11 @@ function handleMatchOver(data){
   const won = data.winner && data.winner.id === Net.myId;
   $('overTitle').textContent = won ? 'بردی!' : (data.winner ? 'پایان' : 'مساوی');
   $('overTitle').style.color = won ? '#5fe08a' : '#ff6b5e';
-  $('winnerDisplay').textContent = data.winner ? `برنده: ${data.winner.name}` : 'همه حذف شدند';
+  $('winnerDisplay').textContent = data.winner ? `🏆 برنده: ${data.winner.name}` : 'همه حذف شدند';
   const me = (data.players || []).find(p => p.id === Net.myId);
   if (me) $('resultLine').innerHTML = `امتیاز شما: <b>${me.kills || 0}</b> کشتار`;
   $('over').classList.add('on');
+  startOverCountdown(5);
 }
 
 function startHostTick(){ if (Net.tickTimer) clearInterval(Net.tickTimer); Net.tickTimer = setInterval(()=>{ if (!Net.isHost) return; broadcastAll({type:'states', players:getAllStates()}); }, 100); }
@@ -837,7 +869,7 @@ function handleFromHost(data){
   else if (data.type==='matchOver'){ handleMatchOver(data); }
   else if (data.type==='backToLobby'){
     G.running = false; G.paused = false; G.over = false; matchOverActive = false;
-    stopRespawnCountdown(); currentKillerId = null; isSpectator = false; myRespawnsUsed = 0;
+    stopRespawnCountdown(); stopOverCountdown(); currentKillerId = null; isSpectator = false; myRespawnsUsed = 0;
     $('over').classList.remove('on'); $('hud').classList.remove('on'); $('mobile').classList.remove('on'); $('pauseBtn').classList.remove('on');
     $('spectator-overlay').classList.remove('on'); $('eliminated-overlay').classList.remove('on');
     if (localParachute) localParachute.visible = false; if (gunGroup) gunGroup.visible = true;
@@ -869,41 +901,8 @@ function buildRemoteModel(){
   g.userData.limbs={leftLeg:llP,rightLeg:rlP,leftArm:laP,rightArm:raP}; g.userData.animPhase=0;
   return g;
 }
-
-// FIXED: use ?? instead of || so y=0 isn't overridden to 20
-function addRemote(state){
-  if (!state || !state.id || state.id===Net.myId || remotePlayers.has(state.id)) return;
-  const group=buildRemoteModel();
-  const sy = state.y ?? 20;
-  group.position.set(state.x, sy, state.z); group.rotation.y=state.yaw||0; group.visible = state.health > 0;
-  scene.add(group);
-  const para = buildParachuteMesh(); para.visible = !!state.parachuting && state.health > 0; group.add(para);
-  for (const p of group.userData.parts) p.userData.playerId=state.id;
-  remotePlayers.set(state.id, { group, parachute: para, name:state.name, target:{ x:state.x, y:sy, z:state.z, yaw:state.yaw||0, pitch:state.pitch||0, health:state.health, parachuting:!!state.parachuting }, dead: state.health <= 0 });
-}
-
-// FIXED: use ?? instead of || for y everywhere
-function updateRemoteState(state){
-  if (!state || !state.id) return;
-  let rp=remotePlayers.get(state.id);
-  if (!rp){ addRemote(state); rp=remotePlayers.get(state.id); if (!rp) return; }
-  const sy = state.y ?? 20;
-  rp.target.x=state.x; rp.target.y=sy; rp.target.z=state.z;
-  rp.target.yaw=state.yaw||0; rp.target.pitch=state.pitch||0;
-  rp.target.health=state.health;
-  rp.target.parachuting=!!state.parachuting;
-  if (state.name) rp.name=state.name;
-  if (state.health<=0 && !rp.dead){
-    rp.dead = true; rp.group.visible = false;
-    if (rp.parachute) rp.parachute.visible = false;
-  } else if (state.health>0 && rp.dead){
-    rp.dead = false; rp.group.visible = true; rp.group.rotation.z = 0;
-    rp.group.position.set(state.x, sy, state.z);
-    rp.target.x = state.x; rp.target.y = sy; rp.target.z = state.z;
-  }
-  if (rp.parachute) rp.parachute.visible = !!rp.target.parachuting && !rp.dead;
-}
-
+function addRemote(state){ if (!state || !state.id || state.id===Net.myId || remotePlayers.has(state.id)) return; const group=buildRemoteModel(); const sy = state.y ?? 20; group.position.set(state.x, sy, state.z); group.rotation.y=state.yaw||0; group.visible = state.health > 0; scene.add(group); const para = buildParachuteMesh(); para.visible = !!state.parachuting && state.health > 0; group.add(para); for (const p of group.userData.parts) p.userData.playerId=state.id; remotePlayers.set(state.id, { group, parachute: para, name:state.name, target:{ x:state.x, y:sy, z:state.z, yaw:state.yaw||0, pitch:state.pitch||0, health:state.health, parachuting:!!state.parachuting }, dead: state.health <= 0 }); }
+function updateRemoteState(state){ if (!state || !state.id) return; let rp=remotePlayers.get(state.id); if (!rp){ addRemote(state); rp=remotePlayers.get(state.id); if (!rp) return; } const sy = state.y ?? 20; rp.target.x=state.x; rp.target.y=sy; rp.target.z=state.z; rp.target.yaw=state.yaw||0; rp.target.pitch=state.pitch||0; rp.target.health=state.health; rp.target.parachuting=!!state.parachuting; if (state.name) rp.name=state.name; if (state.health<=0 && !rp.dead){ rp.dead = true; rp.group.visible = false; if (rp.parachute) rp.parachute.visible = false; } else if (state.health>0 && rp.dead){ rp.dead = false; rp.group.visible = true; rp.group.rotation.z = 0; rp.group.position.set(state.x, sy, state.z); rp.target.x = state.x; rp.target.y = sy; rp.target.z = state.z; } if (rp.parachute) rp.parachute.visible = !!rp.target.parachuting && !rp.dead; }
 function removeRemote(id){ const rp=remotePlayers.get(id); if (!rp) return; scene.remove(rp.group); for (const p of rp.group.userData.parts){ const i=remoteHittables.indexOf(p); if (i>=0) remoteHittables.splice(i,1); if (p.geometry) p.geometry.dispose(); } for (const m of rp.group.userData.mats) m.dispose(); remotePlayers.delete(id); }
 function clearAllRemotes(){ for (const id of Array.from(remotePlayers.keys())) removeRemote(id); }
 function updateRemotes(dt){ for (const rp of remotePlayers.values()){ if (rp.dead) continue; rp.group.rotation.z=0; const pX=rp.group.position.x, pZ=rp.group.position.z; rp.group.position.x=damp(rp.group.position.x,rp.target.x,14,dt); rp.group.position.y=damp(rp.group.position.y,rp.target.y,14,dt); rp.group.position.z=damp(rp.group.position.z,rp.target.z,14,dt); let diff=rp.target.yaw-rp.group.rotation.y; while(diff>Math.PI) diff-=Math.PI*2; while(diff<-Math.PI) diff+=Math.PI*2; rp.group.rotation.y+=diff*Math.min(1,dt*10); const dx=rp.group.position.x-pX, dz=rp.group.position.z-pZ; const sp=Math.hypot(dx,dz)/Math.max(dt,0.001); const ud=rp.group.userData; if (sp>0.3 && ud.limbs && !rp.target.parachuting){ ud.animPhase+=dt*sp*1.4; const sw=Math.sin(ud.animPhase)*Math.min(sp/6,1)*0.7; ud.limbs.leftLeg.rotation.x=sw; ud.limbs.rightLeg.rotation.x=-sw; ud.limbs.leftArm.rotation.x=-sw*0.75; ud.limbs.rightArm.rotation.x=sw*0.75; } else if (ud.limbs){ ud.limbs.leftLeg.rotation.x*=0.85; ud.limbs.rightLeg.rotation.x*=0.85; ud.limbs.leftArm.rotation.x*=0.85; ud.limbs.rightArm.rotation.x*=0.85; } } }
@@ -983,7 +982,6 @@ function playerDie(kId, kName){
   if (respawnsLeft > 0){ deathAnim.active = true; deathAnim.startTime = performance.now(); startRespawnCountdown(10); }
   else { deathAnim.active = false; }
 }
-
 function startRespawnCountdown(seconds){
   const overlay = $('respawn-overlay'); const countEl = $('respawn-count'); const barEl = $('respawn-bar');
   if (!overlay || !countEl) return;
@@ -1036,9 +1034,7 @@ function enterSpectator(){
     const sc = $('scope-overlay'); if (sc) sc.classList.remove('active');
   }, 1300);
 }
-
 function cycleSpectator(){ spectatorIndex++; }
-
 function updateSpectatorCamera(){
   const aliveList = [];
   for (const [id, rp] of remotePlayers){ if (!rp.dead) aliveList.push(id); }
@@ -1055,14 +1051,12 @@ function updateSpectatorCamera(){
   const nameEl = $('spec-target-name');
   if (nameEl) nameEl.textContent = rp.name || 'Player';
 }
-
 function updateLivesHud(){
   const respawnsLeft = Math.max(0, ROOM_SETTINGS.maxRespawns - myRespawnsUsed);
   const el = $('hud-lives'); const cnt = $('lives-count');
   if (cnt) cnt.textContent = respawnsLeft;
   if (el) el.classList.toggle('empty', respawnsLeft === 0);
 }
-
 function beginParachute(x, y, z){
   stopRespawnCountdown(); currentKillerId = null; isSpectator = false;
   $('spectator-overlay').classList.remove('on');
@@ -1080,7 +1074,6 @@ function beginParachute(x, y, z){
   lastChunkKey = '__init__';
 }
 function respawnPlayer(x, y, z, useParachute){
-  // FIXED: use ?? so y=0 is preserved
   if (useParachute){ beginParachute(x, y ?? PARA_START_HEIGHT, z); }
   else {
     stopRespawnCountdown(); currentKillerId = null; isSpectator = false;
@@ -1203,6 +1196,8 @@ function startMatch(){
   if (G.running) return;
   G.running=true; G.paused=false; G.over=false;
   matchOverActive = false;
+  if (autoLobbyTimer){ clearTimeout(autoLobbyTimer); autoLobbyTimer = null; }
+  stopOverCountdown();
   myRespawnsUsed = 0; isSpectator = false; spectatorIndex = 0;
   G.playerScore=0; G.enemyScore=0; G.timeLeft=600; G.kills=0; G.deaths=0;
   if (Net.isHost){ for (const c of Net.clientConns.values()) { c.respawnsUsed = 0; } }
@@ -1236,6 +1231,8 @@ function resumeGame(){ if (!G.running) return; G.paused=false; $('pause').classL
 function endMatch(won){ if (G.over) return; G.over=true; G.running=false; hudEl.classList.remove('on'); touchUI.classList.remove('on'); $('pauseBtn').classList.remove('on'); if (document.pointerLockElement) document.exitPointerLock(); $('overTitle').textContent=won?'بردی':'باختی'; $('overTitle').style.color=won?'#5fe08a':'#ff6b5e'; $('resultLine').innerHTML=`امتیاز شما: <b>${G.kills}</b> کشتار`; $('over').classList.add('on'); }
 
 function backToLobby(){
+  if (autoLobbyTimer){ clearTimeout(autoLobbyTimer); autoLobbyTimer = null; }
+  stopOverCountdown();
   G.running=false; G.paused=false; G.over=false;
   matchOverActive = false;
   stopRespawnCountdown(); currentKillerId = null; isSpectator = false; myRespawnsUsed = 0;
@@ -1253,6 +1250,8 @@ function backToLobby(){
 
 function leaveRoom(){
   G.running=false; G.paused=false;
+  if (autoLobbyTimer){ clearTimeout(autoLobbyTimer); autoLobbyTimer = null; }
+  stopOverCountdown();
   stopRespawnCountdown(); currentKillerId = null; isSpectator = false;
   if (Net.tickTimer){ clearInterval(Net.tickTimer); Net.tickTimer=null; }
   if (Net.hostConn){ try { Net.hostConn.close(); } catch(_){} Net.hostConn=null; }
@@ -1298,8 +1297,7 @@ function updatePlayer(dt){
     const gh = groundHeightAt(PLAYER.pos.x, PLAYER.pos.z, PLAYER.pos.y);
     const landY = gh + PLAYER.eyeStand;
     if (PLAYER.pos.y <= landY){
-      PLAYER.pos.y = landY;
-      PLAYER.parachuting = false;
+      PLAYER.pos.y = landY; PLAYER.parachuting = false;
       if (localParachute) localParachute.visible = false;
       if (gunGroup) gunGroup.visible = true;
       if (crosshairEl) crosshairEl.style.opacity = '1';
@@ -1395,7 +1393,6 @@ function loop(t){
   const dt=Math.min((t-lastTime)/1000,0.05);
   lastTime=t;
   update(dt);
-  // FIXED: use PLAYER.pos directly for chunks + sun follow
   if (G.running && !G.paused){
     updateChunks();
     const px = PLAYER.pos.x;
